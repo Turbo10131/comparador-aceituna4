@@ -7,7 +7,7 @@ import re
 def obtener_precio_desde_aove():
     url = "https://aove.net/precio-aceite-de-oliva-hoy-poolred/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        "User-Agent": "Mozilla/5.0"
     }
 
     try:
@@ -19,17 +19,21 @@ def obtener_precio_desde_aove():
         exit(1)
 
     soup = BeautifulSoup(response.text, "html.parser")
-    posibles = soup.find_all("strong")
+    texto_visible = soup.get_text(separator="\n")
 
-    for item in posibles:
-        texto = item.get_text(strip=True)
-        print(f"🔎 Revisando: {texto}")
-        match = re.search(r"(\d{1,2}[.,]\d{2,3})\s?€/kg", texto)
-        if match:
-            precio = match.group(1).replace(",", ".")
-            return float(precio)
+    # Mostrar las 10 primeras líneas para ver qué contenido se carga
+    lineas = texto_visible.splitlines()
+    print("\n🔎 Primeras líneas del texto visible:")
+    for linea in lineas[:20]:
+        print(f"   ➤ {linea.strip()}")
 
-    print("❌ No se encontró ningún precio válido.")
+    # Buscar patrón de precio en todo el contenido visible
+    match = re.search(r"(\d{1,2}[.,]\d{2,3})\s?€/kg", texto_visible)
+    if match:
+        precio = match.group(1).replace(",", ".")
+        return float(precio)
+
+    print("❌ No se encontró ningún precio válido en el contenido.")
     exit(1)
 
 # Ejecutar y guardar JSON
