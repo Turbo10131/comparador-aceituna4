@@ -1,37 +1,36 @@
-
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, date
+from datetime import date, datetime
 import json
 import re
 
 def obtener_precio_desde_aove():
     url = "https://aove.net/precio-aceite-de-oliva-hoy-poolred/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
+
     try:
-        response = requests.get(url, timeout=10)
+        print("🔎 Solicitando página...")
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"❌ Error al acceder a la página: {e}")
         exit(1)
 
     soup = BeautifulSoup(response.text, "html.parser")
-    posibles_precios = soup.find_all("strong")
+    posibles = soup.find_all("strong")
 
-    precios_encontrados = []
-
-    for item in posibles_precios:
+    for item in posibles:
         texto = item.get_text(strip=True)
-        print("🔎 Revisando:", texto)
-        match = re.search(r"(\d{1,2}[.,]\d{2})\s?€/kg", texto)
+        print(f"🔎 Revisando: {texto}")
+        match = re.search(r"(\d{1,2}[.,]\d{2,3})\s?€/kg", texto)
         if match:
-            precio = float(match.group(1).replace(",", "."))
-            precios_encontrados.append(precio)
+            precio = match.group(1).replace(",", ".")
+            return float(precio)
 
-    if not precios_encontrados:
-        print("❌ No se encontró ningún precio válido.")
-        exit(1)
-
-    return max(precios_encontrados)
+    print("❌ No se encontró ningún precio válido.")
+    exit(1)
 
 # Ejecutar y guardar JSON
 try:
@@ -45,7 +44,7 @@ try:
     with open("precio-aceite.json", "w", encoding="utf-8") as f:
         json.dump(datos, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ Precio obtenido: {precio} €/kg")
-
+    print(f"✅ Precio obtenido y guardado: {precio} €/kg")
 except Exception as e:
     print(f"❌ Error general: {e}")
+    exit(1)
