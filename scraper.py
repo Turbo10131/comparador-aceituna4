@@ -1,13 +1,12 @@
+from datetime import datetime, date
+import json
+import re
 import requests
 from bs4 import BeautifulSoup
-import re
-import json
-from datetime import datetime, date
 
 def obtener_precio_desde_aove():
     url = "https://aove.net/precio-aceite-de-oliva-hoy-poolred/"
     print("🔎 Solicitando página...")
-
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -16,17 +15,15 @@ def obtener_precio_desde_aove():
         exit(1)
 
     soup = BeautifulSoup(response.text, "html.parser")
-    texto_visible = soup.get_text()
-    lineas = texto_visible.strip().splitlines()
 
     print("🔎 Primeras líneas del texto visible:")
-    for linea in lineas[:20]:
-        print("►", linea.strip())
+    print(soup.get_text(strip=True)[:1000])  # Para depuración
 
     posibles_precios = soup.find_all("strong")
     for item in posibles_precios:
         texto = item.get_text(strip=True)
-        match = re.search(r"(\d{1,3}[.,]\d{2,3})\s?€", texto)
+        print(f"🔎 Revisando: {texto}")
+        match = re.search(r"(\d{1,3}[.,]\d{2,3})\s?€?", texto)
         if match:
             precio = match.group(1).replace(",", ".")
             return float(precio)
@@ -34,7 +31,7 @@ def obtener_precio_desde_aove():
     print("❌ No se encontró ningún precio válido en el contenido.")
     exit(1)
 
-# Ejecutar y guardar
+# Ejecutar el scraper
 try:
     precio = obtener_precio_desde_aove()
     datos = {
@@ -47,7 +44,5 @@ try:
         json.dump(datos, f, indent=2, ensure_ascii=False)
 
     print(f"✅ Precio obtenido: {precio} €/kg")
-
 except Exception as e:
     print(f"❌ Error general: {e}")
-    exit(1)
