@@ -2,41 +2,43 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Precio del Aceite de Oliva</title>
+    <title>Precios del Aceite de Oliva</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2em;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .precio {
+            margin-bottom: 1em;
+        }
+    </style>
 </head>
 <body>
     <h1>🫒 Precios del Aceite de Oliva (Infaoliva)</h1>
-
-    <p><strong>Última actualización:</strong> <span id="fecha"></span></p>
-
-    <div id="precios"></div>
+    <div id="contenido">Cargando precios...</div>
 
     <script>
-        async function cargarPrecios() {
-            try {
-                const response = await fetch('precio-aceite.json');
-                const datos = await response.json();
+        fetch("precio-aceite.json")
+            .then(response => response.json())
+            .then(data => {
+                const div = document.getElementById("contenido");
+                const fecha = new Date(data.fecha).toLocaleString("es-ES");
 
-                // Mostrar fecha
-                const fecha = new Date(datos.ultima_actualizacion).toLocaleString('es-ES');
-                document.getElementById('fecha').textContent = fecha;
-
-                // Mostrar precios
-                const preciosDiv = document.getElementById('precios');
-                for (const tipo in datos.precios) {
-                    const info = datos.precios[tipo];
-                    const p = document.createElement('p');
-                    p.textContent = `${tipo} (${info.variedad}): ${info.precio_eur_kg.toFixed(3)} €/kg`;
-                    preciosDiv.appendChild(p);
+                let html = `<p><strong>Última actualización:</strong> ${fecha}</p>`;
+                for (const tipo in data.precios) {
+                    const info = data.precios[tipo];
+                    html += `<div class="precio">${tipo} (${info.variedad}): ${info.precio_eur_kg.toFixed(3)} €/kg</div>`;
                 }
 
-            } catch (error) {
-                document.getElementById('precios').textContent = 'Error al cargar los precios.';
-                console.error('Error:', error);
-            }
-        }
-
-        cargarPrecios();
+                div.innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById("contenido").innerText = "⚠️ Error al cargar los precios.";
+                console.error("Error al cargar JSON:", error);
+            });
     </script>
 </body>
 </html>
