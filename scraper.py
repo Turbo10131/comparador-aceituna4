@@ -17,6 +17,7 @@ def obtener_precio_desde_infaoliva():
     soup = BeautifulSoup(response.text, "html.parser")
     texto_visible = soup.get_text(separator="\n")
 
+    # Buscar el precio del virgen extra picual
     match = re.search(r"virgen extra picual.*?(\d{1,2}[.,]\d{3})\s?€", texto_visible, re.IGNORECASE)
     if match:
         precio = match.group(1).replace(",", ".")
