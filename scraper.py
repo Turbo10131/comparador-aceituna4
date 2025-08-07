@@ -17,8 +17,12 @@ def obtener_precio_desde_infaoliva():
     soup = BeautifulSoup(response.text, "html.parser")
     texto_visible = soup.get_text(separator="\n")
 
-    # Buscar el precio del virgen extra picual
-    match = re.search(r"virgen extra picual.*?(\d{1,2}[.,]\d{3})\s?€", texto_visible, re.IGNORECASE)
+    # Mostrar parte del contenido para depuración
+    print("🧪 Vista previa del contenido de la página:")
+    print(texto_visible[:2000])
+
+    # Buscar un precio con expresión regular más flexible
+    match = re.search(r"virgen extra.*?(\d{1,2}[.,]\d{3})\s?€", texto_visible, re.IGNORECASE)
     if match:
         precio = match.group(1).replace(",", ".")
         return float(precio)
@@ -26,7 +30,7 @@ def obtener_precio_desde_infaoliva():
     print("❌ No se encontró un precio válido en la página de Infaoliva.")
     exit(1)
 
-# Ejecutar y guardar
+# Ejecutar y guardar resultado
 try:
     precio = obtener_precio_desde_infaoliva()
     datos = {
