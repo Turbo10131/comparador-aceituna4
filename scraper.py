@@ -1,52 +1,59 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, date
 import json
-import re
+from datetime import datetime
 
-def obtener_precio_desde_infaoliva():
-    url = "https://www.infaoliva.com/"
+def main():
     print("🔎 Solicitando página de Infaoliva...")
-
+    url = "https://www.infaoliva.com/"
+    
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"❌ Error al acceder a la página de Infaoliva: {e}")
         exit(1)
 
-    soup = BeautifulSoup(response.text, "html.parser")
-    texto = soup.get_text(separator="\n")
-    lineas = texto.splitlines()
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    print("🧪 Buscando tabla de precios...")
+    table = soup.find("table")
+    if not table:
+        print("❌ No se encontró la tabla de precios.")
+        exit(1)
 
-    # Buscar secuencia: virgen extra -> Picual -> precio
-    for i in range(len(lineas) - 2):
-        if "virgen extra" in lineas[i].lower() and "picual" in lineas[i + 1].lower():
-            match = re.search(r"(\d+[.,]\d+)\s?€", lineas[i + 2])
-            if match:
-                precio = float(match.group(1).replace(",", "."))
-                return precio
+    rows = table.find_all("tr")
+    precios = {}
 
-    print("❌ No se encontró un precio válido en la página de Infaoliva.")
-    exit(1)
+    for row in rows[1:]:
+        cols = row.find_all("td")
+        if len(cols) == 3:
+            tipo = cols[0].text.strip()
+            variedad = cols[1].text.strip()
+            precio_raw = cols[2].text.strip().replace(".", "").replace(",", ".").replace("€", "").strip()
+            try:
+                precio = float(precio_raw)
+                precios[tipo] = {
+                    "variedad": variedad,
+                    "precio_eur_kg": precio
+                }
+            except ValueError:
+                continue
 
-# Ejecutar el scraper
-try:
-    precio = obtener_precio_desde_infaoliva()
+    if not precios:
+        print("❌ No se encontró un precio válido en el contenido.")
+        exit(1)
+
     datos = {
-        "precio": precio,
-        "fecha": date.today().isoformat(),
-        "actualizado": datetime.now().isoformat()
+        "fuente": "Infaoliva",
+        "fecha": datetime.now().strftime("%Y-%m-%d"),
+        "precios": precios
     }
 
     with open("precio-aceite.json", "w", encoding="utf-8") as f:
-        json.dump(datos, f, indent=2, ensure_ascii=False)
+        json.dump(datos, f, indent=4, ensure_ascii=False)
 
-    print(f"✅ Precio obtenido: {precio} €/kg")
-except Exception as e:
-    print(f"❌ Error general: {e}")
-    exit(1)
+    print("✅ Precios extraídos correctamente y guardados en 'precio-aceite.json'.")
 
+if __name__ == "__main__":
+    main()
