@@ -1,66 +1,42 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Comparador de Precio de Aceituna</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8f9fa;
-      padding: 2rem;
-      text-align: center;
-    }
-    .contenedor {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-width: 500px;
-      margin: auto;
-    }
-    h1 {
-      color: #2e7d32;
-    }
-    p {
-      font-size: 1.2rem;
-      margin: 1rem 0;
-    }
-    .error {
-      color: red;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Precio del Aceite de Oliva</title>
 </head>
 <body>
-  <div class="contenedor">
-    <h1>Comparador de Precio de Aceituna</h1>
-    <p id="precio">Cargando precio...</p>
-    <p id="fecha">Cargando fecha...</p>
-    <p id="actualizado">Cargando última modificación...</p>
-    <p class="error" id="error" style="display:none;">❌ No se pudieron cargar los datos.</p>
-  </div>
+    <h1>🫒 Precios del Aceite de Oliva (Infaoliva)</h1>
 
-  <script>
-    fetch("precio-aceite.json")
-      .then(response => {
-        if (!response.ok) throw new Error("No se pudo cargar el archivo JSON");
-        return response.json();
-      })
-      .then(data => {
-        document.getElementById("precio").innerText = `💶 Precio del aceite: ${data.precio.toFixed(3)} €/kg`;
-        document.getElementById("fecha").innerText = `📅 Fecha de actualización: ${data.fecha}`;
+    <p><strong>Última actualización:</strong> <span id="fecha"></span></p>
 
-        if (data.actualizado) {
-          const fechaHora = new Date(data.actualizado);
-          document.getElementById("actualizado").innerText = `⏱️ Última modificación: ${fechaHora.toLocaleString("es-ES")}`;
-        } else {
-          document.getElementById("actualizado").innerText = `⏱️ Última modificación: No disponible`;
+    <div id="precios"></div>
+
+    <script>
+        async function cargarPrecios() {
+            try {
+                const response = await fetch('precio-aceite.json');
+                const datos = await response.json();
+
+                // Mostrar fecha
+                const fecha = new Date(datos.ultima_actualizacion).toLocaleString('es-ES');
+                document.getElementById('fecha').textContent = fecha;
+
+                // Mostrar precios
+                const preciosDiv = document.getElementById('precios');
+                for (const tipo in datos.precios) {
+                    const info = datos.precios[tipo];
+                    const p = document.createElement('p');
+                    p.textContent = `${tipo} (${info.variedad}): ${info.precio_eur_kg.toFixed(3)} €/kg`;
+                    preciosDiv.appendChild(p);
+                }
+
+            } catch (error) {
+                document.getElementById('precios').textContent = 'Error al cargar los precios.';
+                console.error('Error:', error);
+            }
         }
-      })
-      .catch(error => {
-        console.error(error);
-        document.getElementById("error").style.display = "block";
-      });
-  </script>
+
+        cargarPrecios();
+    </script>
 </body>
 </html>
