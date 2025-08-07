@@ -57,3 +57,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+    from datetime import datetime
+
+datos['ultima_actualizacion'] = datetime.utcnow().isoformat()  # Para forzar modificación
+
+with open('precio-aceite.json', 'w', encoding='utf-8') as f:
+    json.dump(datos, f, ensure_ascii=False, indent=2)
+
