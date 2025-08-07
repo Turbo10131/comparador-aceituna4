@@ -5,39 +5,32 @@ import json
 import re
 
 def obtener_precio_desde_infaoliva():
-    url = "https://www.infaoliva.com/esp/precios-aceite.html"
+    url = "https://www.infaoliva.com/"
     print("🔎 Solicitando página de Infaoliva...")
 
     try:
-        response = requests.get(url, timeout=10)
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"❌ Error al acceder a la página de Infaoliva: {e}")
         exit(1)
 
     soup = BeautifulSoup(response.text, "html.parser")
+    texto = soup.get_text(separator="\n")
+    lineas = texto.splitlines()
 
-    # Buscar la tabla de precios
-    tabla = soup.find("table")
-    if not tabla:
-        print("❌ No se encontró la tabla de precios en la página.")
-        exit(1)
+    # Buscar secuencia: virgen extra -> Picual -> precio
+    for i in range(len(lineas) - 2):
+        if "virgen extra" in lineas[i].lower() and "picual" in lineas[i + 1].lower():
+            match = re.search(r"(\d+[.,]\d+)\s?€", lineas[i + 2])
+            if match:
+                precio = float(match.group(1).replace(",", "."))
+                return precio
 
-    filas = tabla.find_all("tr")
-    for fila in filas:
-        columnas = fila.find_all("td")
-        if len(columnas) >= 3:
-            tipo = columnas[0].get_text(strip=True).lower()
-            variedad = columnas[1].get_text(strip=True).lower()
-            precio_texto = columnas[2].get_text(strip=True)
-
-            if "virgen extra" in tipo and "picual" in variedad:
-                match = re.search(r"(\d+[.,]\d+)", precio_texto)
-                if match:
-                    precio = float(match.group(1).replace(",", "."))
-                    return precio
-
-    print("❌ No se encontró un precio válido en la tabla.")
+    print("❌ No se encontró un precio válido en la página de Infaoliva.")
     exit(1)
 
 # Ejecutar el scraper
@@ -56,3 +49,4 @@ try:
 except Exception as e:
     print(f"❌ Error general: {e}")
     exit(1)
+
