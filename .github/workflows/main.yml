@@ -1,9 +1,9 @@
 name: Actualizar precio del aceite
 
 on:
-  workflow_dispatch:          # Ejecutar manualmente
   schedule:
-    - cron: '0 11 * * *'      # 11:00 UTC = 13:00 España
+    - cron: '30 11 * * *'  # Todos los días a las 13:30 hora de España (11:30 UTC)
+  workflow_dispatch:
 
 jobs:
   actualizar:
@@ -21,9 +21,9 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install requests beautifulsoup4 playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium
 
-      - name: Ejecutar scraper (Playwright)
+      - name: Ejecutar scraper
         run: python scraper.py
 
       - name: Ver JSON generado
@@ -31,13 +31,13 @@ jobs:
           echo "Contenido de precio-aceite.json:"
           cat precio-aceite.json
 
-      - name: Confirmar cambios en Git
+      - name: Confirmar cambios
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git pull --rebase
           git add precio-aceite.json
-          git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
+          git commit -m "Actualizar precio automáticamente desde Infaoliva" || echo "No hay cambios para confirmar"
           git push
         continue-on-error: true
 
@@ -47,8 +47,8 @@ jobs:
           BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
           if [ -z "$BUILD_HOOK" ]; then
-            echo "No hay NETLIFY_BUILD_HOOK_URL configurado. Sáltate este paso."
+            echo "❌ Build hook no configurado en secretos."
             exit 0
           fi
-          echo "Lanzando redeploy en Netlify…"
-          curl -X POST -d '{}' "$BUILD_HOOK"
+          echo "🚀 Lanzando redeploy en Netlify..."
+          curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
