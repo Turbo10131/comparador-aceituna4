@@ -1,9 +1,9 @@
 name: Actualizar precio del aceite
 
 on:
-  workflow_dispatch:  # Ejecutar manualmente
+  workflow_dispatch:          # Ejecutar manualmente cuando quieras
   schedule:
-    - cron: '0 11 * * *'  # 11:00 UTC = 13:00 España
+    - cron: '0 11 * * *'      # 11:00 UTC = 13:00 España
 
 jobs:
   actualizar:
@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Instalar dependencias Python
+      - name: Instalar dependencias
         run: |
           pip install requests beautifulsoup4 playwright
           python -m playwright install --with-deps chromium
@@ -31,7 +31,7 @@ jobs:
           echo "Contenido de precio-aceite.json:"
           cat precio-aceite.json
 
-      - name: Confirmar cambios
+      - name: Confirmar cambios en Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -40,3 +40,15 @@ jobs:
           git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
           git push
         continue-on-error: true
+
+      - name: Disparar redeploy en Netlify (Build Hook)
+        if: ${{ success() }}
+        env:
+          BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          if [ -z "$BUILD_HOOK" ]; then
+            echo "No hay NETLIFY_BUILD_HOOK_URL configurado. Sáltate este paso."
+            exit 0
+          fi
+          echo "Lanzando redeploy en Netlify…"
+          curl -X POST -d '{}' "$BUILD_HOOK"
