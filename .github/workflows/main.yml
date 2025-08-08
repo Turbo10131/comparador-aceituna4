@@ -1,9 +1,9 @@
 name: Actualizar precio del aceite
 
 on:
-  workflow_dispatch:  # Ejecución manual
+  workflow_dispatch:  # Ejecutar manualmente
   schedule:
-    - cron: '0 11 * * *'  # Todos los días a las 11:00 UTC (13:00 España)
+    - cron: '0 11 * * *'  # 11:00 UTC = 13:00 España
 
 jobs:
   actualizar:
@@ -18,10 +18,12 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Instalar dependencias
-        run: pip install requests beautifulsoup4
+      - name: Instalar dependencias Python
+        run: |
+          pip install requests beautifulsoup4 playwright
+          python -m playwright install --with-deps chromium
 
-      - name: Ejecutar scraper
+      - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
       - name: Ver JSON generado
@@ -35,6 +37,6 @@ jobs:
           git config user.email "github-actions@github.com"
           git pull --rebase
           git add precio-aceite.json
-          git commit -m "Actualizar precio automáticamente (Infaoliva)" || echo "No hay cambios para confirmar"
+          git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
           git push
         continue-on-error: true
