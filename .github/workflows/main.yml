@@ -1,9 +1,9 @@
 name: Actualizar precio del aceite
 
 on:
+  workflow_dispatch:  # Permite ejecutarlo manualmente
   schedule:
-    - cron: '30 11 * * *'  # Todos los días a las 13:30 hora de España (11:30 UTC)
-  workflow_dispatch:
+    - cron: '0 11 * * *'  # Todos los días a las 11:00 UTC (13:00 en España)
 
 jobs:
   actualizar:
@@ -19,17 +19,10 @@ jobs:
           python-version: '3.x'
 
       - name: Instalar dependencias
-        run: |
-          pip install requests beautifulsoup4 playwright
-          python -m playwright install chromium
+        run: pip install requests beautifulsoup4
 
       - name: Ejecutar scraper
         run: python scraper.py
-
-      - name: Ver JSON generado
-        run: |
-          echo "Contenido de precio-aceite.json:"
-          cat precio-aceite.json
 
       - name: Confirmar cambios
         run: |
@@ -41,14 +34,6 @@ jobs:
           git push
         continue-on-error: true
 
-      - name: Disparar redeploy en Netlify (Build Hook)
-        if: ${{ success() }}
-        env:
-          BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+      - name: Desplegar en Netlify
         run: |
-          if [ -z "$BUILD_HOOK" ]; then
-            echo "❌ Build hook no configurado en secretos."
-            exit 0
-          fi
-          echo "🚀 Lanzando redeploy en Netlify..."
-          curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
+          curl -X POST -d '{}' https://api.netlify.com/build_hooks/TU_BUILD_HOOK
