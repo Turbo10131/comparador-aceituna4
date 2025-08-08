@@ -6,11 +6,10 @@ import re
 
 def extraer_float_eur(texto):
     """
-    Convierte strings como '3.600 €' o '3,600 €' a float con punto decimal.
-    - No elimina puntos (en Infaoliva son decimales, no miles).
-    - Cambia coma por punto si la hubiera.
+    Convierte strings como '3.600 €' a float.
+    - Conserva puntos como decimales (Infaoliva usa punto como separador decimal).
+    - Cambia comas por puntos si existen.
     """
-    # coge el primer número con decimales tipo 3.600 o 3,600 o 3.6
     m = re.search(r"\d+(?:[.,]\d+)?", texto)
     if not m:
         raise ValueError(f"No se encontró número en: {texto!r}")
@@ -29,18 +28,21 @@ def main():
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Buscar la tabla del observatorio por cabeceras
-    tabla_correcta = None
-    for tabla in soup.find_all("table"):
-        ths = [th.get_text(strip=True).lower() for th in tabla.find_all("th")]
-        header_line = " ".join(ths)
-        if ("tipo de aceite" in header_line or "tipo de aceite de oliva" in header_line) and \
-           ("variedad" in header_line) and ("precio" in header_line):
-            tabla_correcta = tabla
+    # Buscar el bloque de "Observatorio de precios"
+    observatorio_header = None
+    for tag in soup.find_all(["h2", "h3", "p"]):
+        if "observatorio" in tag.get_text(strip=True).lower() and "precio" in tag.get_text(strip=True).lower():
+            observatorio_header = tag
             break
 
+    if not observatorio_header:
+        print("❌ No se encontró el encabezado del Observatorio.")
+        raise SystemExit(1)
+
+    # Buscar la tabla que sigue a ese encabezado
+    tabla_correcta = observatorio_header.find_next("table")
     if not tabla_correcta:
-        print("❌ No se encontró la tabla de precios (cabeceras esperadas).")
+        print("❌ No se encontró la tabla después del Observatorio.")
         raise SystemExit(1)
 
     precios = {}
@@ -64,12 +66,12 @@ def main():
         }
 
     if not precios:
-        print("❌ No se extrajo ningún precio de la tabla.")
+        print("❌ No se extrajo ningún precio de la tabla del Observatorio.")
         raise SystemExit(1)
 
     datos = {
         "fuente": "Infaoliva",
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "fecha": datetime.now().strftime("%Y-%m-%d"),
         "precios": precios,
         "ultima_actualizacion": datetime.utcnow().isoformat()
     }
@@ -78,7 +80,6 @@ def main():
         json.dump(datos, f, ensure_ascii=False, indent=2)
 
     print("✅ JSON actualizado con éxito.")
-    # Log rápido para que lo veas en Actions
     print(json.dumps(datos, ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":
