@@ -1,9 +1,9 @@
 name: Actualizar precio del aceite
 
 on:
-  workflow_dispatch:  # Permite ejecutarlo manualmente
+  workflow_dispatch:  # Ejecución manual
   schedule:
-    - cron: '0 11 * * *'  # Todos los días a las 11:00 UTC (13:00 en España)
+    - cron: '0 11 * * *'  # Todos los días a las 11:00 UTC (13:00 España)
 
 jobs:
   actualizar:
@@ -24,12 +24,17 @@ jobs:
       - name: Ejecutar scraper
         run: python scraper.py
 
+      - name: Ver JSON generado
+        run: |
+          echo "Contenido de precio-aceite.json:"
+          cat precio-aceite.json
+
       - name: Confirmar cambios
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git pull --rebase
           git add precio-aceite.json
-          git commit -m "Actualizar precio automáticamente desde Infaoliva" || echo "No hay cambios para confirmar"
+          git commit -m "Actualizar precio automáticamente (Infaoliva)" || echo "No hay cambios para confirmar"
           git push
         continue-on-error: true
