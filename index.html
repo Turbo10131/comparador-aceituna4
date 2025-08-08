@@ -1,28 +1,43 @@
-<script>
-  async function cargarPrecios() {
-    try {
-      // 👇 cache-busting para evitar JSON antiguo en CDN
-      const response = await fetch('precio-aceite.json?v=' + Date.now());
-      if (!response.ok) throw new Error('No se pudo cargar el JSON');
-      const datos = await response.json();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Precio de Aceite de Oliva</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #2e7d32; }
+        .precio { font-size: 1.2em; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Comparador de Precio de Aceite de Oliva (Infaoliva)</h1>
+    <div id="precios">Cargando precios...</div>
 
-      const cont = document.getElementById("contenido") || document.getElementById("precios") || document.body;
-      // Si usas el formato con “precios” por tipo:
-      let html = '';
-      html += `<p><strong>Última actualización:</strong> ${new Date(datos.ultima_actualizacion || datos.fecha).toLocaleString('es-ES')}</p>`;
-      if (datos.precios) {
-        for (const tipo in datos.precios) {
-          const info = datos.precios[tipo];
-          html += `<div class="precio">${tipo} (${info.variedad}): ${Number(info.precio_eur_kg).toFixed(3)} €/kg</div>`;
+    <script>
+        async function cargarPrecios() {
+            try {
+                const response = await fetch('precio-aceite.json?v=' + Date.now());
+                if (!response.ok) throw new Error('No se pudo cargar el JSON');
+                const datos = await response.json();
+
+                let html = '';
+                html += `<p><strong>Última actualización:</strong> ${new Date(datos.ultima_actualizacion || datos.fecha).toLocaleString('es-ES')}</p>`;
+                if (datos.precios) {
+                    for (const tipo in datos.precios) {
+                        const info = datos.precios[tipo];
+                        html += `<div class="precio">${tipo} (${info.variedad}): ${Number(info.precio_eur_kg).toFixed(3)} €/kg</div>`;
+                    }
+                } else {
+                    html += `<div class="precio">Precio: ${Number(datos.precio).toFixed(3)} €/kg</div>`;
+                }
+                document.getElementById("precios").innerHTML = html;
+            } catch (e) {
+                console.error(e);
+                document.getElementById("precios").textContent = '⚠️ Error al cargar los precios.';
+            }
         }
-      } else {
-        html += `<div class="precio">Precio: ${Number(datos.precio).toFixed(3)} €/kg</div>`;
-      }
-      (document.getElementById("contenido") || document.getElementById("precios")).innerHTML = html;
-    } catch (e) {
-      console.error(e);
-      (document.getElementById("contenido") || document.getElementById("precios")).textContent = '⚠️ Error al cargar los precios.';
-    }
-  }
-  cargarPrecios();
-</script>
+        cargarPrecios();
+    </script>
+</body>
+</html>
