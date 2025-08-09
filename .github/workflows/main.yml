@@ -1,13 +1,10 @@
 name: Actualizar precio del aceite
 
 on:
-  # Ejecuta a diario (ajusta la hora si quieres)
   schedule:
-    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (verano)
-  # Permite lanzarlo a mano desde Actions
+    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España
   workflow_dispatch:
 
-# ✅ Necesario para poder hacer push al repo desde el workflow
 permissions:
   contents: write
 
@@ -16,11 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar repositorio
+      - name: Checkout (con credenciales y repo completo)
         uses: actions/checkout@v4
         with:
-          persist-credentials: true   # usa GITHUB_TOKEN para push
-          fetch-depth: 0              # necesario para rebase/push correcto
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Mostrar remotos y rama
+        run: |
+          pwd
+          git remote -v
+          git branch -vv
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -32,43 +35,52 @@ jobs:
           pip install requests beautifulsoup4 playwright
           python -m playwright install --with-deps chromium
 
+      - name: Ver JSON ANTES del scraper (si existe)
+        run: |
+          echo "---- JSON antes ----"
+          if [ -f precio-aceite.json ]; then cat precio-aceite.json; else echo "no existe"; fi
+
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      - name: Ver JSON generado
+      - name: Ver JSON DESPUÉS del scraper
         run: |
-          echo "Contenido de precio-aceite.json:"
+          echo "---- JSON después ----"
           cat precio-aceite.json
 
-      # 🔧 Arreglo: add -> stash -> pull --rebase -> stash pop -> commit
-      - name: Preparar commit
+      - name: Preparar commit (add -> stash -> pull --rebase -> stash pop -> commit)
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          git status
           git add precio-aceite.json
+          git status
           git stash || echo "Nada que guardar en stash"
-          git pull --rebase || echo "No se pudo hacer rebase (sin cambios en remoto)"
+          git pull --rebase || echo "Sin cambios en remoto / rebase omitido"
           git stash pop || echo "Nada que restaurar de stash"
+          git status
+          git diff --staged || true
           git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
 
-      - name: Hacer push
+      - name: Hacer push (con token)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
+          # Fuerza a usar el token en https
+          git config url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git push origin HEAD:main
+          echo "Último commit en esta rama:"
           git log -1 --oneline
 
-      # 🚀 Redeploy SIEMPRE, incluso si no hubo cambios que commitear
       - name: Disparar redeploy en Netlify (Build Hook) — siempre
         if: ${{ always() }}
         env:
           BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
           if [ -z "$BUILD_HOOK" ]; then
-            echo "❌ NETLIFY_BUILD_HOOK_URL no está configurado en los Secrets del repo."
+            echo "❌ Falta NETLIFY_BUILD_HOOK_URL en Secrets."
             exit 0
           fi
           echo "🚀 Lanzando redeploy en Netlify…"
-          # Mostrar cabeceras para verificar el 200 OK
           curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
