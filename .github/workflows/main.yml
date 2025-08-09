@@ -1,9 +1,11 @@
 name: Actualizar precio del aceite
 
 on:
-  workflow_dispatch:  # Permite ejecutarlo manualmente
+  # Ejecución automática diaria (ajústalo si quieres)
   schedule:
-    - cron: '0 11 * * *'  # Todos los días a las 11:00 UTC (13:00 en España)
+    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (verano)
+  # Permite lanzarlo a mano desde Actions
+  workflow_dispatch:
 
 jobs:
   actualizar:
@@ -18,22 +20,39 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Instalar dependencias
-        run: pip install requests beautifulsoup4
+      - name: Instalar dependencias (Playwright + Chromium)
+        run: |
+          pip install requests beautifulsoup4 playwright
+          python -m playwright install --with-deps chromium
 
-      - name: Ejecutar scraper
+      - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      - name: Confirmar cambios
+      - name: Ver JSON generado
+        run: |
+          echo "Contenido de precio-aceite.json:"
+          cat precio-aceite.json
+
+      - name: Confirmar cambios en Git (si los hay)
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git pull --rebase
           git add precio-aceite.json
-          git commit -m "Actualizar precio automáticamente desde Infaoliva" || echo "No hay cambios para confirmar"
+          git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
           git push
         continue-on-error: true
 
-      - name: Desplegar en Netlify
+      # ⚠️ Redeploy SIEMPRE, incluso si el commit no cambia nada
+      - name: Disparar redeploy en Netlify (Build Hook) — siempre
+        if: ${{ always() }}   # << clave: se ejecuta aunque falle un paso anterior o no haya commit
+        env:
+          BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
-          curl -X POST -d '{}' https://api.netlify.com/build_hooks/TU_BUILD_HOOK
+          if [ -z "$BUILD_HOOK" ]; then
+            echo "❌ NETLIFY_BUILD_HOOK_URL no está configurado en los Secrets del repo."
+            exit 0
+          fi
+          echo "🚀 Lanzando redeploy en Netlify…"
+          # Mostramos cabeceras para verificar el 200 OK
+          curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
