@@ -21,9 +21,15 @@ jobs:
 
       - name: Mostrar remotos y rama
         run: |
-          pwd
           git remote -v
           git branch -vv
+
+      # ✅ 1) Traer cambios antes de tocar nada
+      - name: Pull inicial
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git pull --rebase || echo "Sin cambios en remoto"
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -38,8 +44,14 @@ jobs:
       - name: Ver JSON ANTES del scraper (si existe)
         run: |
           echo "---- JSON antes ----"
-          if [ -f precio-aceite.json ]; then cat precio-aceite.json; else echo "no existe"; fi
+          if [ -f precio-aceite.json ]; then
+            cat precio-aceite.json
+            echo "SHA antes:" && sha256sum precio-aceite.json || shasum precio-aceite.json
+          else
+            echo "no existe"
+          fi
 
+      # ✅ 2) Generar el JSON ahora (tras el pull)
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
@@ -47,32 +59,33 @@ jobs:
         run: |
           echo "---- JSON después ----"
           cat precio-aceite.json
+          echo "SHA después:" && sha256sum precio-aceite.json || shasum precio-aceite.json
 
-      - name: Preparar commit (add -> stash -> pull --rebase -> stash pop -> commit)
+      # 🔎 Diagnóstico: comprobar si Git lo está ignorando
+      - name: Verificar si precio-aceite.json está ignorado
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git check-ignore -v precio-aceite.json || echo "No está ignorado"
+
+      # ✅ 3) Añadir, commitear y pushear
+      - name: Preparar commit
+        run: |
           git status
-          git add precio-aceite.json
-          git status
-          git stash || echo "Nada que guardar en stash"
-          git pull --rebase || echo "Sin cambios en remoto / rebase omitido"
-          git stash pop || echo "Nada que restaurar de stash"
+          git add -A
           git status
           git diff --staged || true
           git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
 
-      - name: Hacer push (con token)
+      - name: Hacer push con token
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          # Fuerza a usar el token en https
           git config url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git push origin HEAD:main
           echo "Último commit en esta rama:"
           git log -1 --oneline
 
+      # 🚀 Redeploy SIEMPRE en Netlify
       - name: Disparar redeploy en Netlify (Build Hook) — siempre
         if: ${{ always() }}
         env:
