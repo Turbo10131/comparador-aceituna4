@@ -13,7 +13,6 @@ def _to_float_eur(texto: str) -> float:
     Convierte '3.600 €' / '3,600 €' / '3.6' a float.
     Mantiene '.' como decimal y cambia ',' a '.'
     """
-    import re
     m = re.search(r"\d+(?:[.,]\d+)?", texto)
     if not m:
         raise ValueError(f"No se encontró número en: {texto!r}")
@@ -73,7 +72,7 @@ def main():
             browser.close()
             raise SystemExit(1)
 
-        # Aceptar cookies si aparece
+        # Aceptar cookies si aparece (best effort)
         try:
             page.get_by_role("button", name=re.compile("aceptar|accept|consent|consentir", re.I)).click(timeout=3000)
         except Exception:
@@ -94,7 +93,7 @@ def main():
             raise SystemExit(1)
 
         precios = {}
-        for r in range(1, rows.count()):
+        for r in range(1, rows.count()):  # saltar cabecera
             celdas = rows.nth(r).locator("td")
             if celdas.count() < 3:
                 continue
@@ -110,11 +109,14 @@ def main():
 
         browser.close()
 
+    # 🔴 Health-check: si no hay precios o algún valor es inválido, fallar
     if not precios:
-        print("❌ No se extrajeron precios válidos.")
-        raise SystemExit(1)
+        raise SystemExit("❌ Scraper no extrajo ningún precio de la tabla.")
+    if any((v.get("precio_eur_kg") is None or v["precio_eur_kg"] <= 0 or v["precio_eur_kg"] > 20)
+           for v in precios.values()):
+        raise SystemExit("❌ Scraper encontró precios fuera de rango razonable (0–20 €/kg).")
 
-    # Campos dinámicos para forzar cambios SIEMPRE
+    # Campos dinámicos para forzar cambios SIEMPRE (commit y redeploy)
     build_version = _next_build_version()
     now_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     now_utc_iso = datetime.utcnow().isoformat()
@@ -124,8 +126,8 @@ def main():
         "fecha": now_local,
         "precios": precios,
         "ultima_actualizacion": now_utc_iso,
-        "build_version": build_version,      # ← hace que el archivo cambie en cada ejecución
-        "generated_at": now_utc_iso          # ← redundante, pero útil para depurar
+        "build_version": build_version,
+        "generated_at": now_utc_iso
     }
 
     JSON_PATH.write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
