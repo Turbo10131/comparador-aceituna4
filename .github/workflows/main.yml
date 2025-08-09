@@ -1,11 +1,13 @@
 name: Actualizar precio del aceite
 
 on:
-  # Ejecución automática diaria (ajústalo si quieres)
   schedule:
-    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (verano)
-  # Permite lanzarlo a mano desde Actions
+    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (ajusta si quieres)
   workflow_dispatch:
+
+# 👇 Permisos explícitos para poder hacer push
+permissions:
+  contents: write
 
 jobs:
   actualizar:
@@ -13,7 +15,10 @@ jobs:
 
     steps:
       - name: Clonar repositorio
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true  # usa GITHUB_TOKEN para push
+          fetch-depth: 0             # necesario para rebase/push correcto
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -33,19 +38,26 @@ jobs:
           echo "Contenido de precio-aceite.json:"
           cat precio-aceite.json
 
-      - name: Confirmar cambios en Git (si los hay)
+      - name: Preparar commit
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          git status
           git pull --rebase
           git add precio-aceite.json
           git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
-          git push
-        continue-on-error: true
 
-      # ⚠️ Redeploy SIEMPRE, incluso si el commit no cambia nada
+      - name: Hacer push (sin continuar en error)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git push origin HEAD:main
+          git log -1 --oneline
+
+      # ⚠️ Redeploy SIEMPRE (aunque no hubiera cambios de precio)
       - name: Disparar redeploy en Netlify (Build Hook) — siempre
-        if: ${{ always() }}   # << clave: se ejecuta aunque falle un paso anterior o no haya commit
+        if: ${{ always() }}
         env:
           BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
@@ -54,5 +66,4 @@ jobs:
             exit 0
           fi
           echo "🚀 Lanzando redeploy en Netlify…"
-          # Mostramos cabeceras para verificar el 200 OK
           curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
