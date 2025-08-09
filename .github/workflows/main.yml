@@ -1,11 +1,13 @@
 name: Actualizar precio del aceite
 
 on:
+  # Ejecuta a diario (ajusta la hora si quieres)
   schedule:
-    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (ajusta si quieres)
+    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (verano)
+  # Permite lanzarlo a mano desde Actions
   workflow_dispatch:
 
-# 👇 Permisos explícitos para poder hacer push
+# ✅ Necesario para poder hacer push al repo desde el workflow
 permissions:
   contents: write
 
@@ -17,8 +19,8 @@ jobs:
       - name: Clonar repositorio
         uses: actions/checkout@v4
         with:
-          persist-credentials: true  # usa GITHUB_TOKEN para push
-          fetch-depth: 0             # necesario para rebase/push correcto
+          persist-credentials: true   # usa GITHUB_TOKEN para push
+          fetch-depth: 0              # necesario para rebase/push correcto
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -38,16 +40,18 @@ jobs:
           echo "Contenido de precio-aceite.json:"
           cat precio-aceite.json
 
+      # 🔧 Arreglo: add -> stash -> pull --rebase -> stash pop -> commit
       - name: Preparar commit
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git status
-          git pull --rebase
           git add precio-aceite.json
+          git stash || echo "Nada que guardar en stash"
+          git pull --rebase || echo "No se pudo hacer rebase (sin cambios en remoto)"
+          git stash pop || echo "Nada que restaurar de stash"
           git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
 
-      - name: Hacer push (sin continuar en error)
+      - name: Hacer push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -55,7 +59,7 @@ jobs:
           git push origin HEAD:main
           git log -1 --oneline
 
-      # ⚠️ Redeploy SIEMPRE (aunque no hubiera cambios de precio)
+      # 🚀 Redeploy SIEMPRE, incluso si no hubo cambios que commitear
       - name: Disparar redeploy en Netlify (Build Hook) — siempre
         if: ${{ always() }}
         env:
@@ -66,4 +70,5 @@ jobs:
             exit 0
           fi
           echo "🚀 Lanzando redeploy en Netlify…"
+          # Mostrar cabeceras para verificar el 200 OK
           curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
