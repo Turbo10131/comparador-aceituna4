@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (ajústalo si quieres)
   workflow_dispatch:
+    inputs:
+      force_fail:
+        description: 'Forzar fallo del job (true/false)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -13,6 +18,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ Interruptor para forzar fallo y comprobar la alerta por Gmail
+      - name: Forzar fallo si está activado
+        if: ${{ github.event.inputs.force_fail == 'true' }}
+        run: |
+          echo "Fallo forzado a petición del usuario." >&2
+          exit 1
+
       - name: Checkout (repo completo)
         uses: actions/checkout@v4
         with:
@@ -50,7 +62,6 @@ jobs:
           TOKEN: ${{ secrets.SCRAPERGITHUB }}
         run: |
           set -e
-          # reescribir la URL remota con el token personal
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git
           git push origin HEAD:main
           echo "Último commit en esta rama:"
