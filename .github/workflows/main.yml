@@ -2,7 +2,7 @@ name: Actualizar precio del aceite
 
 on:
   schedule:
-    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España
+    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (ajústalo si quieres)
   workflow_dispatch:
 
 permissions:
@@ -13,23 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (con credenciales y repo completo)
+      - name: Checkout (repo completo)
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          persist-credentials: false     # usaremos tu token personal para el push
           fetch-depth: 0
-
-      - name: Mostrar remotos y rama
-        run: |
-          git remote -v
-          git branch -vv
-
-      # ✅ 1) Traer cambios antes de tocar nada
-      - name: Pull inicial
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git pull --rebase || echo "Sin cambios en remoto"
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -41,59 +29,78 @@ jobs:
           pip install requests beautifulsoup4 playwright
           python -m playwright install --with-deps chromium
 
-      - name: Ver JSON ANTES del scraper (si existe)
-        run: |
-          echo "---- JSON antes ----"
-          if [ -f precio-aceite.json ]; then
-            cat precio-aceite.json
-            echo "SHA antes:" && sha256sum precio-aceite.json || shasum precio-aceite.json
-          else
-            echo "no existe"
-          fi
-
-      # ✅ 2) Generar el JSON ahora (tras el pull)
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      - name: Ver JSON DESPUÉS del scraper
+      - name: Ver JSON generado
         run: |
-          echo "---- JSON después ----"
+          echo "Contenido de precio-aceite.json:"
           cat precio-aceite.json
-          echo "SHA después:" && sha256sum precio-aceite.json || shasum precio-aceite.json
 
-      # 🔎 Diagnóstico: comprobar si Git lo está ignorando
-      - name: Verificar si precio-aceite.json está ignorado
+      - name: Preparar commit (pull, add, commit)
         run: |
-          git check-ignore -v precio-aceite.json || echo "No está ignorado"
-
-      # ✅ 3) Añadir, commitear y pushear
-      - name: Preparar commit
-        run: |
-          git status
-          git add -A
-          git status
-          git diff --staged || true
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git pull --rebase || echo "Sin cambios en remoto"
+          git add precio-aceite.json
           git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
 
-      - name: Hacer push con token
+      - name: Hacer push con token personal (SCRAPERGITHUB)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.SCRAPERGITHUB }}
         run: |
           set -e
-          git config url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          # reescribir la URL remota con el token personal
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git
           git push origin HEAD:main
           echo "Último commit en esta rama:"
           git log -1 --oneline
 
-      # 🚀 Redeploy SIEMPRE en Netlify
       - name: Disparar redeploy en Netlify (Build Hook) — siempre
         if: ${{ always() }}
         env:
           BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
           if [ -z "$BUILD_HOOK" ]; then
-            echo "❌ Falta NETLIFY_BUILD_HOOK_URL en Secrets."
+            echo "NETLIFY_BUILD_HOOK_URL no está configurado; salto el redeploy."
             exit 0
           fi
-          echo "🚀 Lanzando redeploy en Netlify…"
+          echo "Lanzando redeploy en Netlify…"
           curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
+
+  # 🔴 Alerta por Gmail si CUALQUIER paso de 'actualizar' falla
+  alertar_fallo:
+    needs: [actualizar]
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: Enviar alerta por Gmail (mensaje en rojo)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "⚠️ FALLÓ el scraper de Infaoliva"
+          to: ${{ secrets.GMAIL_USERNAME }}
+          from: "Scraper Infaoliva <${{ secrets.GMAIL_USERNAME }}>"
+          content_type: text/html
+          html_body: |
+            <div style="font-family:Arial,Helvetica,sans-serif;color:#b00020;">
+              <h2 style="color:#b00020;margin:0 0 8px 0;">⚠️ SCRAPER INFAOLIVA: ERROR</h2>
+              <p style="color:#b00020;margin:0 0 6px 0;">
+                Ha fallado la ejecución del workflow <strong>“Actualizar precio del aceite”</strong>.
+              </p>
+              <p style="color:#b00020;margin:0 0 6px 0;">
+                Revisa los logs en GitHub Actions para ver el motivo (tabla no encontrada, timeouts, precios inválidos, etc.).
+              </p>
+              <p style="color:#b00020;margin:0;">
+                Repo: <strong>${{ github.repository }}</strong><br/>
+                Run ID: <strong>${{ github.run_id }}</strong><br/>
+                URL del run: 
+                <a style="color:#b00020;" href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">
+                  Abrir logs
+                </a>
+              </p>
+            </div>
