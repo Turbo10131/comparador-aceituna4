@@ -22,10 +22,10 @@ def _to_float_eur(texto: str) -> float:
 def _tabla_con_cabeceras(page):
     """Busca una tabla con cabeceras tipo/variedad/precio."""
     tablas = page.locator("table")
-    for i in range(tablas.count()):
-        th_text = " ".join(
-            [t.lower() for t in tablas.nth(i).locator("th").all_text_contents()]
-        )
+    count = tablas.count()
+    for i in range(count):
+        ths = tablas.nth(i).locator("th").all_text_contents()
+        th_text = " ".join(t.lower().strip() for t in ths)
         if th_text and (("tipo" in th_text or "tipo de aceite" in th_text)
                         and "variedad" in th_text
                         and "precio" in th_text):
@@ -33,9 +33,10 @@ def _tabla_con_cabeceras(page):
     return None
 
 def _tabla_despues_de_observatorio(page):
-    """Fallback: busca encabezado con 'observatorio' y 'precios', y coge la tabla siguiente."""
-    candidatos = page.locator("h2,h3,p")
-    for i in range(candidatos.count()):
+    """Fallback: busca encabezado con 'observatorio', 'precios', 'aceite' y coge la tabla siguiente."""
+    candidatos = page.locator("h1,h2,h3,h4,p,section")
+    count = candidatos.count()
+    for i in range(count):
         txt = candidatos.nth(i).inner_text().strip().lower()
         if all(k in txt for k in OBSERVATORIO_KEYS):
             tabla = candidatos.nth(i).locator("xpath=following::table[1]")
@@ -45,12 +46,12 @@ def _tabla_despues_de_observatorio(page):
 
 def _next_build_version() -> int:
     """Lee el JSON anterior y suma 1 al build_version (o 1 si no existe)."""
-    if JSON_PATH.exists():
-        try:
+    try:
+        if JSON_PATH.exists():
             data = json.loads(JSON_PATH.read_text(encoding="utf-8"))
             return int(data.get("build_version", 0)) + 1
-        except Exception:
-            return 1
+    except Exception:
+        pass
     return 1
 
 def main():
@@ -82,7 +83,7 @@ def main():
 
         tabla = _tabla_con_cabeceras(page) or _tabla_despues_de_observatorio(page)
         if tabla is None:
-            print("❌ No se encontró la tabla actual del Observatorio.")
+            print("❌ No se encontró la tabla del Observatorio.")
             browser.close()
             raise SystemExit(1)
 
