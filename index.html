@@ -2,35 +2,47 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Precios del Aceite de Oliva (Infaoliva)</title>
-  <link rel="preload" href="/precio-aceite.json" as="fetch" crossorigin="anonymous" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
-    h1 { display: flex; align-items: center; gap: 10px; font-size: 1.8rem; margin-bottom: 6px; }
-    .muted { color: #666; font-size: .9rem; margin: 0 0 18px; }
-    .card { border: 1px solid #e6e6e6; border-radius: 10px; padding: 14px; margin: 12px 0; }
-    label { display: block; font-weight: 600; margin-bottom: 8px; }
-    select { width: 100%; max-width: 460px; padding: 10px 12px; border: 1px solid #cfd1d6; border-radius: 8px; }
-    .precio { font-weight: 700; font-size: 1.05rem; margin-top: 12px; }
-    .lista { margin: 0; padding-left: 18px; }
-    .lista li { margin: 4px 0; }
+    :root { --gap: 16px; }
+    body{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;
+          margin: 24px; line-height: 1.45; }
+    h1{ display:flex; align-items:center; gap:10px; margin:0 0 var(--gap) 0; }
+    h1 img{ width:36px; height:36px; }
+    .card{ border:1px solid #e2e2e2; border-radius:10px; padding:16px; margin:16px 0; max-width:780px; }
+    label{ display:block; font-weight:600; margin-bottom:8px; }
+    select{ width:100%; max-width:420px; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
+    .precio-titulo{ font-weight:700; margin-top:16px; }
+    #lista{ padding-left: 16px; }
+    .muted{ color:#666; }
   </style>
 </head>
 <body>
   <h1>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Olea_europaea_olive.svg" alt="Aceituna" width="32" height="32" />
+    <img alt="Aceituna" src="https://upload.wikimedia.org/wikipedia/commons/8/89/Olea_europaea_olive.svg">
     Precios del Aceite de Oliva (Infaoliva)
   </h1>
-  <p id="last-update" class="muted">Cargando fecha…</p>
 
-  <div id="root"></div>
+  <p class="muted">Última actualización: <span id="fecha">Cargando fecha…</span></p>
 
-  <!-- React desde tu propio dominio (coloca estos archivos en /vendor) -->
-  <script src="/vendor/react.production.min.js"></script>
-  <script src="/vendor/react-dom.production.min.js"></script>
+  <div class="card">
+    <label for="calidad">Calidad del Aceite</label>
+    <select id="calidad" aria-label="Selecciona la calidad del aceite">
+      <option value="Aceite de oliva virgen extra">Virgen Extra</option>
+      <option value="Aceite de oliva virgen">Virgen</option>
+      <option value="Aceite de oliva lampante">Lampante</option>
+    </select>
 
-  <!-- Tu app React -->
-  <script src="/app.js"></script>
+    <p class="precio-titulo">Precio: <span id="precio">—</span></p>
+    <!-- El texto “Variedad/Fuente” ya no se pinta -->
+  </div>
+
+  <div class="card">
+    <div id="lista">Cargando precios…</div>
+  </div>
+
+  <!-- BUST de caché por si el navegador tiene una versión antigua -->
+  <script src="/app.js?v=20250813-1" defer></script>
 </body>
 </html>
