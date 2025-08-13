@@ -27,6 +27,8 @@
             font-weight: bold;
         }
     </style>
+    <!-- Cargar JS externo para cumplir la CSP -->
+    <script src="app.js" defer></script>
 </head>
 <body>
     <h1>
@@ -36,27 +38,5 @@
 
     <p class="actualizacion">Última actualización: <span id="fecha-actualizacion">Cargando...</span></p>
     <div id="lista-precios">Cargando precios...</div>
-
-    <script>
-        fetch('precio-aceite.json?v=' + Date.now())
-            .then(response => {
-                if (!response.ok) throw new Error("Error al cargar JSON");
-                return response.json();
-            })
-            .then(datos => {
-                document.getElementById('fecha-actualizacion').textContent = new Date(datos.ultima_actualizacion).toLocaleString('es-ES');
-
-                let html = '';
-                for (let tipo in datos.precios) {
-                    const item = datos.precios[tipo];
-                    html += `<p class="precio">${tipo} (${item.variedad}): ${item.precio_eur_kg.toFixed(3)} €/kg</p>`;
-                }
-                document.getElementById('lista-precios').innerHTML = html;
-            })
-            .catch(error => {
-                document.getElementById('lista-precios').textContent = "Error al cargar los precios.";
-                console.error(error);
-            });
-    </script>
 </body>
 </html>
