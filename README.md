@@ -1,14 +1,8 @@
-# Comparador de Precios de Aceite de Oliva (Infaoliva)
+## 📊 Estado del sistema
 
-Este proyecto extrae automáticamente los precios diarios del aceite de oliva desde Infaoliva y los muestra en una página web.
+[![Uptime status](https://img.shields.io/uptimerobot/status/m801162687?label=Estado%20web)](https://stats.uptimerobot.com/s6sms0nwdk)
+[![Uptime ratio](https://img.shields.io/uptimerobot/ratio/m801162687?label=Uptime%2030d)](https://stats.uptimerobot.com/s6sms0nwdk)
+[![Scraper Infaoliva](https://github.com/Turbo10131/comparador-aceituna4/actions/workflows/main.yml/badge.svg)](https://github.com/Turbo10131/comparador-aceituna4/actions/workflows/main.yml)
 
-## 📦 Estructura del proyecto
-
-- `scraper.py`: Script que recoge los datos y genera `precio-aceite.json`.
-- `precio-aceite.json`: Archivo JSON con los últimos precios extraídos.
-- `index.html`: Página web que muestra los precios del JSON.
-- `.github/workflows/main.yml`: Automatización para ejecutar el scraper cada día a las 13:00 (hora España).
-
-## ▶️ Cómo usar
-
-1. Clona el repositorio:
+> **Estado web:** monitorizado cada 5 minutos con [UptimeRobot](https://uptimerobot.com/).  
+> **Scraper:** ejecutado automáticamente en horarios programados para mantener los precios actualizados.
