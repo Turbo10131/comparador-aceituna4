@@ -1,43 +1,49 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Precios del Aceite de Oliva (Infaoliva)</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            display: flex;
-            align-items: center;
-            font-size: 1.8em;
-        }
-        h1 img {
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
-        }
-        .precio {
-            margin: 5px 0;
-            font-size: 1.2em;
-        }
-        .actualizacion {
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Precios del Aceite de Oliva (Infaoliva)</title>
+  <meta name="description" content="Precios diarios del aceite de oliva según Infaoliva.">
+  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/8/89/Olea_europaea_olive.svg"/>
+
+  <style>
+    :root { --gap: 14px; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 22px; line-height: 1.45; }
+    h1 { display:flex; align-items:center; gap:.6rem; font-size:1.9rem; margin: 0 0 var(--gap) 0; }
+    h1 img{ width:38px; height:38px; }
+    .actualizacion { font-weight: 700; margin: 8px 0 var(--gap) 0; }
+    .precio { margin: 4px 0; font-size: 1.05rem; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; max-width: 640px; }
+    label { display:block; font-weight: 600; margin-bottom: 6px; }
+    select { width:100%; max-width: 420px; padding: 10px; border-radius: 8px; border:1px solid #ccc; }
+    .resultado { margin-top: 10px; font-weight: 600; }
+    .muted { color:#666; font-size:.94rem; }
+  </style>
 </head>
 <body>
-    <h1>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Olea_europaea_olive.svg" alt="Aceituna">
-        Precios del Aceite de Oliva (Infaoliva)
-    </h1>
+  <h1>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Olea_europaea_olive.svg" alt="Aceituna">
+    Precios del Aceite de Oliva (Infaoliva)
+  </h1>
 
-    <p class="actualizacion">Última actualización: <span id="fecha-actualizacion">Cargando...</span></p>
-    <div id="lista-precios">Cargando precios...</div>
+  <p class="actualizacion">Última actualización: <span id="fecha-actualizacion">Cargando…</span></p>
 
-    <!-- JavaScript externo para cumplir con CSP segura -->
-    <script src="app.js"></script>
+  <!-- Selector de calidad -->
+  <div class="card" style="margin-bottom: var(--gap);">
+    <label for="calidad">Calidad del Aceite</label>
+    <select id="calidad">
+      <option value="">-- Elegir calidad --</option>
+      <!-- Las opciones se rellenan desde app.js para evitar desalineaciones con el JSON -->
+    </select>
+    <p id="resultado" class="resultado"></p>
+    <p class="muted" id="info-variedad"></p>
+  </div>
+
+  <!-- Lista rápida con todos los precios (opcional) -->
+  <div class="card" id="lista-precios">Cargando precios…</div>
+
+  <!-- JS externo para cumplir la CSP (script-src 'self') -->
+  <script defer src="app.js"></script>
 </body>
 </html>
