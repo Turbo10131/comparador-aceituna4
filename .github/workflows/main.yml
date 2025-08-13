@@ -2,7 +2,10 @@ name: Actualizar precio del aceite
 
 on:
   schedule:
-    - cron: '30 11 * * *'   # 11:30 UTC = 13:30 España (ajústalo si quieres)
+    # Tres ejecuciones diarias en UTC
+    - cron: '50 9 * * *'   # 09:50 UTC
+    - cron: '15 10 * * *'  # 10:15 UTC
+    - cron: '0 11 * * *'   # 11:00 UTC
   workflow_dispatch:
     inputs:
       force_fail:
@@ -12,6 +15,11 @@ on:
 
 permissions:
   contents: write
+
+# Evita carreras entre ejecuciones solapadas (cancelar la anterior si arranca una nueva)
+concurrency:
+  group: update-precio-aceite
+  cancel-in-progress: true
 
 jobs:
   actualizar:
@@ -109,7 +117,7 @@ jobs:
               <p style="color:#b00020;margin:0;">
                 Repo: <strong>${{ github.repository }}</strong><br/>
                 Run ID: <strong>${{ github.run_id }}</strong><br/>
-                URL del run: 
+                URL del run:
                 <a style="color:#b00020;" href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">
                   Abrir logs
                 </a>
