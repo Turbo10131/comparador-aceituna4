@@ -2,47 +2,111 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Precios del Aceite de Oliva (Infaoliva)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Precios del Aceite de Oliva (Infoaliva)</title>
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    :root { --gap: 16px; }
-    body{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;
-          margin: 24px; line-height: 1.45; }
-    h1{ display:flex; align-items:center; gap:10px; margin:0 0 var(--gap) 0; }
-    h1 img{ width:36px; height:36px; }
-    .card{ border:1px solid #e2e2e2; border-radius:10px; padding:16px; margin:16px 0; max-width:780px; }
-    label{ display:block; font-weight:600; margin-bottom:8px; }
-    select{ width:100%; max-width:420px; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
-    .precio-titulo{ font-weight:700; margin-top:16px; }
-    #lista{ padding-left: 16px; }
-    .muted{ color:#666; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f8f8;
+    }
+
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+
+    .contenedor {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #007BFF;
+      box-shadow: 0 0 4px rgba(0,123,255,0.5);
+    }
+
+    .ayuda {
+      font-size: 0.85em;
+      color: #666;
+      margin-top: -8px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .precio {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .lista-precios {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f1f1f1;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
-  <h1>
-    <img alt="Aceituna" src="https://upload.wikimedia.org/wikipedia/commons/8/89/Olea_europaea_olive.svg">
-    Precios del Aceite de Oliva (Infaoliva)
-  </h1>
+  <div class="contenedor">
+    <h1>🫒 Precios del Aceite de Oliva (Infoaliva)</h1>
+    <p id="ultima-actualizacion">Cargando fecha...</p>
 
-  <p class="muted">Última actualización: <span id="fecha">Cargando fecha…</span></p>
+    <!-- Campo: Rendimiento (%) -->
+    <div class="campo">
+      <label for="rendimiento">Rendimiento (%)</label>
+      <input
+        id="rendimiento"
+        type="number"
+        inputmode="decimal"
+        min="0"
+        max="100"
+        step="0.1"
+        placeholder="Ej: 20"
+        aria-describedby="rend-help"
+      />
+      <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
+    </div>
 
-  <div class="card">
-    <label for="calidad">Calidad del Aceite</label>
-    <select id="calidad" aria-label="Selecciona la calidad del aceite">
-      <option value="Aceite de oliva virgen extra">Virgen Extra</option>
-      <option value="Aceite de oliva virgen">Virgen</option>
-      <option value="Aceite de oliva lampante">Lampante</option>
+    <!-- Selector: Tipo de Aceite -->
+    <label for="tipo-aceite">Calidad del Aceite</label>
+    <select id="tipo-aceite">
+      <option value="">-- Elegir calidad --</option>
+      <option value="extra">Virgen Extra</option>
+      <option value="virgen">Virgen</option>
+      <option value="lampante">Lampante</option>
     </select>
 
-    <p class="precio-titulo">Precio: <span id="precio">—</span></p>
-    <!-- El texto “Variedad/Fuente” ya no se pinta -->
+    <!-- Precio -->
+    <p id="precio" class="precio"></p>
+
+    <!-- Lista completa -->
+    <div id="lista-precios" class="lista-precios"></div>
   </div>
 
-  <div class="card">
-    <div id="lista">Cargando precios…</div>
-  </div>
-
-  <!-- BUST de caché por si el navegador tiene una versión antigua -->
-  <script src="/app.js?v=20250813-1" defer></script>
+  <script src="app.js"></script>
 </body>
 </html>
