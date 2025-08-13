@@ -1,4 +1,4 @@
-/* 
+/*  
   # Seguridad base: aplica a TODO el sitio
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
@@ -6,7 +6,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  # CSP: solo lo necesario para tu página
+  # CSP estricta: solo recursos propios y sin JS inline
   Content-Security-Policy: default-src 'self'; img-src 'self' https://upload.wikimedia.org data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'
 
 /precio-aceite.json
