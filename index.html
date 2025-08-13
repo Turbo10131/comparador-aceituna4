@@ -3,108 +3,131 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Precios del Aceite de Oliva (Infoaliva)</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Precios del Aceite de Oliva (Infaoliva)</title>
   <style>
+    :root {
+      --card-bg: #fff;
+      --card-bd: #e6e6e6;
+      --muted: #666;
+      --pill-bg: #f5f7fb;
+      --accent: #1f6feb;
+      --okay: #18a957;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       margin: 0;
-      padding: 20px;
-      background-color: #f8f8f8;
+      background: #f6f8fa;
+      color: #222;
     }
-
+    .wrap {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-bd);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.04);
+    }
     h1 {
-      font-size: 1.8em;
-      margin-bottom: 10px;
+      margin: 0 0 6px;
+      font-size: clamp(22px, 2.9vw, 32px);
+      display: flex;
+      align-items: center;
+      gap: .6rem;
     }
-
-    .contenedor {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 500px;
-      margin: auto;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    h1 .dot {
+      font-size: 28px;
     }
-
+    .muted {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+    .campo {
+      margin-bottom: 16px;
+    }
     label {
+      font-weight: 600;
       display: block;
       margin-bottom: 6px;
-      font-weight: bold;
     }
-
-    input, select {
+    input[type="number"], select {
       width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1em;
-    }
-
-    input:focus, select:focus {
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--card-bd);
+      background: #fff;
       outline: none;
-      border-color: #007BFF;
-      box-shadow: 0 0 4px rgba(0,123,255,0.5);
+      transition: border .15s, box-shadow .15s;
     }
-
-    .ayuda {
-      font-size: 0.85em;
-      color: #666;
-      margin-top: -8px;
-      margin-bottom: 12px;
+    input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+    }
+    small.ayuda {
+      color: var(--muted);
       display: block;
+      margin-top: 6px;
     }
-
-    .precio {
-      font-size: 1.1em;
-      font-weight: bold;
-      margin-top: 10px;
+    #precio {
+      margin-top: 14px;
+      font-weight: 700;
+      padding: 10px 12px;
+      background: var(--pill-bg);
+      border-radius: 10px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
     }
-
-    .lista-precios {
+    #lista-precios {
       margin-top: 20px;
-      padding: 10px;
-      background: #f1f1f1;
-      border-radius: 6px;
+      padding: 12px 14px;
+      border: 1px dashed var(--card-bd);
+      border-radius: 12px;
+      background: #fcfcfe;
     }
   </style>
 </head>
 <body>
-  <div class="contenedor">
-    <h1>🫒 Precios del Aceite de Oliva (Infoaliva)</h1>
-    <p id="ultima-actualizacion">Cargando fecha...</p>
+  <div class="wrap">
+    <div class="card">
+      <h1><span class="dot">🫒</span>Precios del Aceite de Oliva (Infaoliva)</h1>
+      <p class="muted">Última actualización — <span id="fecha">Cargando fecha…</span></p>
 
-    <!-- Campo: Rendimiento (%) -->
-    <div class="campo">
-      <label for="rendimiento">Rendimiento (%)</label>
-      <input
-        id="rendimiento"
-        type="number"
-        inputmode="decimal"
-        min="0"
-        max="100"
-        step="0.1"
-        placeholder="Ej: 20"
-        aria-describedby="rend-help"
-      />
-      <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
+      <div class="campo">
+        <label for="rendimiento">Rendimiento (%)</label>
+        <input
+          id="rendimiento"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          max="100"
+          step="0.1"
+          placeholder="Ej: 20"
+          aria-describedby="rend-help"
+          value="20"
+        />
+        <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
+      </div>
+
+      <div class="campo">
+        <label for="tipo">Calidad del Aceite</label>
+        <select id="tipo">
+          <option value="">-- Elegir calidad --</option>
+          <option value="virgen_extra">Virgen Extra</option>
+          <option value="virgen">Virgen</option>
+          <option value="lampante">Lampante</option>
+        </select>
+      </div>
+
+      <div id="precio"></div>
+
+      <div id="lista-precios"></div>
     </div>
-
-    <!-- Selector: Tipo de Aceite -->
-    <label for="tipo-aceite">Calidad del Aceite</label>
-    <select id="tipo-aceite">
-      <option value="">-- Elegir calidad --</option>
-      <option value="extra">Virgen Extra</option>
-      <option value="virgen">Virgen</option>
-      <option value="lampante">Lampante</option>
-    </select>
-
-    <!-- Precio -->
-    <p id="precio" class="precio"></p>
-
-    <!-- Lista completa -->
-    <div id="lista-precios" class="lista-precios"></div>
   </div>
 
   <script src="app.js"></script>
