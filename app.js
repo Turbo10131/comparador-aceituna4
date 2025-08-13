@@ -1,104 +1,65 @@
-/* global React, ReactDOM */
-
 (function () {
-  const { useEffect, useMemo, useState } = React;
+  const FEED = '/precio-aceite.json?v=' + Date.now();
 
-  // Mapeo entre las claves del JSON y las etiquetas del selector
-  const KEY_TO_LABEL = {
-    "Aceite de oliva virgen extra": "Virgen Extra",
-    "Aceite de oliva virgen": "Virgen",
-    "Aceite de oliva lampante": "Lampante",
-  };
+  // Busca elementos con seguridad
+  function qs(id) { return document.getElementById(id); }
+  const fechaEl  = qs('fecha');
+  const selectEl = qs('calidad');
+  const precioEl = qs('precio');
+  const listaEl  = qs('lista');
 
-  const LABEL_TO_KEY = Object.fromEntries(
-    Object.entries(KEY_TO_LABEL).map(([k, v]) => [v, k])
-  );
-
-  function formateaEUR(valor) {
-    return `${valor.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} €/kg`;
+  // Si falta algo del DOM, salimos mostrando pista
+  if (!fechaEl || !selectEl || !precioEl || !listaEl) {
+    console.error('Faltan elementos del DOM que el script necesita.');
+    return;
   }
 
-  function App() {
-    const [data, setData] = useState(null);
-    const [error, setError] = useState("");
-    const [selected, setSelected] = useState("Virgen Extra"); // selección por defecto
-
-    useEffect(() => {
-      // cache-buster para evitar caché agresiva
-      fetch(`/precio-aceite.json?v=${Date.now()}`)
-        .then(r => {
-          if (!r.ok) throw new Error("No se pudo cargar el JSON");
-          return r.json();
-        })
-        .then(json => setData(json))
-        .catch(err => setError(err.message || "Error al cargar datos"));
-    }, []);
-
-    useEffect(() => {
-      const p = document.getElementById("last-update");
-      if (!p) return;
-      if (data?.ultima_actualizacion) {
-        p.textContent = `Última actualización: ${new Date(data.ultima_actualizacion).toLocaleString("es-ES")}`;
-      } else {
-        p.textContent = "";
+  // Carga JSON y pinta
+  fetch(FEED, { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      // Fecha
+      const iso = data.ultima_actualizacion || data.generated_at || data.fecha;
+      try {
+        fechaEl.textContent = new Date(iso).toLocaleString('es-ES');
+      } catch {
+        fechaEl.textContent = iso || '—';
       }
-    }, [data]);
 
-    const opciones = useMemo(() => Object.values(KEY_TO_LABEL), []);
-    const precios = data?.precios || {};
+      // Mapea claves del JSON a etiquetas legibles
+      const map = {
+        'Aceite de oliva virgen extra': 'Virgen Extra',
+        'Aceite de oliva virgen': 'Virgen',
+        'Aceite de oliva lampante': 'Lampante'
+      };
 
-    const precioSeleccionado = useMemo(() => {
-      const key = LABEL_TO_KEY[selected];
-      const item = precios[key];
-      return item ? formateaEUR(Number(item.precio_eur_kg || 0)) : "";
-    }, [selected, precios]);
+      // Rellena el listado completo
+      const partes = [];
+      for (const tipo in data.precios) {
+        const item = data.precios[tipo];
+        const nombre = map[tipo] || tipo;
+        partes.push(`${tipo} (Picual): ${Number(item.precio_eur_kg).toFixed(3)} €/kg`);
+      }
+      listaEl.innerHTML = partes.map(p => `<p>${p}</p>`).join('');
 
-    if (error) {
-      return <div className="card"><strong>Error:</strong> {error}</div>;
-    }
+      // Función de pintado del precio actual
+      const paint = () => {
+        const tipo = selectEl.value;
+        const it = data.precios[tipo];
+        precioEl.textContent = it ? `${Number(it.precio_eur_kg).toFixed(3)} €/kg` : '—';
+      };
 
-    if (!data) {
-      return <div className="card">Cargando…</div>;
-    }
-
-    return (
-      <div>
-        <div className="card">
-          <label htmlFor="calidad">Calidad del Aceite</label>
-          <select
-            id="calidad"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-          >
-            <option value="">-- Elegir calidad --</option>
-            {opciones.map(op => (
-              <option key={op} value={op}>{op}</option>
-            ))}
-          </select>
-
-          {/* SOLO el precio correspondiente – sin variedad ni fuente */}
-          {precioSeleccionado && (
-            <p className="precio">Precio {selected}: {precioSeleccionado}</p>
-          )}
-        </div>
-
-        {/* Resumen con los tres precios (opcional, útil para ver todo de un vistazo) */}
-        <div className="card">
-          <ul className="lista">
-            {Object.entries(KEY_TO_LABEL).map(([jsonKey, label]) => {
-              const item = precios[jsonKey];
-              if (!item) return null;
-              return (
-                <li key={jsonKey}>
-                  Aceite de oliva {label.toLowerCase()} (Picual): {formateaEUR(Number(item.precio_eur_kg))}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-    );
-  }
-
-  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+      // Selección inicial = primera opción del <select>
+      paint();
+      selectEl.addEventListener('change', paint);
+    })
+    .catch(err => {
+      console.error('Error cargando el JSON:', err);
+      fechaEl.textContent = 'Error al cargar';
+      listaEl.textContent = 'No se pudo cargar el JSON.';
+      precioEl.textContent = '—';
+    });
 })();
