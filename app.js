@@ -1,109 +1,104 @@
-// URL del JSON con cache-busting (también desactivamos caché en Netlify vía _headers)
-const JSON_URL = `precio-aceite.json?v=${Date.now()}`;
+/* global React, ReactDOM */
 
-// Mapeo de etiquetas "bonitas" del selector <-> claves del JSON
-// Las claves del JSON son:
-///  "Aceite de oliva virgen extra", "Aceite de oliva virgen", "Aceite de oliva lampante"
-const LABEL_TO_KEY = {
-  "Virgen Extra": "Aceite de oliva virgen extra",
-  "Virgen": "Aceite de oliva virgen",
-  "Lampante": "Aceite de oliva lampante",
-};
+(function () {
+  const { useEffect, useMemo, useState } = React;
 
-// Elementos del DOM
-const $fecha = document.getElementById("fecha-actualizacion");
-const $lista = document.getElementById("lista-precios");
-const $select = document.getElementById("calidad");
-const $resultado = document.getElementById("resultado");
-const $infoVariedad = document.getElementById("info-variedad");
+  // Mapeo entre las claves del JSON y las etiquetas del selector
+  const KEY_TO_LABEL = {
+    "Aceite de oliva virgen extra": "Virgen Extra",
+    "Aceite de oliva virgen": "Virgen",
+    "Aceite de oliva lampante": "Lampante",
+  };
 
-let datos = null;
+  const LABEL_TO_KEY = Object.fromEntries(
+    Object.entries(KEY_TO_LABEL).map(([k, v]) => [v, k])
+  );
 
-// Utilidad para formatear números a 3 decimales con coma si el locale es ES
-function formatEuroKg(n) {
-  // Asegura número y 3 decimales
-  const fixed = Number(n).toFixed(3);
-  // Muestra con coma en ES, punto en otros
-  return (Number(fixed)).toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-}
-
-// Pinta el bloque “lista de todos los precios”
-function renderListaPrecios(data) {
-  const precios = data.precios;
-  const lineas = Object.keys(precios).map(key => {
-    const item = precios[key];
-    return `<p class="precio">${key} (${item.variedad}): ${formatEuroKg(item.precio_eur_kg)} €/kg</p>`;
-  }).join("");
-  $lista.innerHTML = lineas;
-}
-
-// Pinta fecha de actualización
-function renderFecha(data) {
-  try {
-    const fecha = new Date(data.ultima_actualizacion).toLocaleString('es-ES');
-    $fecha.textContent = fecha;
-  } catch {
-    $fecha.textContent = data.ultima_actualizacion || "—";
+  function formateaEUR(valor) {
+    return `${valor.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} €/kg`;
   }
-}
 
-// Rellena el <select> desde el JSON para que siempre esté sincronizado
-function rellenarSelect(data) {
-  // Orden deseado
-  const ordenBonito = ["Virgen Extra", "Virgen", "Lampante"];
-  const frag = document.createDocumentFragment();
+  function App() {
+    const [data, setData] = useState(null);
+    const [error, setError] = useState("");
+    const [selected, setSelected] = useState("Virgen Extra"); // selección por defecto
 
-  ordenBonito.forEach(label => {
-    const key = LABEL_TO_KEY[label];
-    if (key && data.precios[key]) {
-      const opt = document.createElement("option");
-      opt.value = label;
-      opt.textContent = label;
-      frag.appendChild(opt);
+    useEffect(() => {
+      // cache-buster para evitar caché agresiva
+      fetch(`/precio-aceite.json?v=${Date.now()}`)
+        .then(r => {
+          if (!r.ok) throw new Error("No se pudo cargar el JSON");
+          return r.json();
+        })
+        .then(json => setData(json))
+        .catch(err => setError(err.message || "Error al cargar datos"));
+    }, []);
+
+    useEffect(() => {
+      const p = document.getElementById("last-update");
+      if (!p) return;
+      if (data?.ultima_actualizacion) {
+        p.textContent = `Última actualización: ${new Date(data.ultima_actualizacion).toLocaleString("es-ES")}`;
+      } else {
+        p.textContent = "";
+      }
+    }, [data]);
+
+    const opciones = useMemo(() => Object.values(KEY_TO_LABEL), []);
+    const precios = data?.precios || {};
+
+    const precioSeleccionado = useMemo(() => {
+      const key = LABEL_TO_KEY[selected];
+      const item = precios[key];
+      return item ? formateaEUR(Number(item.precio_eur_kg || 0)) : "";
+    }, [selected, precios]);
+
+    if (error) {
+      return <div className="card"><strong>Error:</strong> {error}</div>;
     }
-  });
 
-  $select.appendChild(frag);
-}
+    if (!data) {
+      return <div className="card">Cargando…</div>;
+    }
 
-// Muestra el precio según selección
-function mostrarPrecioSeleccion(label) {
-  if (!label) {
-    $resultado.textContent = "";
-    $infoVariedad.textContent = "";
-    return;
+    return (
+      <div>
+        <div className="card">
+          <label htmlFor="calidad">Calidad del Aceite</label>
+          <select
+            id="calidad"
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            <option value="">-- Elegir calidad --</option>
+            {opciones.map(op => (
+              <option key={op} value={op}>{op}</option>
+            ))}
+          </select>
+
+          {/* SOLO el precio correspondiente – sin variedad ni fuente */}
+          {precioSeleccionado && (
+            <p className="precio">Precio {selected}: {precioSeleccionado}</p>
+          )}
+        </div>
+
+        {/* Resumen con los tres precios (opcional, útil para ver todo de un vistazo) */}
+        <div className="card">
+          <ul className="lista">
+            {Object.entries(KEY_TO_LABEL).map(([jsonKey, label]) => {
+              const item = precios[jsonKey];
+              if (!item) return null;
+              return (
+                <li key={jsonKey}>
+                  Aceite de oliva {label.toLowerCase()} (Picual): {formateaEUR(Number(item.precio_eur_kg))}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    );
   }
-  const key = LABEL_TO_KEY[label];
-  const item = datos?.precios?.[key];
-  if (!item) {
-    $resultado.textContent = "No hay datos para esa calidad.";
-    $infoVariedad.textContent = "";
-    return;
-  }
 
-  $resultado.textContent = `Precio ${label}: ${formatEuroKg(item.precio_eur_kg)} €/kg`;
-  $infoVariedad.textContent = `Variedad: ${item.variedad} — Fuente: Infaoliva`;
-}
-
-// Eventos
-$select.addEventListener("change", (e) => {
-  mostrarPrecioSeleccion(e.target.value);
-});
-
-// Carga inicial
-fetch(JSON_URL, { cache: "no-store" })
-  .then(r => {
-    if (!r.ok) throw new Error(`Error HTTP ${r.status}`);
-    return r.json();
-  })
-  .then(data => {
-    datos = data;
-    renderFecha(data);
-    renderListaPrecios(data);
-    rellenarSelect(data);
-  })
-  .catch(err => {
-    console.error("Error al cargar JSON:", err);
-    $lista.textContent = "Error al cargar los precios.";
-    $fecha.textContent = "—";
-  });
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+})();
