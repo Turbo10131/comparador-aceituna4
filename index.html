@@ -27,8 +27,6 @@
             font-weight: bold;
         }
     </style>
-    <!-- Cargar JS externo para cumplir la CSP -->
-    <script src="app.js" defer></script>
 </head>
 <body>
     <h1>
@@ -38,5 +36,8 @@
 
     <p class="actualizacion">Última actualización: <span id="fecha-actualizacion">Cargando...</span></p>
     <div id="lista-precios">Cargando precios...</div>
+
+    <!-- JavaScript externo para cumplir con CSP segura -->
+    <script src="app.js"></script>
 </body>
 </html>
