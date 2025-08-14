@@ -1,42 +1,22 @@
-name: Actualizar precio del aceite
+name: actualizar
 
 on:
-  schedule:
-    # Tres ejecuciones diarias en UTC
-    - cron: '50 9 * * *'   # 09:50 UTC
-    - cron: '15 10 * * *'  # 10:15 UTC
-    - cron: '0 11 * * *'   # 11:00 UTC
+  # Lánzalo manualmente cuando quieras
   workflow_dispatch:
-    inputs:
-      force_fail:
-        description: 'Forzar fallo del job (true/false)'
-        required: false
-        default: 'false'
-
-permissions:
-  contents: write
-
-# Evita carreras entre ejecuciones solapadas (cancelar la anterior si arranca una nueva)
-concurrency:
-  group: update-precio-aceite
-  cancel-in-progress: true
+  # Programado (cada 4 horas). Cambia si prefieres otros horarios.
+  schedule:
+    - cron: "0 */4 * * *"
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
+    env:
+      DATA_FILE: precio-aceite.json
 
     steps:
-      # ✅ Interruptor para forzar fallo y comprobar la alerta por Gmail
-      - name: Forzar fallo si está activado
-        if: ${{ github.event.inputs.force_fail == 'true' }}
-        run: |
-          echo "Fallo forzado a petición del usuario." >&2
-          exit 1
-
       - name: Checkout (repo completo)
         uses: actions/checkout@v4
         with:
-          persist-credentials: false     # usaremos tu token personal para el push
           fetch-depth: 0
 
       - name: Configurar Python
@@ -46,7 +26,8 @@ jobs:
 
       - name: Instalar dependencias (Playwright + Chromium)
         run: |
-          pip install requests beautifulsoup4 playwright
+          python -m pip install --upgrade pip
+          pip install playwright requests beautifulsoup4
           python -m playwright install --with-deps chromium
 
       - name: Ejecutar scraper (Playwright)
@@ -54,72 +35,70 @@ jobs:
 
       - name: Ver JSON generado
         run: |
-          echo "Contenido de precio-aceite.json:"
-          cat precio-aceite.json
+          echo "Contenido de ${DATA_FILE}:"
+          test -f "${DATA_FILE}" && cat "${DATA_FILE}" || (echo "❌ ${DATA_FILE} no existe" && exit 1)
+
+      # Detecta si el archivo cambió con respecto al último commit
+      - name: Detectar cambios en el JSON
+        id: cambios
+        run: |
+          if git diff --quiet -- "${DATA_FILE}"; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No hay cambios en ${DATA_FILE}"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Hay cambios en ${DATA_FILE}"
+          fi
 
       - name: Preparar commit (pull, add, commit)
+        if: steps.cambios.outputs.changed == 'true'
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git pull --rebase || echo "Sin cambios en remoto"
-          git add precio-aceite.json
-          git commit -m "Actualizar precio automáticamente (Infaoliva, Playwright)" || echo "No hay cambios para confirmar"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "${DATA_FILE}"
+          git commit -m "Actualizar ${DATA_FILE} automáticamente (scraper)"
 
       - name: Hacer push con token personal (SCRAPERGITHUB)
+        if: steps.cambios.outputs.changed == 'true'
         env:
           TOKEN: ${{ secrets.SCRAPERGITHUB }}
         run: |
           set -e
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          git fetch origin main
+          # Integra cambios remotos antes de subir (evita non-fast-forward)
+          git pull --rebase origin main || true
           git push origin HEAD:main
-          echo "Último commit en esta rama:"
+          echo "Último commit:"
           git log -1 --oneline
 
-      - name: Disparar redeploy en Netlify (Build Hook) — siempre
-        if: ${{ always() }}
+      - name: Disparar redeploy en Netlify (Build Hook)
+        if: steps.cambios.outputs.changed == 'true'
         env:
           BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
           if [ -z "$BUILD_HOOK" ]; then
-            echo "NETLIFY_BUILD_HOOK_URL no está configurado; salto el redeploy."
+            echo "⚠️ NETLIFY_BUILD_HOOK_URL no está configurado; no se dispara redeploy."
             exit 0
           fi
           echo "Lanzando redeploy en Netlify…"
-          curl -i -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
+          curl -fsS -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
+          echo "Redeploy solicitado."
 
-  # 🔴 Alerta por Gmail si CUALQUIER paso de 'actualizar' falla
+      # (Opcional) Si quieres SIEMPRE redeploy aunque no cambie el JSON, usa:
+      # if: ${{ always() }}
+      # en la tarea anterior en lugar de la condición por cambios.
+
+      - name: Resumen
+        run: |
+          echo "✅ Workflow finalizado."
+          echo "Cambios en ${DATA_FILE}: ${{ steps.cambios.outputs.changed }}"
+
+  # 🔴 Alerta si algo falla en 'actualizar'
   alertar_fallo:
-    needs: [actualizar]
+    needs: actualizar
     runs-on: ubuntu-latest
     if: ${{ failure() }}
     steps:
-      - name: Enviar alerta por Gmail (mensaje en rojo)
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.GMAIL_USERNAME }}
-          password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: "⚠️ FALLÓ el scraper de Infaoliva"
-          to: ${{ secrets.GMAIL_USERNAME }}
-          from: "Scraper Infaoliva <${{ secrets.GMAIL_USERNAME }}>"
-          content_type: text/html
-          html_body: |
-            <div style="font-family:Arial,Helvetica,sans-serif;color:#b00020;">
-              <h2 style="color:#b00020;margin:0 0 8px 0;">⚠️ SCRAPER INFAOLIVA: ERROR</h2>
-              <p style="color:#b00020;margin:0 0 6px 0;">
-                Ha fallado la ejecución del workflow <strong>“Actualizar precio del aceite”</strong>.
-              </p>
-              <p style="color:#b00020;margin:0 0 6px 0;">
-                Revisa los logs en GitHub Actions para ver el motivo (tabla no encontrada, timeouts, precios inválidos, etc.).
-              </p>
-              <p style="color:#b00020;margin:0;">
-                Repo: <strong>${{ github.repository }}</strong><br/>
-                Run ID: <strong>${{ github.run_id }}</strong><br/>
-                URL del run:
-                <a style="color:#b00020;" href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">
-                  Abrir logs
-                </a>
-              </p>
-            </div>
+      - name: Mensaje de error
+        run: echo "⚠️ El job 'actualizar' ha fallado."
