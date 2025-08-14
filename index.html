@@ -77,6 +77,40 @@
       align-items: center;
     }
 
+    /* Calculadora */
+    .calc {
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px dashed var(--card-bd);
+      border-radius: 10px;
+      background: #fcfefd;
+    }
+    .calc h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .calc h2 .emoji { font-size: 20px; }
+    .resultado {
+      margin-top: 10px;
+      padding: 12px 14px;
+      background: #eefbf3;
+      border: 1px solid #cfeedd;
+      border-radius: 10px;
+      font-weight: 700;
+      color: #0b7a3b;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .resultado.error {
+      background: #fff6f6;
+      border-color: #ffd1d1;
+      color: #a40000;
+    }
+
     /* Tabla de precios */
     .tabla-wrap {
       margin-top: 22px;
@@ -161,6 +195,15 @@
       </div>
 
       <div id="precio"></div>
+
+      <!-- Calculadora -->
+      <div class="calc">
+        <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
+        <p class="muted" style="margin: 4px 0 8px;">
+          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
+        </p>
+        <div id="resultado" class="resultado"></div>
+      </div>
 
       <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
