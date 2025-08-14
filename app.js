@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fechaSpan      = document.getElementById('fecha');
   const rendimientoInp = document.getElementById('rendimiento');
   const tablaWrap      = document.getElementById('tabla-precios');
+  const resultadoDiv   = document.getElementById('resultado');
 
   let precios = {}; // { virgen_extra: number, virgen: number, lampante: number }
 
@@ -28,15 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function pintarTabla(precios) {
     const filas = [];
-    if (precios.virgen_extra != null) {
-      filas.push({ tipo: 'Aceite de oliva virgen extra', valor: precios.virgen_extra });
-    }
-    if (precios.virgen != null) {
-      filas.push({ tipo: 'Aceite de oliva virgen', valor: precios.virgen });
-    }
-    if (precios.lampante != null) {
-      filas.push({ tipo: 'Aceite de oliva lampante', valor: precios.lampante });
-    }
+    if (precios.virgen_extra != null) filas.push({ tipo: 'Aceite de oliva virgen extra', valor: precios.virgen_extra });
+    if (precios.virgen != null)       filas.push({ tipo: 'Aceite de oliva virgen',       valor: precios.virgen });
+    if (precios.lampante != null)     filas.push({ tipo: 'Aceite de oliva lampante',     valor: precios.lampante });
 
     if (!filas.length) {
       tablaWrap.innerHTML = '<div style="padding:16px">No hay datos de precios disponibles.</div>';
@@ -64,6 +59,47 @@ document.addEventListener('DOMContentLoaded', () => {
     tablaWrap.innerHTML = html;
   }
 
+  function mostrarPrecioSeleccion() {
+    const tipo = tipoSelect.value;
+    if (!tipo || precios[tipo] == null) {
+      precioDiv.textContent = '';
+      return;
+    }
+    precioDiv.textContent = `Precio ${tipo.replace('_', ' ')}: ${n3(precios[tipo])} €/kg`;
+  }
+
+  // Calculadora: precio aceituna €/kg = precio aceite €/kg * (rendimiento % / 100)
+  function calcular() {
+    const tipo = tipoSelect.value;
+    const precioAceite = precios[tipo];
+
+    // rendimiento
+    const v = rendimientoInp.value.replace(',', '.').trim();
+    const rend = parseFloat(v);
+
+    // Validaciones básicas
+    if (!tipo || precioAceite == null) {
+      resultadoDiv.classList.add('error');
+      resultadoDiv.textContent = 'Selecciona una calidad de aceite.';
+      return;
+    }
+    if (isNaN(rend) || rend < 0 || rend > 100) {
+      resultadoDiv.classList.add('error');
+      resultadoDiv.textContent = 'Introduce un rendimiento válido (0–100).';
+      return;
+    }
+
+    // OK: calculamos
+    const precioAceituna = precioAceite * (rend / 100);
+    resultadoDiv.classList.remove('error');
+    resultadoDiv.innerHTML = `
+      Con rendimiento <strong>${n3(rend)}%</strong> y precio del aceite
+      <strong>${n3(precioAceite)} €/kg</strong> →
+      <span style="margin-left:6px">Precio aceituna: <strong>${n3(precioAceituna)} €/kg</strong></span>
+    `;
+  }
+
+  // Fetch JSON con precios
   fetch('precio-aceite.json?v=' + Date.now())
     .then((r) => {
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -80,20 +116,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
       precios = mapearPrecios(data);
       pintarTabla(precios);
+
+      // Si hay un tipo preseleccionado, mostramos/calculamos
+      mostrarPrecioSeleccion();
+      calcular();
     })
     .catch((err) => {
       console.error(err);
       fechaSpan.textContent = 'Error cargando datos';
       tablaWrap.innerHTML = '<div style="padding:16px">No se pudo cargar el JSON de precios.</div>';
+      resultadoDiv.classList.add('error');
+      resultadoDiv.textContent = 'No se pudo calcular. Intenta de nuevo más tarde.';
     });
 
+  // Eventos
   tipoSelect.addEventListener('change', () => {
-    const tipo = tipoSelect.value;
-    if (!tipo || precios[tipo] == null) {
-      precioDiv.textContent = '';
-      return;
-    }
-    precioDiv.textContent = `Precio ${tipo.replace('_', ' ')}: ${n3(precios[tipo])} €/kg`;
+    mostrarPrecioSeleccion();
+    calcular();
   });
 
   rendimientoInp.addEventListener('input', () => {
@@ -106,5 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
       rendimientoInp.style.border = '1px solid #ffb3b3';
       rendimientoInp.style.backgroundColor = '#fff6f6';
     }
+    calcular();
   });
 });
