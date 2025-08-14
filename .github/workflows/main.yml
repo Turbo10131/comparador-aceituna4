@@ -1,11 +1,14 @@
 name: actualizar
 
 on:
-  # Lánzalo manualmente cuando quieras
   workflow_dispatch:
-  # Programado (cada 4 horas). Cambia si prefieres otros horarios.
   schedule:
-    - cron: "0 */4 * * *"
+    # 09:50 UTC
+    - cron: "50 9 * * *"
+    # 10:15 UTC
+    - cron: "15 10 * * *"
+    # 11:00 UTC
+    - cron: "0 11 * * *"
 
 jobs:
   actualizar:
@@ -38,7 +41,6 @@ jobs:
           echo "Contenido de ${DATA_FILE}:"
           test -f "${DATA_FILE}" && cat "${DATA_FILE}" || (echo "❌ ${DATA_FILE} no existe" && exit 1)
 
-      # Detecta si el archivo cambió con respecto al último commit
       - name: Detectar cambios en el JSON
         id: cambios
         run: |
@@ -66,7 +68,6 @@ jobs:
           set -e
           git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           git fetch origin main
-          # Integra cambios remotos antes de subir (evita non-fast-forward)
           git pull --rebase origin main || true
           git push origin HEAD:main
           echo "Último commit:"
@@ -85,16 +86,11 @@ jobs:
           curl -fsS -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
           echo "Redeploy solicitado."
 
-      # (Opcional) Si quieres SIEMPRE redeploy aunque no cambie el JSON, usa:
-      # if: ${{ always() }}
-      # en la tarea anterior en lugar de la condición por cambios.
-
       - name: Resumen
         run: |
           echo "✅ Workflow finalizado."
           echo "Cambios en ${DATA_FILE}: ${{ steps.cambios.outputs.changed }}"
 
-  # 🔴 Alerta si algo falla en 'actualizar'
   alertar_fallo:
     needs: actualizar
     runs-on: ubuntu-latest
