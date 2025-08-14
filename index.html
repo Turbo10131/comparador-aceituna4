@@ -12,6 +12,8 @@
       --pill-bg: #f5f7fb;
       --accent: #1f6feb;
       --okay: #18a957;
+      --olive: #8a9b0f;
+      --olive-dark: #6f7d0c;
     }
     * { box-sizing: border-box; }
     body {
@@ -21,7 +23,7 @@
       color: #222;
     }
     .wrap {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 40px auto;
       padding: 0 16px;
     }
@@ -39,16 +41,11 @@
       align-items: center;
       gap: .6rem;
     }
-    h1 .dot {
-      font-size: 28px;
-    }
-    .muted {
-      color: var(--muted);
-      margin: 0 0 24px;
-    }
-    .campo {
-      margin-bottom: 16px;
-    }
+    h1 .dot { font-size: 28px; }
+    .muted { color: var(--muted); margin: 0 0 24px; }
+
+    /* Campos */
+    .campo { margin-bottom: 16px; }
     label {
       font-weight: 600;
       display: block;
@@ -68,11 +65,7 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(31,111,235,.12);
     }
-    small.ayuda {
-      color: var(--muted);
-      display: block;
-      margin-top: 6px;
-    }
+    small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
     #precio {
       margin-top: 14px;
       font-weight: 700;
@@ -83,12 +76,55 @@
       display: flex;
       align-items: center;
     }
-    #lista-precios {
-      margin-top: 20px;
-      padding: 12px 14px;
-      border: 1px dashed var(--card-bd);
+
+    /* Tabla de precios */
+    .tabla-wrap {
+      margin-top: 22px;
+      border: 1px solid var(--card-bd);
       border-radius: 12px;
-      background: #fcfcfe;
+      overflow: hidden;
+      background: #fff;
+    }
+    table.price-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .price-table thead th {
+      background: linear-gradient(0deg, var(--olive), var(--olive-dark));
+      color: #fff;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .price-table tbody td {
+      padding: 14px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .price-table tbody tr:nth-child(even) {
+      background: #fbfcf7;
+    }
+    .price-table .tipo {
+      font-weight: 600;
+    }
+    .price-table .precio {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    @media (max-width: 640px) {
+      .price-table thead { display: none; }
+      .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
+      .price-table tr { border-bottom: 1px solid #f0f0f0; }
+      .price-table td {
+        display: flex; justify-content: space-between; gap: 12px;
+      }
+      .price-table td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .price-table .precio { text-align: left; }
     }
   </style>
 </head>
@@ -126,7 +162,8 @@
 
       <div id="precio"></div>
 
-      <div id="lista-precios"></div>
+      <!-- Tabla de precios -->
+      <div id="tabla-precios" class="tabla-wrap"></div>
     </div>
   </div>
 
