@@ -1,150 +1,132 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const tipoSelect     = document.getElementById('tipo');
-  const precioDiv      = document.getElementById('precio');
-  const fechaSpan      = document.getElementById('fecha');
-  const rendimientoInp = document.getElementById('rendimiento');
-  const tablaWrap      = document.getElementById('tabla-precios');
-  const resultadoDiv   = document.getElementById('resultado');
+// app.js
 
-  let precios = {}; // { virgen_extra: number, virgen: number, lampante: number }
+async function cargarDatos() {
+  try {
+    const res = await fetch("datos.json", { cache: "no-store" });
+    const datos = await res.json();
 
-  const ez = (x) => (x == null ? '' : String(x));
-  const n3 = (n) => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const contenedor = document.getElementById("app");
+    contenedor.innerHTML = "";
 
-  function mapearPrecios(data) {
-    const out = { virgen_extra: null, virgen: null, lampante: null };
-    if (!data || !data.precios) return out;
-
-    for (const [clave, item] of Object.entries(data.precios)) {
-      const key = ez(clave).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
-      const valor = item?.precio_eur_kg ?? item?.precio_euros_kg ?? item?.precio ?? null;
-      if (valor == null) continue;
-
-      if (key.includes('extra')) out.virgen_extra = Number(valor);
-      else if (key.includes('lampante')) out.lampante = Number(valor);
-      else if (key.includes('virgen')) out.virgen = Number(valor);
-    }
-    return out;
-  }
-
-  function pintarTabla(precios) {
-    const filas = [];
-    if (precios.virgen_extra != null) filas.push({ tipo: 'Aceite de oliva virgen extra', valor: precios.virgen_extra });
-    if (precios.virgen != null)       filas.push({ tipo: 'Aceite de oliva virgen',       valor: precios.virgen });
-    if (precios.lampante != null)     filas.push({ tipo: 'Aceite de oliva lampante',     valor: precios.lampante });
-
-    if (!filas.length) {
-      tablaWrap.innerHTML = '<div style="padding:16px">No hay datos de precios disponibles.</div>';
-      return;
+    // Aviso si no hay cierre de operaciones
+    if (datos.sin_cierre_operaciones) {
+      const aviso = document.createElement("div");
+      aviso.textContent =
+        "⚠️ Hoy no hay cierre de operaciones en Infaoliva. Se muestran los últimos precios disponibles.";
+      aviso.style.margin = "12px 0";
+      aviso.style.padding = "10px 12px";
+      aviso.style.background = "#fff3cd";
+      aviso.style.border = "1px solid #ffe69c";
+      aviso.style.borderRadius = "8px";
+      aviso.style.color = "#5c4f00";
+      contenedor.appendChild(aviso);
     }
 
-    const html = `
-      <table class="price-table">
-        <thead>
-          <tr>
-            <th>Tipo de aceite de oliva</th>
-            <th style="text-align:right">Precio €/kg</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filas.map(row => `
-            <tr>
-              <td class="tipo" data-label="Tipo">${row.tipo}</td>
-              <td class="precio" data-label="Precio">${n3(row.valor)} €</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+    // Título con fecha
+    const titulo = document.createElement("h2");
+    titulo.innerHTML = "📊 Precios del Aceite de Oliva (Infaoliva)";
+    contenedor.appendChild(titulo);
+
+    const fecha = document.createElement("p");
+    fecha.textContent = `Última actualización: ${datos.fecha}`;
+    contenedor.appendChild(fecha);
+
+    // Input de rendimiento
+    const inputRend = document.createElement("div");
+    inputRend.innerHTML = `
+      <label for="rendimiento"><strong>Rendimiento (%)</strong></label>
+      <input id="rendimiento" type="number" min="0" max="100" value="20" class="form-control" />
+      <small>Introduce un número entre 0 y 100.</small>
     `;
-    tablaWrap.innerHTML = html;
-  }
+    contenedor.appendChild(inputRend);
 
-  function mostrarPrecioSeleccion() {
-    const tipo = tipoSelect.value;
-    if (!tipo || precios[tipo] == null) {
-      precioDiv.textContent = '';
-      return;
-    }
-    precioDiv.textContent = `Precio ${tipo.replace('_', ' ')}: ${n3(precios[tipo])} €/kg`;
-  }
-
-  // Calculadora: precio aceituna €/kg = precio aceite €/kg * (rendimiento % / 100)
-  function calcular() {
-    const tipo = tipoSelect.value;
-    const precioAceite = precios[tipo];
-
-    // rendimiento
-    const v = rendimientoInp.value.replace(',', '.').trim();
-    const rend = parseFloat(v);
-
-    // Validaciones básicas
-    if (!tipo || precioAceite == null) {
-      resultadoDiv.classList.add('error');
-      resultadoDiv.textContent = 'Selecciona una calidad de aceite.';
-      return;
-    }
-    if (isNaN(rend) || rend < 0 || rend > 100) {
-      resultadoDiv.classList.add('error');
-      resultadoDiv.textContent = 'Introduce un rendimiento válido (0–100).';
-      return;
-    }
-
-    // OK: calculamos
-    const precioAceituna = precioAceite * (rend / 100);
-    resultadoDiv.classList.remove('error');
-    resultadoDiv.innerHTML = `
-      Con rendimiento <strong>${n3(rend)}%</strong> y precio del aceite
-      <strong>${n3(precioAceite)} €/kg</strong> →
-      <span style="margin-left:6px">Precio aceituna: <strong>${n3(precioAceituna)} €/kg</strong></span>
+    // Selector de tipo de aceite
+    const selectDiv = document.createElement("div");
+    selectDiv.innerHTML = `
+      <label for="tipo"><strong>Calidad del Aceite</strong></label>
+      <select id="tipo" class="form-control"></select>
     `;
-  }
+    contenedor.appendChild(selectDiv);
 
-  // Fetch JSON con precios
-  fetch('precio-aceite.json?v=' + Date.now())
-    .then((r) => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then((data) => {
-      const fechaRaw = data.ultima_actualizacion || data.fecha || '';
-      try {
-        const f = new Date(fechaRaw);
-        fechaSpan.textContent = isNaN(f) ? ez(fechaRaw) : f.toLocaleString('es-ES');
-      } catch {
-        fechaSpan.textContent = ez(fechaRaw) || '—';
-      }
+    // Tabla de precios
+    const tabla = document.createElement("table");
+    tabla.className = "tabla-precios";
+    tabla.innerHTML = `
+      <thead>
+        <tr>
+          <th>Tipo de aceite de oliva</th>
+          <th>Precio €/kg</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    contenedor.appendChild(tabla);
 
-      precios = mapearPrecios(data);
-      pintarTabla(precios);
+    const cuerpoTabla = tabla.querySelector("tbody");
 
-      // Si hay un tipo preseleccionado, mostramos/calculamos
-      mostrarPrecioSeleccion();
-      calcular();
-    })
-    .catch((err) => {
-      console.error(err);
-      fechaSpan.textContent = 'Error cargando datos';
-      tablaWrap.innerHTML = '<div style="padding:16px">No se pudo cargar el JSON de precios.</div>';
-      resultadoDiv.classList.add('error');
-      resultadoDiv.textContent = 'No se pudo calcular. Intenta de nuevo más tarde.';
+    Object.entries(datos.precios).forEach(([tipo, info]) => {
+      const row = document.createElement("tr");
+
+      const tdTipo = document.createElement("td");
+      tdTipo.textContent = tipo;
+
+      const tdPrecio = document.createElement("td");
+      tdPrecio.textContent = info.precio_eur_kg
+        ? info.precio_eur_kg.toFixed(3) + " €"
+        : "—";
+
+      row.appendChild(tdTipo);
+      row.appendChild(tdPrecio);
+      cuerpoTabla.appendChild(row);
     });
 
-  // Eventos
-  tipoSelect.addEventListener('change', () => {
-    mostrarPrecioSeleccion();
-    calcular();
-  });
+    // Rellenar el selector
+    const select = document.getElementById("tipo");
+    Object.keys(datos.precios).forEach((tipo) => {
+      const opt = document.createElement("option");
+      opt.value = tipo;
+      opt.textContent = tipo;
+      select.appendChild(opt);
+    });
 
-  rendimientoInp.addEventListener('input', () => {
-    const v = rendimientoInp.value.replace(',', '.').trim();
-    const n = parseFloat(v);
-    if (!isNaN(n) && n >= 0 && n <= 100) {
-      rendimientoInp.style.border = '1px solid #9bd2a8';
-      rendimientoInp.style.backgroundColor = '#f6fffa';
-    } else {
-      rendimientoInp.style.border = '1px solid #ffb3b3';
-      rendimientoInp.style.backgroundColor = '#fff6f6';
+    // Zona resultado calculadora
+    const resultadoDiv = document.createElement("div");
+    resultadoDiv.id = "resultado";
+    resultadoDiv.style.marginTop = "15px";
+    resultadoDiv.style.padding = "10px";
+    resultadoDiv.style.border = "1px solid #ddd";
+    resultadoDiv.style.borderRadius = "8px";
+    resultadoDiv.style.background = "#f9f9f9";
+    contenedor.appendChild(resultadoDiv);
+
+    function calcular() {
+      const tipoSeleccionado = select.value;
+      const rendimiento = parseFloat(
+        document.getElementById("rendimiento").value
+      );
+      const precioAceite = datos.precios[tipoSeleccionado]?.precio_eur_kg;
+
+      if (!rendimiento || !precioAceite) {
+        resultadoDiv.textContent = "Introduce un rendimiento válido.";
+        return;
+      }
+
+      const precioAceituna = (rendimiento / 100) * precioAceite;
+      resultadoDiv.innerHTML = `
+        <strong>Resultado:</strong><br>
+        Con un rendimiento del <strong>${rendimiento}%</strong> y el precio de aceite seleccionado,
+        cobrarías <strong>${precioAceituna.toFixed(3)} €/kg</strong> de aceituna.
+      `;
     }
-    calcular();
-  });
-});
+
+    select.addEventListener("change", calcular);
+    document.getElementById("rendimiento").addEventListener("input", calcular);
+
+    calcular(); // cálculo inicial
+  } catch (err) {
+    document.getElementById("app").innerHTML =
+      "❌ Error cargando datos: " + err.message;
+  }
+}
+
+cargarDatos();
