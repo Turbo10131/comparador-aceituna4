@@ -1,6 +1,6 @@
 {
   "fuente": "Infaoliva",
-  "fecha": "2025-08-20 10:48:13",
+  "fecha": "2025-08-20 11:29:00",
   "precios": {
     "Aceite de oliva virgen extra": {
       "variedad": "Picual",
@@ -15,8 +15,8 @@
       "precio_eur_kg": 3.233
     }
   },
-  "ultima_actualizacion": "2025-08-20T10:48:13.729190",
-  "build_version": 31,
-  "generated_at": "2025-08-20T10:48:13.729190",
+  "ultima_actualizacion": "2025-08-20T11:29:00.667684",
+  "build_version": 32,
+  "generated_at": "2025-08-20T11:29:00.667684",
   "sin_cierre_operaciones": false
 }
