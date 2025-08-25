@@ -9,25 +9,17 @@ const TIPO_LABEL = {
 
 let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
 
-function setTexto(el, txt) {
-  if (!el) return;
-  el.textContent = txt;
-}
-
-function euros(n) {
-  return `${Number(n).toFixed(3)} €/kg`;
-}
+function setTexto(el, txt) { if (!el) return; el.textContent = txt; }
+function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
 function normalizaPrecios(preciosRaw) {
   const map = {};
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
   const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
   const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
-
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
-
   return map;
 }
 
@@ -68,7 +60,7 @@ function actualizarPrecioSeleccion() {
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
 
-  const key = sel.value;              // virgen_extra | virgen | lampante | ""
+  const key = sel.value;
   const precio = PRECIOS_MAP[key];
 
   if (precio) {
@@ -80,7 +72,7 @@ function actualizarPrecioSeleccion() {
   }
 }
 
-// ⬇️ Versión en TABLA (4 columnas)
+// Tabla calculadora (4 columnas)
 function calcular() {
   const sel = document.getElementById('tipo');
   const res = document.getElementById('resultado');
@@ -91,59 +83,57 @@ function calcular() {
   const rendimiento = Number(rEl.value);
   const precio = PRECIOS_MAP[key];
 
-  // Validaciones
   if (!key || !precio || isNaN(rendimiento) || rendimiento < 0 || rendimiento > 100) {
     res.classList.add('error');
     res.innerHTML = `
       <strong>Falta información:</strong> selecciona una calidad con precio disponible y
       escribe un rendimiento entre 0 y 100.
     `;
-    return;
+  } else {
+    const precioAceituna = (rendimiento / 100) * precio;
+    res.classList.remove('error');
+    res.innerHTML = `
+      <table class="calc-table">
+        <thead>
+          <tr>
+            <th>Rendimiento (%)</th>
+            <th>Calidad del Aceite</th>
+            <th>Precio del Aceite</th>
+            <th>Precio aceituna (€/kg)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="Rendimiento (%)">${rendimiento}%</td>
+            <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
+            <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
+            <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
   }
-
-  const precioAceituna = (rendimiento / 100) * precio;
-
-  // Mostrar tabla con el cálculo
-  res.classList.remove('error');
-  res.innerHTML = `
-    <table class="calc-table">
-      <thead>
-        <tr>
-          <th>Rendimiento (%)</th>
-          <th>Calidad del Aceite</th>
-          <th>Precio del Aceite</th>
-          <th>Precio aceituna (€/kg)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td data-label="Rendimiento (%)">${rendimiento}%</td>
-          <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
-          <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
-          <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
-        </tr>
-      </tbody>
-    </table>
-  `;
 }
 
 async function cargarDatos() {
   const fechaEl  = document.getElementById('fecha');
   const precioEl = document.getElementById('precio');
+  const tablaInfoEl = document.getElementById('tabla-info');
 
   try {
     const res = await fetch(`precio-aceite.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
-    console.debug('[JSON]', datos);
 
-    // Fecha legible
+    // Fecha legible (misma para cabecera y rótulo de la tabla)
+    let fechaTxt = datos.fecha || 'desconocida';
     try {
       const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
-      setTexto(fechaEl, isNaN(f) ? (datos.fecha || 'desconocida') : f.toLocaleString('es-ES'));
-    } catch {
-      setTexto(fechaEl, datos.fecha || 'desconocida');
-    }
+      if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
+    } catch {/* noop */}
+
+    setTexto(fechaEl, fechaTxt);
+    setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
     // Aviso de “sin cierre”
     if (datos.sin_cierre_operaciones) {
@@ -155,7 +145,6 @@ async function cargarDatos() {
       aviso.style.border = '1px solid #ffe0a6';
       aviso.style.borderRadius = '8px';
       aviso.style.color = '#7a5e00';
-      // Insertamos aviso antes del bloque de precio
       const card = document.querySelector('.card');
       card?.insertBefore(aviso, precioEl);
     }
@@ -163,10 +152,8 @@ async function cargarDatos() {
     // Tabla de precios
     renderTabla(datos.precios || {});
 
-    // Normaliza a nuestro selector
+    // Normaliza a nuestro selector y autoselecciona
     PRECIOS_MAP = normalizaPrecios(datos.precios || {});
-
-    // Si hay precio para alguna calidad, selecciona la primera disponible
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
       if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
@@ -186,10 +173,11 @@ async function cargarDatos() {
     console.error('[cargarDatos] Error:', err);
     setTexto(fechaEl, 'Error cargando datos');
     setTexto(precioEl, 'No se pudieron cargar los precios.');
+    setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
     const tabla = document.getElementById('tabla-precios');
     if (tabla) tabla.innerHTML = '';
     const res = document.getElementById('resultado');
-    if (res) { res.classList.add('error'); setTexto(res, 'No se pudo calcular.'); }
+    if (res) { res.classList.add('error'); res.textContent = 'No se pudo calcular.'; }
   }
 }
 
