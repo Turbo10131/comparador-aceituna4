@@ -66,7 +66,6 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(31,111,235,.12);
     }
-    /* Foco solo con teclado */
     :focus:not(:focus-visible){ outline: none; box-shadow:none; }
     small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
     #precio {
@@ -99,18 +98,16 @@
     .resultado {
       margin-top: 10px;
       padding: 12px 14px;
-      background: #eefbf3;
-      border: 1px solid #cfeedd;
       border-radius: 10px;
       font-weight: 700;
-      color: #0b7a3b;
       min-height: 44px;
       display: flex;
       align-items: center;
+      justify-content: center;
     }
     .resultado.error {
       background: #fff6f6;
-      border-color: #ffd1d1;
+      border: 1px solid #ffd1d1;
       color: #a40000;
     }
 
@@ -149,6 +146,33 @@
       font-variant-numeric: tabular-nums;
       font-weight: 700;
     }
+
+    /* Tabla calculadora */
+    .calc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 15px;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .calc-table th {
+      background: #f0f4e6;
+      color: #333;
+      padding: 10px;
+      text-align: center;
+    }
+    .calc-table td {
+      border-top: 1px solid #eee;
+      padding: 10px;
+      text-align: center;
+    }
+    .calc-table tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+
     @media (max-width: 640px) {
       .price-table thead { display: none; }
       .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
@@ -163,8 +187,6 @@
       }
       .price-table .precio { text-align: left; }
     }
-
-    /* Noscript aviso */
     .noscript {
       margin-top: 12px;
       padding: 12px 14px;
@@ -214,7 +236,6 @@
         </select>
       </div>
 
-      <!-- Resultado de precio del aceite seleccionado -->
       <div id="precio" role="status" aria-live="polite"></div>
 
       <!-- Calculadora -->
