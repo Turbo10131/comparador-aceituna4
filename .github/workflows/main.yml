@@ -1,100 +1,122 @@
-name: actualizar
+// app.js
 
-on:
-  workflow_dispatch:
-  schedule:
-    # 09:50 UTC
-    - cron: "50 9 * * *"
-    # 10:15 UTC
-    - cron: "15 10 * * *"
-    # 11:00 UTC
-    - cron: "0 11 * * *"
+const TIPO_LABEL = {
+  virgen_extra: 'Aceite de oliva virgen extra',
+  virgen: 'Aceite de oliva virgen',
+  lampante: 'Aceite de oliva lampante',
+};
 
-jobs:
-  actualizar:
-    runs-on: ubuntu-latest
-    env:
-      DATA_FILE: precio-aceite.json
+let PRECIOS_MAP = {};
 
-    steps:
-      - name: Checkout (repo completo)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+function setTexto(el, txt) {
+  if (el) el.textContent = txt;
+}
 
-      - name: Configurar Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+function euros(n) {
+  return `${Number(n).toFixed(3)} €/kg`;
+}
 
-      - name: Instalar dependencias (Playwright + Chromium)
-        run: |
-          python -m pip install --upgrade pip
-          pip install playwright requests beautifulsoup4
-          python -m playwright install --with-deps chromium
+function normalizaPrecios(preciosRaw) {
+  const map = {};
+  if (preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg) map.virgen_extra = preciosRaw['Aceite de oliva virgen extra'].precio_eur_kg;
+  if (preciosRaw['Aceite de oliva virgen']?.precio_eur_kg) map.virgen = preciosRaw['Aceite de oliva virgen'].precio_eur_kg;
+  if (preciosRaw['Aceite de oliva lampante']?.precio_eur_kg) map.lampante = preciosRaw['Aceite de oliva lampante'].precio_eur_kg;
+  return map;
+}
 
-      - name: Ejecutar scraper (Playwright)
-        run: python scraper.py
+function renderTabla(preciosRaw) {
+  const cont = document.getElementById('tabla-precios');
+  if (!cont) return;
+  cont.innerHTML = `
+    <table class="price-table">
+      <thead>
+        <tr><th>Tipo de aceite de oliva</th><th>Precio €/kg</th></tr>
+      </thead>
+      <tbody>
+        ${Object.entries(preciosRaw).map(([tipo, info]) => `
+          <tr>
+            <td class="tipo">${tipo}</td>
+            <td class="precio">${info.precio_eur_kg ? euros(info.precio_eur_kg) : '—'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
 
-      - name: Ver JSON generado
-        run: |
-          echo "Contenido de ${DATA_FILE}:"
-          test -f "${DATA_FILE}" && cat "${DATA_FILE}" || (echo "❌ ${DATA_FILE} no existe" && exit 1)
+function actualizarPrecioSeleccion() {
+  const sel = document.getElementById('tipo');
+  const precioEl = document.getElementById('precio');
+  const key = sel.value;
+  const precio = PRECIOS_MAP[key];
+  if (precio) setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
+  else setTexto(precioEl, '');
+}
 
-      - name: Detectar cambios en el JSON
-        id: cambios
-        run: |
-          if git diff --quiet -- "${DATA_FILE}"; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No hay cambios en ${DATA_FILE}"
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Hay cambios en ${DATA_FILE}"
-          fi
+function calcular() {
+  const sel = document.getElementById('tipo');
+  const res = document.getElementById('resultado');
+  const rEl = document.getElementById('rendimiento');
+  const key = sel.value;
+  const rendimiento = Number(rEl.value);
+  const precio = PRECIOS_MAP[key];
 
-      - name: Preparar commit (pull, add, commit)
-        if: steps.cambios.outputs.changed == 'true'
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${DATA_FILE}"
-          git commit -m "Actualizar ${DATA_FILE} automáticamente (scraper)"
+  if (!key || !precio || isNaN(rendimiento) || rendimiento <= 0 || rendimiento > 100) {
+    res.classList.add('error');
+    res.innerHTML = "Introduce rendimiento válido (0–100) y una calidad.";
+    return;
+  }
 
-      - name: Hacer push con token personal (SCRAPERGITHUB)
-        if: steps.cambios.outputs.changed == 'true'
-        env:
-          TOKEN: ${{ secrets.SCRAPERGITHUB }}
-        run: |
-          set -e
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
-          git fetch origin main
-          git pull --rebase origin main || true
-          git push origin HEAD:main
-          echo "Último commit:"
-          git log -1 --oneline
+  const precioAceituna = (rendimiento / 100) * precio;
+  res.classList.remove('error');
+  res.innerHTML = `
+    <table class="calc-table">
+      <thead>
+        <tr>
+          <th>Rendimiento (%)</th>
+          <th>Calidad del Aceite</th>
+          <th>Precio del Aceite</th>
+          <th>Precio aceituna (€/kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>${rendimiento}%</td>
+          <td>${TIPO_LABEL[key]}</td>
+          <td>${euros(precio)}</td>
+          <td><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+}
 
-      - name: Disparar redeploy en Netlify (Build Hook)
-        if: steps.cambios.outputs.changed == 'true'
-        env:
-          BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
-        run: |
-          if [ -z "$BUILD_HOOK" ]; then
-            echo "⚠️ NETLIFY_BUILD_HOOK_URL no está configurado; no se dispara redeploy."
-            exit 0
-          fi
-          echo "Lanzando redeploy en Netlify…"
-          curl -fsS -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
-          echo "Redeploy solicitado."
+async function cargarDatos() {
+  const fechaEl = document.getElementById('fecha');
+  try {
+    const res = await fetch(`precio-aceite.json?v=${Date.now()}`, { cache: 'no-store' });
+    const datos = await res.json();
 
-      - name: Resumen
-        run: |
-          echo "✅ Workflow finalizado."
-          echo "Cambios en ${DATA_FILE}: ${{ steps.cambios.outputs.changed }}"
+    PRECIOS_MAP = normalizaPrecios(datos.precios || {});
+    renderTabla(datos.precios || {});
 
-  alertar_fallo:
-    needs: actualizar
-    runs-on: ubuntu-latest
-    if: ${{ failure() }}
-    steps:
-      - name: Mensaje de error
-        run: echo "⚠️ El job 'actualizar' ha fallado."
+    const sel = document.getElementById('tipo');
+    if (sel && !sel.value) {
+      if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
+      else if (PRECIOS_MAP.virgen) sel.value = 'virgen';
+      else if (PRECIOS_MAP.lampante) sel.value = 'lampante';
+    }
+
+    actualizarPrecioSeleccion();
+    calcular();
+
+    sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
+    document.getElementById('rendimiento')?.addEventListener('input', calcular);
+
+    setTexto(fechaEl, datos.fecha || 'desconocida');
+  } catch (err) {
+    setTexto(fechaEl, 'Error cargando datos');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', cargarDatos);
