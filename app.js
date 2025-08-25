@@ -9,10 +9,9 @@ const TIPO_LABEL = {
 
 let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
 
-function setTexto(el, txt) { if (el) el.textContent = txt; }
+function setTexto(el, txt) { if (!el) return; el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
-// Normaliza claves del JSON a nuestro selector
 function normalizaPrecios(preciosRaw) {
   const map = {};
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
@@ -60,10 +59,17 @@ function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
+
   const key = sel.value;
   const precio = PRECIOS_MAP[key];
-  if (precio) setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
-  else setTexto(precioEl, key ? '— Precio no disponible —' : '');
+
+  if (precio) {
+    setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
+  } else if (key) {
+    setTexto(precioEl, '— Precio no disponible —');
+  } else {
+    setTexto(precioEl, '');
+  }
 }
 
 // Tabla calculadora (4 columnas)
@@ -110,7 +116,8 @@ function calcular() {
 }
 
 async function cargarDatos() {
-  const precioEl    = document.getElementById('precio');
+  const fechaEl  = document.getElementById('fecha');      // puede no existir (lo toleramos)
+  const precioEl = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
   try {
@@ -118,12 +125,14 @@ async function cargarDatos() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    // Fecha (solo en el rótulo encima de la tabla)
-    let fechaTxt = datos.fecha || datos.ultima_actualizacion || datos.generated_at || '';
+    // Fecha legible (misma para cabecera y rótulo de la tabla)
+    let fechaTxt = datos.fecha || 'desconocida';
     try {
-      const f = new Date(fechaTxt);
+      const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
-    } catch {}
+    } catch {/* noop */}
+
+    setTexto(fechaEl, fechaTxt);
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
     // Aviso de “sin cierre”
@@ -140,11 +149,11 @@ async function cargarDatos() {
       card?.insertBefore(aviso, precioEl);
     }
 
-    // Tabla de precios + normalización
+    // Tabla de precios
     renderTabla(datos.precios || {});
-    PRECIOS_MAP = normalizaPrecios(datos.precios || {});
 
-    // Selección inicial
+    // Normaliza a nuestro selector y autoselecciona
+    PRECIOS_MAP = normalizaPrecios(datos.precios || {});
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
       if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
@@ -152,16 +161,19 @@ async function cargarDatos() {
       else if (PRECIOS_MAP.lampante) sel.value = 'lampante';
     }
 
+    // Pintar precio y cálculo inicial
     actualizarPrecioSeleccion();
     calcular();
 
+    // Listeners
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
 
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
-    setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
+    setTexto(fechaEl, 'Error cargando datos');
     setTexto(precioEl, 'No se pudieron cargar los precios.');
+    setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
     const tabla = document.getElementById('tabla-precios');
     if (tabla) tabla.innerHTML = '';
     const res = document.getElementById('resultado');
@@ -169,4 +181,24 @@ async function cargarDatos() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarDatos);
+/* ===== Modal Fuente ===== */
+function setupModal() {
+  const modal = document.getElementById('modal');
+  const open = document.getElementById('openModal');
+  const close = document.getElementById('closeModal');
+  if (!modal || !open || !close) return;
+
+  const show = () => modal.classList.add('show');
+  const hide = () => modal.classList.remove('show');
+
+  open.addEventListener('click', (e) => { e.preventDefault(); show(); });
+  close.addEventListener('click', (e) => { e.preventDefault(); hide(); });
+  modal.addEventListener('click', (e) => { if (e.target === modal) hide(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+}
+
+/* Iniciar */
+document.addEventListener('DOMContentLoaded', () => {
+  cargarDatos();
+  setupModal();
+});
