@@ -23,11 +23,7 @@
       background: #f6f8fa;
       color: #222;
     }
-    .wrap {
-      max-width: 1000px;
-      margin: 40px auto;
-      padding: 0 16px;
-    }
+    .wrap { max-width: 1000px; margin: 40px auto; padding: 0 16px; }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-bd);
@@ -35,141 +31,67 @@
       padding: 24px;
       box-shadow: 0 10px 20px rgba(0,0,0,.04);
     }
-    h1 {
-      margin: 0 0 6px;
-      font-size: clamp(22px, 2.9vw, 32px);
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 2.9vw, 32px); display: flex; align-items: center; gap: .6rem; }
     h1 .dot { font-size: 28px; }
-
     .muted { color: var(--muted); margin: 0 0 24px; }
 
     /* Campos */
     .campo { margin-bottom: 16px; }
     label { font-weight: 600; display: block; margin-bottom: 6px; }
     input[type="number"], select {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid var(--card-bd);
-      background: #fff;
-      outline: none;
+      width: 100%; padding: 10px 12px; font-size: 16px; border-radius: 8px;
+      border: 1px solid var(--card-bd); background: #fff; outline: none;
       transition: border .15s, box-shadow .15s;
     }
     input[type="number"]:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,235,.12);
     }
     :focus:not(:focus-visible){ outline: none; box-shadow:none; }
     small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
     #precio {
-      margin-top: 14px;
-      font-weight: 700;
-      padding: 10px 12px;
-      background: var(--pill-bg);
-      border-radius: 10px;
-      min-height: 42px;
-      display: flex;
-      align-items: center;
+      margin-top: 14px; font-weight: 700; padding: 10px 12px; background: var(--pill-bg);
+      border-radius: 10px; min-height: 42px; display: flex; align-items: center;
     }
 
     /* Calculadora */
     .calc {
-      margin-top: 20px;
-      padding: 16px;
-      border: 1px dashed var(--card-bd);
-      border-radius: 10px;
-      background: #fcfefd;
+      margin-top: 20px; padding: 16px; border: 1px dashed var(--card-bd);
+      border-radius: 10px; background: #fcfefd;
     }
-    .calc h2 {
-      margin: 0 0 6px;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .calc h2 { margin: 0 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
     .calc h2 .emoji { font-size: 20px; }
     .resultado {
-      margin-top: 10px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin-top: 10px; padding: 12px 14px; border-radius: 10px; font-weight: 700;
+      min-height: 44px; display: flex; align-items: center; justify-content: center;
     }
-    .resultado.error {
-      background: #fff6f6;
-      border: 1px solid #ffd1d1;
-      color: #a40000;
-    }
+    .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
 
     /* Nota encima de la tabla (fecha) */
     .tabla-info{
-      margin-top:22px;
-      margin-bottom:8px;
-      padding:10px 12px;
-      background:#f5f7fb;
-      border:1px solid var(--card-bd);
-      border-radius:10px;
-      color:#334;
-      font-weight:600;
+      margin-top:22px; margin-bottom:8px; padding:10px 12px;
+      background:#f5f7fb; border:1px solid var(--card-bd); border-radius:10px;
+      color:#334; font-weight:600;
     }
 
     /* Tabla de precios */
-    .tabla-wrap {
-      border: 1px solid var(--card-bd);
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-    }
+    .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
     table.price-table { width: 100%; border-collapse: collapse; }
     .price-table thead th {
       background: linear-gradient(0deg, var(--olive), var(--olive-dark));
-      color: #fff;
-      text-align: left;
-      padding: 14px 16px;
-      font-weight: 700;
-      letter-spacing: .2px;
+      color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; letter-spacing: .2px;
     }
-    .price-table tbody td {
-      padding: 14px 16px;
-      border-top: 1px solid #f0f0f0;
-    }
+    .price-table tbody td { padding: 14px 16px; border-top: 1px solid #f0f0f0; }
     .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
     .price-table .tipo { font-weight: 600; }
-    .price-table .precio {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-    }
+    .price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 
     /* Tabla calculadora */
     .calc-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 15px;
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 8px;
-      overflow: hidden;
+      width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; background: #fff;
+      border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden;
     }
-    .calc-table th {
-      background: #f0f4e6;
-      color: #333;
-      padding: 10px;
-      text-align: center;
-    }
-    .calc-table td {
-      border-top: 1px solid #eee;
-      padding: 10px;
-      text-align: center;
-    }
+    .calc-table th { background: #f0f4e6; color: #333; padding: 10px; text-align: center; }
+    .calc-table td { border-top: 1px solid #eee; padding: 10px; text-align: center; }
     .calc-table tbody tr:nth-child(even) { background: #fafafa; }
 
     @media (max-width: 640px) {
@@ -180,13 +102,10 @@
       .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
       .price-table .precio { text-align: left; }
     }
+
     .noscript {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid #ffe0a6;
-      background: #fff8e6;
-      color: #8a5a00;
+      margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid #ffe0a6;
+      background: #fff8e6; color: #8a5a00;
     }
   </style>
 </head>
@@ -196,28 +115,16 @@
       <!-- Título sin "(Infaoliva)" -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
-      <!-- Eliminado: “Última actualización — …” -->
+      <!-- Eliminado: “Última actualización — …” debajo del título -->
 
       <noscript>
-        <div class="noscript">
-          ⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.
-        </div>
+        <div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div>
       </noscript>
 
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
-        <input
-          id="rendimiento"
-          type="number"
-          inputmode="decimal"
-          min="0"
-          max="100"
-          step="0.1"
-          placeholder="Ej: 20"
-          aria-describedby="rend-help"
-          value="20"
-          autocomplete="off"
-        />
+        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1"
+               placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
         <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
