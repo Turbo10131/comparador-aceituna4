@@ -12,6 +12,7 @@
       --muted: #666;
       --pill-bg: #f5f7fb;
       --accent: #1f6feb;
+      --okay: #18a957;
       --olive: #8a9b0f;
       --olive-dark: #6f7d0c;
     }
@@ -36,6 +37,7 @@
 
     .muted { color: var(--muted); margin: 0 0 24px; }
 
+    /* Campos */
     .campo { margin-bottom: 16px; }
     label { font-weight: 600; display: block; margin-bottom: 6px; }
     input[type="number"], select {
@@ -53,6 +55,7 @@
       border-radius: 10px; min-height: 42px; display: flex; align-items: center;
     }
 
+    /* Calculadora */
     .calc {
       margin-top: 20px; padding: 16px; border: 1px dashed var(--card-bd);
       border-radius: 10px; background: #fcfefd;
@@ -65,11 +68,13 @@
     }
     .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
 
+    /* Nota encima de la tabla (fecha) */
     .tabla-info{
       margin-top:22px; margin-bottom:8px; padding:10px 12px; background:#f5f7fb;
       border:1px solid var(--card-bd); border-radius:10px; color:#334; font-weight:600;
     }
 
+    /* Tabla de precios */
     .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
     table.price-table { width: 100%; border-collapse: collapse; }
     .price-table thead th {
@@ -81,6 +86,7 @@
     .price-table .tipo { font-weight: 600; }
     .price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 
+    /* Tabla calculadora */
     .calc-table {
       width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; background: #fff;
       border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden;
@@ -89,59 +95,35 @@
     .calc-table td { border-top: 1px solid #eee; padding: 10px; text-align: center; }
     .calc-table tbody tr:nth-child(even) { background: #fafafa; }
 
-    .source-link {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .source-link a {
-      color: var(--accent);
-      cursor: pointer;
-      text-decoration: underline;
-    }
+    /* Enlace fuente */
+    .source-link { margin-top: 16px; text-align: center; font-size: 15px; font-weight: 600; }
+    .source-link a { color: var(--accent); cursor: pointer; text-decoration: underline; }
 
     /* Modal */
     .modal {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
+      display: none;           /* por defecto oculto */
+      align-items: center; justify-content: center;
       z-index: 1000;
     }
+    .modal.show { display: flex; }   /* al mostrar, usamos clase */
     .modal-content {
-      background: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      text-align: center;
-      max-width: 400px;
+      background: #fff; padding: 24px; border-radius: 12px; text-align: center; max-width: 420px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .modal-content h3 {
-      margin-top: 0;
-    }
-    .modal-content a {
-      display: inline-block;
-      margin-top: 12px;
-      color: var(--accent);
-      font-weight: 600;
-    }
+    .modal-content h3 { margin-top: 0; }
+    .modal-content a { display: inline-block; margin-top: 12px; color: var(--accent); font-weight: 600; }
     .modal-close {
-      margin-top: 20px;
-      display: inline-block;
-      padding: 8px 16px;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
+      margin-top: 20px; display: inline-block; padding: 8px 16px;
+      background: var(--accent); color: #fff; border-radius: 6px; cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+      <!-- Título sin "(Infaoliva)" -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
       <noscript>
@@ -166,43 +148,35 @@
 
       <div id="precio" role="status" aria-live="polite"></div>
 
+      <!-- Calculadora -->
       <div class="calc">
         <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
         <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
       </div>
 
+      <!-- Rótulo de fecha encima de la tabla -->
       <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
+
+      <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
 
       <!-- Fuente -->
       <div class="source-link">
-        <a id="openModal">De dónde obtenemos los precios</a>
+        <a id="openModal" href="#" role="button">De dónde obtenemos los precios</a>
       </div>
     </div>
   </div>
 
   <!-- Modal -->
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <h3>Fuente de los precios</h3>
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Fuente de los precios</h3>
       <p>Los precios se obtienen de <strong>Infaoliva</strong>.</p>
-      <a href="https://www.infaoliva.com/" target="_blank">Visitar Infaoliva</a>
+      <a href="https://www.infaoliva.com/" target="_blank" rel="noopener">Visitar Infaoliva</a>
       <div id="closeModal" class="modal-close">Cerrar</div>
     </div>
   </div>
 
   <script src="app.js" defer></script>
-  <script>
-    // Control del modal
-    document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.getElementById('modal');
-      const open = document.getElementById('openModal');
-      const close = document.getElementById('closeModal');
-
-      open.addEventListener('click', () => modal.style.display = 'flex');
-      close.addEventListener('click', () => modal.style.display = 'none');
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
-    });
-  </script>
 </body>
 </html>
