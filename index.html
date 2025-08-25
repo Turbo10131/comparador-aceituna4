@@ -47,11 +47,7 @@
 
     /* Campos */
     .campo { margin-bottom: 16px; }
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 6px;
-    }
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
     input[type="number"], select {
       width: 100%;
       padding: 10px 12px;
@@ -111,18 +107,26 @@
       color: #a40000;
     }
 
+    /* Nota encima de la tabla (fecha) */
+    .tabla-info{
+      margin-top:22px;
+      margin-bottom:8px;
+      padding:10px 12px;
+      background:#f5f7fb;
+      border:1px solid var(--card-bd);
+      border-radius:10px;
+      color:#334;
+      font-weight:600;
+    }
+
     /* Tabla de precios */
     .tabla-wrap {
-      margin-top: 22px;
       border: 1px solid var(--card-bd);
       border-radius: 12px;
       overflow: hidden;
       background: #fff;
     }
-    table.price-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    table.price-table { width: 100%; border-collapse: collapse; }
     .price-table thead th {
       background: linear-gradient(0deg, var(--olive), var(--olive-dark));
       color: #fff;
@@ -135,12 +139,8 @@
       padding: 14px 16px;
       border-top: 1px solid #f0f0f0;
     }
-    .price-table tbody tr:nth-child(even) {
-      background: #fbfcf7;
-    }
-    .price-table .tipo {
-      font-weight: 600;
-    }
+    .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
+    .price-table .tipo { font-weight: 600; }
     .price-table .precio {
       text-align: right;
       font-variant-numeric: tabular-nums;
@@ -169,22 +169,14 @@
       padding: 10px;
       text-align: center;
     }
-    .calc-table tbody tr:nth-child(even) {
-      background: #fafafa;
-    }
+    .calc-table tbody tr:nth-child(even) { background: #fafafa; }
 
     @media (max-width: 640px) {
       .price-table thead { display: none; }
       .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
       .price-table tr { border-bottom: 1px solid #f0f0f0; }
-      .price-table td {
-        display: flex; justify-content: space-between; gap: 12px;
-      }
-      .price-table td::before {
-        content: attr(data-label);
-        color: var(--muted);
-        font-weight: 600;
-      }
+      .price-table td { display: flex; justify-content: space-between; gap: 12px; }
+      .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
       .price-table .precio { text-align: left; }
     }
     .noscript {
@@ -246,6 +238,9 @@
         </p>
         <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
       </div>
+
+      <!-- Rótulo de fecha encima de la tabla -->
+      <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
 
       <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
