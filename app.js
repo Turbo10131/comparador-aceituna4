@@ -80,6 +80,7 @@ function actualizarPrecioSeleccion() {
   }
 }
 
+// ⬇️ NUEVA VERSIÓN “bonita”
 function calcular() {
   const sel = document.getElementById('tipo');
   const res = document.getElementById('resultado');
@@ -90,18 +91,47 @@ function calcular() {
   const rendimiento = Number(rEl.value);
   const precio = PRECIOS_MAP[key];
 
+  // Validaciones
   if (!key || !precio || isNaN(rendimiento) || rendimiento < 0 || rendimiento > 100) {
-    res.classList.remove('error');
-    setTexto(res, 'Introduce rendimiento (0–100) y una calidad con precio.');
+    res.classList.add('error');
+    res.innerHTML = `
+      <strong>Falta información:</strong> elige una <em>calidad</em> con precio disponible y
+      escribe un <em>rendimiento</em> entre 0 y 100.
+    `;
     return;
   }
 
   const precioAceituna = (rendimiento / 100) * precio;
+
+  // Quitamos estado de error y pintamos tarjeta
   res.classList.remove('error');
   res.innerHTML = `
-    <strong>Resultado:</strong><br>
-    Con un rendimiento del <strong>${rendimiento}%</strong> y el precio de <strong>${TIPO_LABEL[key]}</strong>,
-    cobrarías <strong>${precioAceituna.toFixed(3)} €/kg</strong> de aceituna.
+    <div class="result-card">
+      <div class="result-head">
+        <p class="result-title">Precio estimado por kg de aceituna</p>
+        <div class="kpi">
+          <div class="kpi-value">${precioAceituna.toFixed(3)} €</div>
+          <div class="kpi-sub">€/kg</div>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="badge">
+          <span class="badge-label">Rendimiento</span>
+          <div class="badge-value">${rendimiento}%</div>
+        </div>
+
+        <div class="badge">
+          <span class="badge-label">Calidad</span>
+          <div class="badge-value">${TIPO_LABEL[key]}</div>
+        </div>
+
+        <div class="badge">
+          <span class="badge-label">Precio aceite</span>
+          <div class="badge-value">${precio.toFixed(3)} €/kg</div>
+        </div>
+      </div>
+    </div>
   `;
 }
 
