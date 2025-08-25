@@ -80,7 +80,7 @@ function actualizarPrecioSeleccion() {
   }
 }
 
-// ⬇️ NUEVA VERSIÓN “bonita”
+// ⬇️ Versión en TABLA (4 columnas)
 function calcular() {
   const sel = document.getElementById('tipo');
   const res = document.getElementById('resultado');
@@ -95,43 +95,35 @@ function calcular() {
   if (!key || !precio || isNaN(rendimiento) || rendimiento < 0 || rendimiento > 100) {
     res.classList.add('error');
     res.innerHTML = `
-      <strong>Falta información:</strong> elige una <em>calidad</em> con precio disponible y
-      escribe un <em>rendimiento</em> entre 0 y 100.
+      <strong>Falta información:</strong> selecciona una calidad con precio disponible y
+      escribe un rendimiento entre 0 y 100.
     `;
     return;
   }
 
   const precioAceituna = (rendimiento / 100) * precio;
 
-  // Quitamos estado de error y pintamos tarjeta
+  // Mostrar tabla con el cálculo
   res.classList.remove('error');
   res.innerHTML = `
-    <div class="result-card">
-      <div class="result-head">
-        <p class="result-title">Precio estimado por kg de aceituna</p>
-        <div class="kpi">
-          <div class="kpi-value">${precioAceituna.toFixed(3)} €</div>
-          <div class="kpi-sub">€/kg</div>
-        </div>
-      </div>
-
-      <div class="result-grid">
-        <div class="badge">
-          <span class="badge-label">Rendimiento</span>
-          <div class="badge-value">${rendimiento}%</div>
-        </div>
-
-        <div class="badge">
-          <span class="badge-label">Calidad</span>
-          <div class="badge-value">${TIPO_LABEL[key]}</div>
-        </div>
-
-        <div class="badge">
-          <span class="badge-label">Precio aceite</span>
-          <div class="badge-value">${precio.toFixed(3)} €/kg</div>
-        </div>
-      </div>
-    </div>
+    <table class="calc-table">
+      <thead>
+        <tr>
+          <th>Rendimiento (%)</th>
+          <th>Calidad del Aceite</th>
+          <th>Precio del Aceite</th>
+          <th>Precio aceituna (€/kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Rendimiento (%)">${rendimiento}%</td>
+          <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
+          <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
+          <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
+        </tr>
+      </tbody>
+    </table>
   `;
 }
 
@@ -168,7 +160,7 @@ async function cargarDatos() {
       card?.insertBefore(aviso, precioEl);
     }
 
-    // Tabla
+    // Tabla de precios
     renderTabla(datos.precios || {});
 
     // Normaliza a nuestro selector
