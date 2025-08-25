@@ -9,9 +9,10 @@ const TIPO_LABEL = {
 
 let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
 
-function setTexto(el, txt) { if (!el) return; el.textContent = txt; }
+function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
+// Normaliza claves del JSON a nuestro selector
 function normalizaPrecios(preciosRaw) {
   const map = {};
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
@@ -59,17 +60,10 @@ function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
-
   const key = sel.value;
   const precio = PRECIOS_MAP[key];
-
-  if (precio) {
-    setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
-  } else if (key) {
-    setTexto(precioEl, '— Precio no disponible —');
-  } else {
-    setTexto(precioEl, '');
-  }
+  if (precio) setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
+  else setTexto(precioEl, key ? '— Precio no disponible —' : '');
 }
 
 // Tabla calculadora (4 columnas)
@@ -116,8 +110,7 @@ function calcular() {
 }
 
 async function cargarDatos() {
-  const fechaEl  = document.getElementById('fecha');
-  const precioEl = document.getElementById('precio');
+  const precioEl    = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
   try {
@@ -125,14 +118,12 @@ async function cargarDatos() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    // Fecha legible (misma para cabecera y rótulo de la tabla)
-    let fechaTxt = datos.fecha || 'desconocida';
+    // Fecha (solo en el rótulo encima de la tabla)
+    let fechaTxt = datos.fecha || datos.ultima_actualizacion || datos.generated_at || '';
     try {
-      const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
+      const f = new Date(fechaTxt);
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
-    } catch {/* noop */}
-
-    setTexto(fechaEl, fechaTxt);
+    } catch {}
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
     // Aviso de “sin cierre”
@@ -149,11 +140,11 @@ async function cargarDatos() {
       card?.insertBefore(aviso, precioEl);
     }
 
-    // Tabla de precios
+    // Tabla de precios + normalización
     renderTabla(datos.precios || {});
-
-    // Normaliza a nuestro selector y autoselecciona
     PRECIOS_MAP = normalizaPrecios(datos.precios || {});
+
+    // Selección inicial
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
       if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
@@ -161,19 +152,16 @@ async function cargarDatos() {
       else if (PRECIOS_MAP.lampante) sel.value = 'lampante';
     }
 
-    // Pintar precio y cálculo inicial
     actualizarPrecioSeleccion();
     calcular();
 
-    // Listeners
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
 
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
-    setTexto(fechaEl, 'Error cargando datos');
-    setTexto(precioEl, 'No se pudieron cargar los precios.');
     setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
+    setTexto(precioEl, 'No se pudieron cargar los precios.');
     const tabla = document.getElementById('tabla-precios');
     if (tabla) tabla.innerHTML = '';
     const res = document.getElementById('resultado');
