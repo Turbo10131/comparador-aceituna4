@@ -43,7 +43,6 @@
       gap: .6rem;
     }
     h1 .dot { font-size: 28px; }
-
     .muted { color: var(--muted); margin: 0 0 24px; }
 
     /* Campos */
@@ -148,29 +147,56 @@
       font-weight: 700;
     }
 
-    /* Tabla calculadora */
-    .calc-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 15px;
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 8px;
-      overflow: hidden;
+    /* Enlace “fuente” debajo de la tabla, pequeño e IZQUIERDA */
+    .tabla-footer {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start; /* izquierda */
     }
-    .calc-table th {
-      background: #f0f4e6;
-      color: #333;
-      padding: 10px;
+    .fuente {
+      font-size: 12px;
+      color: #666;
+    }
+    .fuente a {
+      font-size: 12px;
+      color: #1f6feb;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* Modal */
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none;          /* oculto por defecto */
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal-overlay.open{ display:flex; }
+    .modal-content{
+      background:#fff;
+      max-width: 480px;
+      width: 90%;
+      border-radius: 12px;
+      padding: 20px 18px;
+      box-shadow: 0 15px 35px rgba(0,0,0,.25);
       text-align: center;
     }
-    .calc-table td {
-      border-top: 1px solid #eee;
-      padding: 10px;
-      text-align: center;
+    .modal-content h3{ margin: 0 0 6px; }
+    .modal-content p { margin: 0 0 14px; color:#444; }
+    .modal-actions{
+      display:flex; gap:10px; justify-content:center; margin-top: 6px;
     }
-    .calc-table tbody tr:nth-child(even) { background: #fafafa; }
+    .btn{
+      padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de;
+      background:#fff; cursor:pointer;
+    }
+    .btn.primary{
+      background:#1f6feb; color:#fff; border-color:#1f6feb;
+    }
 
     @media (max-width: 640px) {
       .price-table thead { display: none; }
@@ -180,52 +206,6 @@
       .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
       .price-table .precio { text-align: left; }
     }
-
-    /* Enlace “fuente” debajo de la tabla */
-    .fuente-precios{
-      margin-top:8px;
-      font-size:13px;           /* más pequeño */
-      text-align:left;          /* alineado a la izquierda */
-    }
-    .fuente-precios a{
-      color: var(--accent);
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    /* Modal */
-    .modal{
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,.45);
-      padding: 16px;
-      z-index: 1000;
-    }
-    .modal.open{ display:flex; }
-    .modal-content{
-      background: #fff;
-      border-radius: 12px;
-      max-width: 520px;
-      width: 100%;
-      padding: 20px 22px;
-      border: 1px solid var(--card-bd);
-      box-shadow: 0 20px 50px rgba(0,0,0,.2);
-    }
-    .close{
-      appearance: none;
-      border: none;
-      background: transparent;
-      font-size: 26px;
-      line-height: 1;
-      float: right;
-      cursor: pointer;
-      color: #666;
-    }
-    .close:hover{ color:#000; }
-
     .noscript {
       margin-top: 12px;
       padding: 12px 14px;
@@ -239,7 +219,7 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- Título sin “(Infaoliva)” -->
+      <!-- Título sin "(Infaoliva)" -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
       <noscript>
@@ -292,24 +272,26 @@
       <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
 
-      <!-- Enlace de fuente (debajo de la tabla, pequeño y a la izquierda) -->
-      <div class="fuente-precios">
-        <a href="#" id="enlace-fuente">De dónde obtenemos los precios</a>
+      <!-- Enlace a la fuente (debajo, pequeño, alineado IZQUIERDA) -->
+      <div class="tabla-footer">
+        <span class="fuente">
+          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
+            De dónde obtenemos los precios
+          </a>
+        </span>
       </div>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div id="modal-fuente" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <button id="cerrar-modal" class="close" aria-label="Cerrar">×</button>
-      <h2 id="modal-title">Fuente de los precios</h2>
-      <p>Los precios se obtienen de <strong>INFAOLIVA</strong>:</p>
-      <p>
-        <a href="https://www.infaoliva.com/" target="_blank" rel="noopener">
-          https://www.infaoliva.com/
-        </a>
-      </p>
+  <!-- MODAL -->
+  <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content">
+      <h3 id="modal-title">Fuente de los precios</h3>
+      <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
+      <div class="modal-actions">
+        <a class="btn primary" href="https://www.infaoliva.com/" target="_blank" rel="noopener">Ir a Infaoliva</a>
+        <button id="modal-close" class="btn" type="button">Cerrar</button>
+      </div>
     </div>
   </div>
 
