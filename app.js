@@ -7,7 +7,9 @@ const TIPO_LABEL = {
   lampante:     'Aceite de oliva lampante',
 };
 
-let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
+let PRECIOS_MAP = {};     // precios actuales
+let HISTORICO_MAP = {};   // histórico para la gráfica
+let chart = null;         // instancia Chart.js
 
 // ====== Utilidades ======
 function setTexto(el, txt) { if (el) el.textContent = txt; }
@@ -18,11 +20,52 @@ function normalizaPrecios(preciosRaw) {
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
   const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
   const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
-
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
   return map;
+}
+
+// Espera datos.historico con esta forma posible:
+// { "virgen_extra":[{fecha:"2024-01-15", precio_eur_kg:3.456},...], ... }
+// o con claves de etiqueta larga como en la tabla.
+function normalizaHistorico(h) {
+  const out = { virgen_extra: [], virgen: [], lampante: [] };
+  if (!h || typeof h !== 'object') return out;
+
+  const keyMap = {
+    'Aceite de oliva virgen extra': 'virgen_extra',
+    'Aceite de oliva virgen': 'virgen',
+    'Aceite de oliva lampante': 'lampante',
+    'virgen_extra': 'virgen_extra',
+    'virgen': 'virgen',
+    'lampante': 'lampante',
+  };
+
+  Object.keys(h).forEach(k => {
+    const key = keyMap[k] ?? null;
+    if (!key || !Array.isArray(h[k])) return;
+
+    out[key] = h[k]
+      .map(p => ({
+        fecha: p.fecha,
+        precio: Number(
+          (typeof p.precio_eur_kg !== 'undefined') ? p.precio_eur_kg : p.precio
+        )
+      }))
+      .filter(p => p.fecha && !Number.isNaN(p.precio) && p.precio > 0 && p.precio < 20)
+      .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+  });
+
+  // Limitar a ~24 meses si viene más largo
+  Object.keys(out).forEach(k => {
+    if (out[k].length > 0) {
+      const last24 = out[k].slice(-24);
+      out[k] = last24;
+    }
+  });
+
+  return out;
 }
 
 // ====== Tabla de precios principal ======
@@ -64,16 +107,12 @@ function actualizarPrecioSeleccion() {
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
 
-  const key = sel.value; // virgen_extra | virgen | lampante | ""
+  const key = sel.value;
   const precio = PRECIOS_MAP[key];
 
-  if (precio) {
-    setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
-  } else if (key) {
-    setTexto(precioEl, '— Precio no disponible —');
-  } else {
-    setTexto(precioEl, '');
-  }
+  if (precio) setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
+  else if (key) setTexto(precioEl, '— Precio no disponible —');
+  else setTexto(precioEl, '');
 }
 
 // ====== Calculadora (tabla 4 columnas) ======
@@ -121,45 +160,70 @@ function calcular() {
   `;
 }
 
-// ====== Modal “De dónde obtenemos los precios” ======
-function setupFuenteModal() {
-  const boton = document.getElementById('fuente-btn');
-  const modal = document.getElementById('fuente-modal');
-  const cerrar = document.getElementById('fuente-cerrar');
+// ====== Gráfica ======
+function renderChartFor(key) {
+  const empty = document.getElementById('chart-empty');
+  const canvas = document.getElementById('chartPrecios');
+  if (!canvas) return;
 
-  if (!boton || !modal || !cerrar) return;
+  const serie = HISTORICO_MAP[key] ?? [];
+  if (!serie.length) {
+    if (chart) { chart.destroy(); chart = null; }
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
 
-  const abrir = () => {
-    modal.removeAttribute('hidden');
-    modal.setAttribute('aria-hidden', 'false');
-    cerrar.focus();
-  };
+  const labels = serie.map(p => p.fecha);
+  const data   = serie.map(p => p.precio);
 
-  const cerrarModal = () => {
-    modal.setAttribute('hidden', '');
-    modal.setAttribute('aria-hidden', 'true');
-    boton.focus();
-  };
+  if (chart) chart.destroy();
 
-  boton.addEventListener('click', (e) => { e.preventDefault(); abrir(); });
-  cerrar.addEventListener('click', cerrarModal);
-
-  // Cerrar al hacer click fuera del cuadro
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) cerrarModal();
-  });
-
-  // Cerrar con ESC
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
-      cerrarModal();
+  chart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${TIPO_LABEL[key]} (€/kg)`,
+        data,
+        tension: 0.25,
+        pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { maxRotation: 0, autoSkip: true }, grid: { display:false } },
+        y: { beginAtZero: false }
+      },
+      plugins: {
+        legend: { display: true },
+        tooltip: { callbacks: { label: (ctx) => ` ${euros(ctx.parsed.y)}` } }
+      }
     }
   });
 }
 
+// ====== Modal “De dónde obtenemos los precios” ======
+function setupFuenteModal() {
+  const link = document.getElementById('fuente-link');
+  const modal = document.getElementById('fuente-modal');
+  const closeBtn = document.getElementById('modal-close');
+  if (!link || !modal || !closeBtn) return;
+
+  const open = () => { modal.classList.add('open'); link.blur(); };
+  const close = () => { modal.classList.remove('open'); link.focus(); };
+
+  link.addEventListener('click', e => { e.preventDefault(); open(); });
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
+}
+
 // ====== Carga de datos ======
 async function cargarDatos() {
-  const fechaEl     = document.getElementById('fecha');
+  const fechaEl     = document.getElementById('fecha');      // puede no existir
   const precioEl    = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
@@ -168,24 +232,20 @@ async function cargarDatos() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    // Fecha legible (misma para rótulo de la tabla)
+    // Fecha legible
     let fechaTxt = datos.fecha || 'desconocida';
     try {
       const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
-    } catch {/* noop */}
+    } catch {}
 
-    // Si existe #fecha en la cabecera, lo actualizamos (tu HTML puede no tenerlo ya)
-    setTexto(fechaEl, fechaTxt);
-    // Rótulo encima de la tabla
+    setTexto(fechaEl, fechaTxt); // si no existe, no hace nada
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
-
-    // ⚠️ Eliminado: NO mostrar aviso cuando sin_cierre_operaciones = true
 
     // Tabla de precios
     renderTabla(datos.precios || {});
 
-    // Normaliza a nuestro selector y autoselecciona
+    // Normaliza actuales
     PRECIOS_MAP = normalizaPrecios(datos.precios || {});
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
@@ -198,9 +258,21 @@ async function cargarDatos() {
     actualizarPrecioSeleccion();
     calcular();
 
+    // ===== Gráfica =====
+    HISTORICO_MAP = normalizaHistorico(datos.historico || {});
+    const serieSel = document.getElementById('serie-calidad');
+    // Seleccionar en la gráfica la misma calidad del selector (o la primera con datos)
+    let grafKey = sel?.value || 'virgen_extra';
+    if (!HISTORICO_MAP[grafKey]?.length) {
+      grafKey = ['virgen_extra','virgen','lampante'].find(k => HISTORICO_MAP[k]?.length) || grafKey;
+    }
+    if (serieSel) serieSel.value = grafKey;
+    renderChartFor(grafKey);
+
     // Listeners
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
+    serieSel?.addEventListener('change', () => renderChartFor(serieSel.value));
 
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
@@ -213,6 +285,9 @@ async function cargarDatos() {
 
     const res = document.getElementById('resultado');
     if (res) { res.classList.add('error'); res.textContent = 'No se pudo calcular.'; }
+
+    const empty = document.getElementById('chart-empty');
+    if (empty) empty.style.display = '';
   }
 }
 
