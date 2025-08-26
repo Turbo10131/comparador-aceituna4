@@ -1,6 +1,6 @@
 // app.js
 
-// Mapea etiquetas del selector a claves del JSON
+// ====== Mapeo etiquetas -> claves del JSON ======
 const TIPO_LABEL = {
   virgen_extra: 'Aceite de oliva virgen extra',
   virgen:       'Aceite de oliva virgen',
@@ -9,7 +9,8 @@ const TIPO_LABEL = {
 
 let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
 
-function setTexto(el, txt) { if (!el) return; el.textContent = txt; }
+// ====== Utilidades ======
+function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
 function normalizaPrecios(preciosRaw) {
@@ -17,12 +18,14 @@ function normalizaPrecios(preciosRaw) {
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
   const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
   const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
+
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
   return map;
 }
 
+// ====== Tabla de precios principal ======
 function renderTabla(preciosRaw) {
   const cont = document.getElementById('tabla-precios');
   if (!cont) return;
@@ -55,12 +58,13 @@ function renderTabla(preciosRaw) {
   `;
 }
 
+// ====== Precio seleccionado (debajo del selector) ======
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
 
-  const key = sel.value;
+  const key = sel.value; // virgen_extra | virgen | lampante | ""
   const precio = PRECIOS_MAP[key];
 
   if (precio) {
@@ -72,7 +76,7 @@ function actualizarPrecioSeleccion() {
   }
 }
 
-// Tabla calculadora (4 columnas)
+// ====== Calculadora (tabla 4 columnas) ======
 function calcular() {
   const sel = document.getElementById('tipo');
   const res = document.getElementById('resultado');
@@ -89,35 +93,74 @@ function calcular() {
       <strong>Falta información:</strong> selecciona una calidad con precio disponible y
       escribe un rendimiento entre 0 y 100.
     `;
-  } else {
-    const precioAceituna = (rendimiento / 100) * precio;
-    res.classList.remove('error');
-    res.innerHTML = `
-      <table class="calc-table">
-        <thead>
-          <tr>
-            <th>Rendimiento (%)</th>
-            <th>Calidad del Aceite</th>
-            <th>Precio del Aceite</th>
-            <th>Precio aceituna (€/kg)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td data-label="Rendimiento (%)">${rendimiento}%</td>
-            <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
-            <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
-            <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
-          </tr>
-        </tbody>
-      </table>
-    `;
+    return;
   }
+
+  const precioAceituna = (rendimiento / 100) * precio;
+
+  res.classList.remove('error');
+  res.innerHTML = `
+    <table class="calc-table">
+      <thead>
+        <tr>
+          <th>Rendimiento (%)</th>
+          <th>Calidad del Aceite</th>
+          <th>Precio del Aceite</th>
+          <th>Precio aceituna (€/kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Rendimiento (%)">${rendimiento}%</td>
+          <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
+          <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
+          <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
 }
 
+// ====== Modal “De dónde obtenemos los precios” ======
+function setupFuenteModal() {
+  const boton = document.getElementById('fuente-btn');
+  const modal = document.getElementById('fuente-modal');
+  const cerrar = document.getElementById('fuente-cerrar');
+
+  if (!boton || !modal || !cerrar) return;
+
+  const abrir = () => {
+    modal.removeAttribute('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    cerrar.focus();
+  };
+
+  const cerrarModal = () => {
+    modal.setAttribute('hidden', '');
+    modal.setAttribute('aria-hidden', 'true');
+    boton.focus();
+  };
+
+  boton.addEventListener('click', (e) => { e.preventDefault(); abrir(); });
+  cerrar.addEventListener('click', cerrarModal);
+
+  // Cerrar al hacer click fuera del cuadro
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) cerrarModal();
+  });
+
+  // Cerrar con ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
+      cerrarModal();
+    }
+  });
+}
+
+// ====== Carga de datos ======
 async function cargarDatos() {
-  const fechaEl  = document.getElementById('fecha');
-  const precioEl = document.getElementById('precio');
+  const fechaEl     = document.getElementById('fecha');
+  const precioEl    = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
   try {
@@ -125,29 +168,19 @@ async function cargarDatos() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    // Fecha legible (misma para cabecera y rótulo de la tabla)
+    // Fecha legible (misma para rótulo de la tabla)
     let fechaTxt = datos.fecha || 'desconocida';
     try {
       const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
     } catch {/* noop */}
 
+    // Si existe #fecha en la cabecera, lo actualizamos (tu HTML puede no tenerlo ya)
     setTexto(fechaEl, fechaTxt);
+    // Rótulo encima de la tabla
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
-    // Aviso de “sin cierre”
-    if (datos.sin_cierre_operaciones) {
-      const aviso = document.createElement('div');
-      aviso.textContent = '⚠️ Hoy no hay cierre de operaciones en Infaoliva. Se muestran los últimos precios disponibles.';
-      aviso.style.margin = '10px 0';
-      aviso.style.padding = '10px 12px';
-      aviso.style.background = '#fff8e1';
-      aviso.style.border = '1px solid #ffe0a6';
-      aviso.style.borderRadius = '8px';
-      aviso.style.color = '#7a5e00';
-      const card = document.querySelector('.card');
-      card?.insertBefore(aviso, precioEl);
-    }
+    // ⚠️ Eliminado: NO mostrar aviso cuando sin_cierre_operaciones = true
 
     // Tabla de precios
     renderTabla(datos.precios || {});
@@ -174,42 +207,17 @@ async function cargarDatos() {
     setTexto(fechaEl, 'Error cargando datos');
     setTexto(precioEl, 'No se pudieron cargar los precios.');
     setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
+
     const tabla = document.getElementById('tabla-precios');
     if (tabla) tabla.innerHTML = '';
+
     const res = document.getElementById('resultado');
     if (res) { res.classList.add('error'); res.textContent = 'No se pudo calcular.'; }
   }
 }
 
-// --- Modal Fuente ---
-function initFuenteModal() {
-  const open = document.getElementById('fuente-link');
-  const modal = document.getElementById('fuente-modal');
-  const closeBtn = document.getElementById('modal-close');
-
-  if (!open || !modal || !closeBtn) return;
-
-  const openModal = (e) => {
-    e.preventDefault();
-    modal.classList.add('open');
-  };
-  const closeModal = (e) => {
-    e?.preventDefault();
-    modal.classList.remove('open');
-  };
-
-  open.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal(); // cerrar al click fuera
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-  });
-}
-
-// Inicialización
+// ====== Inicio ======
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
-  initFuenteModal();
+  setupFuenteModal(); // modal “De dónde obtenemos los precios”
 });
