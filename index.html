@@ -23,16 +23,25 @@
       background: #f6f8fa;
       color: #222;
     }
-    .wrap { max-width: 1000px; margin: 40px auto; padding: 0 16px; }
+    .wrap {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-bd);
       border-radius: 12px;
       padding: 24px;
       box-shadow: 0 10px 20px rgba(0,0,0,.04);
-      position: relative;
     }
-    h1 { margin: 0 0 6px; font-size: clamp(22px, 2.9vw, 32px); display: flex; align-items: center; gap: .6rem; }
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(22px, 2.9vw, 32px);
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
     h1 .dot { font-size: 28px; }
 
     .muted { color: var(--muted); margin: 0 0 24px; }
@@ -41,99 +50,219 @@
     .campo { margin-bottom: 16px; }
     label { font-weight: 600; display: block; margin-bottom: 6px; }
     input[type="number"], select {
-      width: 100%; padding: 10px 12px; font-size: 16px; border-radius: 8px;
-      border: 1px solid var(--card-bd); background: #fff; outline: none;
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--card-bd);
+      background: #fff;
+      outline: none;
       transition: border .15s, box-shadow .15s;
     }
     input[type="number"]:focus, select:focus {
-      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(31,111,235,.12);
     }
     :focus:not(:focus-visible){ outline: none; box-shadow:none; }
     small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
     #precio {
-      margin-top: 14px; font-weight: 700; padding: 10px 12px; background: var(--pill-bg);
-      border-radius: 10px; min-height: 42px; display: flex; align-items: center;
+      margin-top: 14px;
+      font-weight: 700;
+      padding: 10px 12px;
+      background: var(--pill-bg);
+      border-radius: 10px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
     }
 
     /* Calculadora */
     .calc {
-      margin-top: 20px; padding: 16px; border: 1px dashed var(--card-bd);
-      border-radius: 10px; background: #fcfefd;
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px dashed var(--card-bd);
+      border-radius: 10px;
+      background: #fcfefd;
     }
-    .calc h2 { margin: 0 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+    .calc h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .calc h2 .emoji { font-size: 20px; }
     .resultado {
-      margin-top: 10px; padding: 12px 14px; border-radius: 10px; font-weight: 700;
-      min-height: 44px; display: flex; align-items: center; justify-content: center;
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
+    .resultado.error {
+      background: #fff6f6;
+      border: 1px solid #ffd1d1;
+      color: #a40000;
+    }
 
     /* Nota encima de la tabla (fecha) */
     .tabla-info{
-      margin-top:22px; margin-bottom:8px; padding:10px 12px; background:#f5f7fb;
-      border:1px solid var(--card-bd); border-radius:10px; color:#334; font-weight:600;
+      margin-top:22px;
+      margin-bottom:8px;
+      padding:10px 12px;
+      background:#f5f7fb;
+      border:1px solid var(--card-bd);
+      border-radius:10px;
+      color:#334;
+      font-weight:600;
     }
 
     /* Tabla de precios */
-    .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
+    .tabla-wrap {
+      border: 1px solid var(--card-bd);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
     table.price-table { width: 100%; border-collapse: collapse; }
     .price-table thead th {
       background: linear-gradient(0deg, var(--olive), var(--olive-dark));
-      color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; letter-spacing: .2px;
+      color: #fff;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 700;
+      letter-spacing: .2px;
     }
-    .price-table tbody td { padding: 14px 16px; border-top: 1px solid #f0f0f0; }
+    .price-table tbody td {
+      padding: 14px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
     .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
     .price-table .tipo { font-weight: 600; }
-    .price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .price-table .precio {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
 
     /* Tabla calculadora */
     .calc-table {
-      width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; background: #fff;
-      border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden;
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 15px;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 8px;
+      overflow: hidden;
     }
-    .calc-table th { background: #f0f4e6; color: #333; padding: 10px; text-align: center; }
-    .calc-table td { border-top: 1px solid #eee; padding: 10px; text-align: center; }
+    .calc-table th {
+      background: #f0f4e6;
+      color: #333;
+      padding: 10px;
+      text-align: center;
+    }
+    .calc-table td {
+      border-top: 1px solid #eee;
+      padding: 10px;
+      text-align: center;
+    }
     .calc-table tbody tr:nth-child(even) { background: #fafafa; }
 
-    /* Enlace fuente */
-    .source-link { margin-top: 16px; text-align: center; font-size: 15px; font-weight: 600; }
-    .source-link a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+    @media (max-width: 640px) {
+      .price-table thead { display: none; }
+      .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
+      .price-table tr { border-bottom: 1px solid #f0f0f0; }
+      .price-table td { display: flex; justify-content: space-between; gap: 12px; }
+      .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
+      .price-table .precio { text-align: left; }
+    }
+
+    /* Enlace “fuente” debajo de la tabla */
+    .fuente-precios{
+      margin-top:8px;
+      font-size:13px;           /* más pequeño */
+      text-align:left;          /* alineado a la izquierda */
+    }
+    .fuente-precios a{
+      color: var(--accent);
+      text-decoration: underline;
+      cursor: pointer;
+    }
 
     /* Modal */
-    .modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;           /* por defecto oculto */
-      align-items: center; justify-content: center;
+    .modal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.45);
+      padding: 16px;
       z-index: 1000;
     }
-    .modal.show { display: flex; }   /* al mostrar, usamos clase */
-    .modal-content {
-      background: #fff; padding: 24px; border-radius: 12px; text-align: center; max-width: 420px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    .modal.open{ display:flex; }
+    .modal-content{
+      background: #fff;
+      border-radius: 12px;
+      max-width: 520px;
+      width: 100%;
+      padding: 20px 22px;
+      border: 1px solid var(--card-bd);
+      box-shadow: 0 20px 50px rgba(0,0,0,.2);
     }
-    .modal-content h3 { margin-top: 0; }
-    .modal-content a { display: inline-block; margin-top: 12px; color: var(--accent); font-weight: 600; }
-    .modal-close {
-      margin-top: 20px; display: inline-block; padding: 8px 16px;
-      background: var(--accent); color: #fff; border-radius: 6px; cursor: pointer;
+    .close{
+      appearance: none;
+      border: none;
+      background: transparent;
+      font-size: 26px;
+      line-height: 1;
+      float: right;
+      cursor: pointer;
+      color: #666;
+    }
+    .close:hover{ color:#000; }
+
+    .noscript {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #ffe0a6;
+      background: #fff8e6;
+      color: #8a5a00;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- Título sin "(Infaoliva)" -->
+      <!-- Título sin “(Infaoliva)” -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
       <noscript>
-        <div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div>
+        <div class="noscript">
+          ⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.
+        </div>
       </noscript>
 
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
-        <input id="rendimiento" type="number" min="0" max="100" step="0.1" value="20" autocomplete="off" />
-        <small class="ayuda">Introduce un número entre 0 y 100.</small>
+        <input
+          id="rendimiento"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          max="100"
+          step="0.1"
+          placeholder="Ej: 20"
+          aria-describedby="rend-help"
+          value="20"
+          autocomplete="off"
+        />
+        <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
       <div class="campo">
@@ -151,6 +280,9 @@
       <!-- Calculadora -->
       <div class="calc">
         <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
+        <p class="muted" style="margin: 4px 0 8px;">
+          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
+        </p>
         <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
       </div>
 
@@ -160,20 +292,24 @@
       <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
 
-      <!-- Fuente -->
-      <div class="source-link">
-        <a id="openModal" href="#" role="button">De dónde obtenemos los precios</a>
+      <!-- Enlace de fuente (debajo de la tabla, pequeño y a la izquierda) -->
+      <div class="fuente-precios">
+        <a href="#" id="enlace-fuente">De dónde obtenemos los precios</a>
       </div>
     </div>
   </div>
 
   <!-- Modal -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <h3 id="modalTitle">Fuente de los precios</h3>
-      <p>Los precios se obtienen de <strong>Infaoliva</strong>.</p>
-      <a href="https://www.infaoliva.com/" target="_blank" rel="noopener">Visitar Infaoliva</a>
-      <div id="closeModal" class="modal-close">Cerrar</div>
+  <div id="modal-fuente" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button id="cerrar-modal" class="close" aria-label="Cerrar">×</button>
+      <h2 id="modal-title">Fuente de los precios</h2>
+      <p>Los precios se obtienen de <strong>INFAOLIVA</strong>:</p>
+      <p>
+        <a href="https://www.infaoliva.com/" target="_blank" rel="noopener">
+          https://www.infaoliva.com/
+        </a>
+      </p>
     </div>
   </div>
 
