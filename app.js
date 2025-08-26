@@ -116,7 +116,7 @@ function calcular() {
 }
 
 async function cargarDatos() {
-  const fechaEl  = document.getElementById('fecha');      // puede no existir (lo toleramos)
+  const fechaEl  = document.getElementById('fecha');
   const precioEl = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
@@ -181,24 +181,35 @@ async function cargarDatos() {
   }
 }
 
-/* ===== Modal Fuente ===== */
-function setupModal() {
-  const modal = document.getElementById('modal');
-  const open = document.getElementById('openModal');
-  const close = document.getElementById('closeModal');
-  if (!modal || !open || !close) return;
+// --- Modal Fuente ---
+function initFuenteModal() {
+  const open = document.getElementById('fuente-link');
+  const modal = document.getElementById('fuente-modal');
+  const closeBtn = document.getElementById('modal-close');
 
-  const show = () => modal.classList.add('show');
-  const hide = () => modal.classList.remove('show');
+  if (!open || !modal || !closeBtn) return;
 
-  open.addEventListener('click', (e) => { e.preventDefault(); show(); });
-  close.addEventListener('click', (e) => { e.preventDefault(); hide(); });
-  modal.addEventListener('click', (e) => { if (e.target === modal) hide(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+  const openModal = (e) => {
+    e.preventDefault();
+    modal.classList.add('open');
+  };
+  const closeModal = (e) => {
+    e?.preventDefault();
+    modal.classList.remove('open');
+  };
+
+  open.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal(); // cerrar al click fuera
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
 }
 
-/* Iniciar */
+// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
-  setupModal();
+  initFuenteModal();
 });
