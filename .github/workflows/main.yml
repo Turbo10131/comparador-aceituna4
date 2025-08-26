@@ -14,7 +14,7 @@ jobs:
   actualizar:
     runs-on: ubuntu-latest
     env:
-      DATA_FILE: precio-aceite.json
+      DATA_FILES: "precio-aceite.json precio-aceite-historico.json"
 
     steps:
       - name: Checkout (repo completo)
@@ -36,20 +36,23 @@ jobs:
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      - name: Ver JSON generado
+      - name: Ver JSON generados
         run: |
-          echo "Contenido de ${DATA_FILE}:"
-          test -f "${DATA_FILE}" && cat "${DATA_FILE}" || (echo "❌ ${DATA_FILE} no existe" && exit 1)
+          for f in ${DATA_FILES}; do
+            echo "Contenido de $f:"
+            test -f "$f" && cat "$f" || echo "⚠️ $f no existe."
+            echo ""
+          done
 
-      - name: Detectar cambios en el JSON
+      - name: Detectar cambios en los JSON
         id: cambios
         run: |
-          if git diff --quiet -- "${DATA_FILE}"; then
+          if git diff --quiet -- ${DATA_FILES}; then
             echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No hay cambios en ${DATA_FILE}"
+            echo "No hay cambios en ${DATA_FILES}"
           else
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Hay cambios en ${DATA_FILE}"
+            echo "Hay cambios en ${DATA_FILES}"
           fi
 
       - name: Preparar commit (pull, add, commit)
@@ -57,8 +60,8 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${DATA_FILE}"
-          git commit -m "Actualizar ${DATA_FILE} automáticamente (scraper)"
+          git add ${DATA_FILES}
+          git commit -m "Actualizar JSONs automáticamente (scraper): ${DATA_FILES}"
 
       - name: Hacer push con token personal (SCRAPERGITHUB)
         if: steps.cambios.outputs.changed == 'true'
@@ -89,7 +92,7 @@ jobs:
       - name: Resumen
         run: |
           echo "✅ Workflow finalizado."
-          echo "Cambios en ${DATA_FILE}: ${{ steps.cambios.outputs.changed }}"
+          echo "Cambios: ${{ steps.cambios.outputs.changed }}"
 
   alertar_fallo:
     needs: actualizar
