@@ -26,43 +26,49 @@ function normalizaPrecios(preciosRaw) {
   return map;
 }
 
-// Espera datos.historico con esta forma posible:
-// { "virgen_extra":[{fecha:"2024-01-15", precio_eur_kg:3.456},...], ... }
-// o con claves de etiqueta larga como en la tabla.
+// Admite 3 formatos: (A) objeto por calidades; (B) etiquetas largas; (C) lista mensual con 3 columnas
 function normalizaHistorico(h) {
   const out = { virgen_extra: [], virgen: [], lampante: [] };
   if (!h || typeof h !== 'object') return out;
 
-  const keyMap = {
-    'Aceite de oliva virgen extra': 'virgen_extra',
-    'Aceite de oliva virgen': 'virgen',
-    'Aceite de oliva lampante': 'lampante',
-    'virgen_extra': 'virgen_extra',
-    'virgen': 'virgen',
-    'lampante': 'lampante',
-  };
+  // Opción C: lista mensual con columnas por calidad
+  if (Array.isArray(h)) {
+    h.forEach(row => {
+      const { fecha } = row || {};
+      if (!fecha) return;
+      if (row.virgen_extra) out.virgen_extra.push({ fecha, precio: Number(row.virgen_extra) });
+      if (row.virgen)       out.virgen.push({ fecha, precio: Number(row.virgen) });
+      if (row.lampante)     out.lampante.push({ fecha, precio: Number(row.lampante) });
+    });
+  } else {
+    // Opción A/B: objeto por calidades (claves cortas o etiquetas largas)
+    const keyMap = {
+      'Aceite de oliva virgen extra': 'virgen_extra',
+      'Aceite de oliva virgen': 'virgen',
+      'Aceite de oliva lampante': 'lampante',
+      'virgen_extra': 'virgen_extra',
+      'virgen': 'virgen',
+      'lampante': 'lampante',
+    };
+    Object.keys(h).forEach(k => {
+      const key = keyMap[k] ?? null;
+      if (!key || !Array.isArray(h[k])) return;
+      out[key] = h[k]
+        .map(p => ({
+          fecha: p.fecha,
+          precio: Number(
+            (typeof p.precio_eur_kg !== 'undefined') ? p.precio_eur_kg : p.precio
+          )
+        }))
+        .filter(p => p.fecha && !Number.isNaN(p.precio) && p.precio > 0 && p.precio < 20);
+    });
+  }
 
-  Object.keys(h).forEach(k => {
-    const key = keyMap[k] ?? null;
-    if (!key || !Array.isArray(h[k])) return;
-
-    out[key] = h[k]
-      .map(p => ({
-        fecha: p.fecha,
-        precio: Number(
-          (typeof p.precio_eur_kg !== 'undefined') ? p.precio_eur_kg : p.precio
-        )
-      }))
-      .filter(p => p.fecha && !Number.isNaN(p.precio) && p.precio > 0 && p.precio < 20)
-      .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-  });
-
-  // Limitar a ~24 meses si viene más largo
+  // Ordenar y limitar a 24 meses
   Object.keys(out).forEach(k => {
-    if (out[k].length > 0) {
-      const last24 = out[k].slice(-24);
-      out[k] = last24;
-    }
+    out[k] = (out[k] || [])
+      .sort((a,b) => new Date(a.fecha) - new Date(b.fecha))
+      .slice(-24);
   });
 
   return out;
@@ -205,7 +211,7 @@ function renderChartFor(key) {
   });
 }
 
-// ====== Modal “De dónde obtenemos los precios” ======
+// ====== Modal ======
 function setupFuenteModal() {
   const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
@@ -219,6 +225,25 @@ function setupFuenteModal() {
   closeBtn.addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
+}
+
+// ====== Carga de histórico extra (archivos opcionales) ======
+async function cargarHistoricoExterno() {
+  const candidatos = [
+    'precio-aceite-historico.json',
+    'historico.json'
+  ];
+  for (const url of candidatos) {
+    try {
+      const r = await fetch(`${url}?v=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (j?.historico) return j.historico;
+      // permitir que el archivo ya sea directamente el bloque esperado
+      return j;
+    } catch { /* seguir intentando */ }
+  }
+  return null;
 }
 
 // ====== Carga de datos ======
@@ -239,7 +264,7 @@ async function cargarDatos() {
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
     } catch {}
 
-    setTexto(fechaEl, fechaTxt); // si no existe, no hace nada
+    setTexto(fechaEl, fechaTxt);
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
     // Tabla de precios
@@ -259,9 +284,17 @@ async function cargarDatos() {
     calcular();
 
     // ===== Gráfica =====
-    HISTORICO_MAP = normalizaHistorico(datos.historico || {});
+    // 1) intentar usar datos.historico
+    let historicoRaw = datos.historico || null;
+    // 2) si no hay, intentar cargar de fichero externo
+    if (!historicoRaw) {
+      historicoRaw = await cargarHistoricoExterno();
+    }
+    HISTORICO_MAP = normalizaHistorico(
+      historicoRaw?.historico ?? historicoRaw
+    );
+
     const serieSel = document.getElementById('serie-calidad');
-    // Seleccionar en la gráfica la misma calidad del selector (o la primera con datos)
     let grafKey = sel?.value || 'virgen_extra';
     if (!HISTORICO_MAP[grafKey]?.length) {
       grafKey = ['virgen_extra','virgen','lampante'].find(k => HISTORICO_MAP[k]?.length) || grafKey;
