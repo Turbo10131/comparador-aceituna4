@@ -1,0 +1,19 @@
+{
+  "historico": {
+    "virgen_extra": [
+      { "fecha": "2025-06-01", "precio_eur_kg": 3.80 },
+      { "fecha": "2025-07-01", "precio_eur_kg": 3.75 },
+      { "fecha": "2025-08-01", "precio_eur_kg": 3.83 }
+    ],
+    "virgen": [
+      { "fecha": "2025-06-01", "precio_eur_kg": 3.40 },
+      { "fecha": "2025-07-01", "precio_eur_kg": 3.38 },
+      { "fecha": "2025-08-01", "precio_eur_kg": 3.45 }
+    ],
+    "lampante": [
+      { "fecha": "2025-06-01", "precio_eur_kg": 3.20 },
+      { "fecha": "2025-07-01", "precio_eur_kg": 3.25 },
+      { "fecha": "2025-08-01", "precio_eur_kg": 3.30 }
+    ]
+  }
+}
