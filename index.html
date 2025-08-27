@@ -31,62 +31,58 @@
       padding: 24px;
       box-shadow: 0 10px 20px rgba(0,0,0,.04);
     }
-    h1 {
-      margin: 0 0 6px;
-      font-size: clamp(22px, 2.9vw, 32px);
-      display: flex; align-items: center; gap: .6rem;
-    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 2.9vw, 32px); display: flex; align-items: center; gap: .6rem; }
     h1 .dot { font-size: 28px; }
     .muted { color: var(--muted); margin: 0 0 24px; }
 
+    /* Campos */
     .campo { margin-bottom: 16px; }
     label { font-weight: 600; display: block; margin-bottom: 6px; }
     input[type="number"], select {
-      width: 100%; padding: 10px 12px; font-size: 16px;
-      border-radius: 8px; border: 1px solid var(--card-bd);
-      background: #fff; outline: none; transition: border .15s, box-shadow .15s;
+      width: 100%; padding: 10px 12px; font-size: 16px; border-radius: 8px;
+      border: 1px solid var(--card-bd); background: #fff; outline: none; transition: border .15s, box-shadow .15s;
     }
-    input[type="number"]:focus, select:focus {
-      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,235,.12);
-    }
+    input[type="number"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,235,.12); }
     :focus:not(:focus-visible){ outline: none; box-shadow:none; }
     small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
-    #precio {
-      margin-top: 14px; font-weight: 700; padding: 10px 12px; background: var(--pill-bg);
-      border-radius: 10px; min-height: 42px; display: flex; align-items: center;
-    }
+    #precio { margin-top: 14px; font-weight: 700; padding: 10px 12px; background: var(--pill-bg); border-radius: 10px; min-height: 42px; display: flex; align-items: center; }
 
+    /* Calculadora */
     .calc { margin-top: 20px; padding: 16px; border: 1px dashed var(--card-bd); border-radius: 10px; background: #fcfefd; }
     .calc h2 { margin: 0 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
     .calc h2 .emoji { font-size: 20px; }
     .resultado {
-      margin-top: 10px; padding: 12px 14px; border-radius: 10px; font-weight: 700;
-      min-height: 44px; display: flex; align-items: center; justify-content: center;
+      margin-top: 10px; padding: 12px 14px; border-radius: 10px; font-weight: 700; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
     }
     .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
 
+    /* Nota encima de la tabla (fecha) */
     .tabla-info{
       margin-top:22px; margin-bottom:8px; padding:10px 12px; background:#f5f7fb;
       border:1px solid var(--card-bd); border-radius:10px; color:#334; font-weight:600;
     }
 
+    /* Tabla de precios */
     .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
     table.price-table { width: 100%; border-collapse: collapse; }
     .price-table thead th {
-      background: linear-gradient(0deg, var(--olive), var(--olive-dark));
-      color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; letter-spacing: .2px;
+      background: linear-gradient(0deg, var(--olive), var(--olive-dark)); color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; letter-spacing: .2px;
     }
     .price-table tbody td { padding: 14px 16px; border-top: 1px solid #f0f0f0; }
     .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
     .price-table .tipo { font-weight: 600; }
     .price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 
-    .tabla-footer{ margin-top: 8px; display:flex; align-items:center; justify-content:flex-start; }
-    .fuente{ font-size:12px; color:#666; }
-    .fuente a{ font-size:12px; color:#1f6feb; text-decoration:underline; cursor:pointer; }
+    /* Enlace fuente */
+    .tabla-footer { margin-top: 8px; display: flex; align-items: center; justify-content: flex-start; }
+    .fuente { font-size: 12px; color: #666; }
+    .fuente a { font-size: 12px; color: #1f6feb; text-decoration: underline; cursor: pointer; }
 
     /* Modal */
-    .modal-overlay{ position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items:center; justify-content:center; z-index: 9999; }
+    .modal-overlay{
+      position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 9999;
+    }
     .modal-overlay.open{ display:flex; }
     .modal-content{ background:#fff; max-width: 480px; width: 90%; border-radius: 12px; padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25); text-align: center; }
     .modal-content h3{ margin: 0 0 6px; }
@@ -95,16 +91,18 @@
     .btn{ padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de; background:#fff; cursor:pointer; }
     .btn.primary{ background:#1f6feb; color:#fff; border-color:#1f6feb; }
 
-    /* --- Gráfica con selector de escala --- */
-    .chart-card { margin-top:20px; padding:16px; border:1px solid var(--card-bd); border-radius:10px; background:#fff; }
-    .chart-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    .chart-title { display:flex; align-items:center; gap:8px; font-size:18px; margin:0; }
-    .segmented { display:flex; gap:8px; }
-    .seg {
-      border:1px solid #b9d0ff; background:#eaf2ff; color:#114aa7; padding:8px 12px;
-      border-radius:10px; font-weight:600; cursor:pointer;
+    /* Botonera gráfica (segmented) */
+    .chart-head{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
     }
-    .seg.active { background:#1f6feb; color:#fff; border-color:#1f6feb; }
+    .segmented{ display:flex; gap:6px; }
+    .segmented .seg{
+      padding:8px 12px; border:1px solid #d0d7de; background:#fff; border-radius:8px; cursor:pointer; font-weight:600;
+    }
+    .segmented .seg.active{ background:#1f6feb; color:#fff; border-color:#1f6feb; }
+
+    .chart-canvas-wrap{ height: 360px; margin-top: 12px; }
+    #grafico-precios{ width:100%; height:100%; }
 
     @media (max-width: 640px) {
       .price-table thead { display: none; }
@@ -114,25 +112,19 @@
       .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
       .price-table .precio { text-align: left; }
     }
-    .noscript {
-      margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid #ffe0a6;
-      background: #fff8e6; color: #8a5a00;
-    }
+    .noscript { margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid #ffe0a6; background: #fff8e6; color: #8a5a00; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- Título -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
-      <noscript>
-        <div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div>
-      </noscript>
+      <noscript><div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div></noscript>
 
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
-        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off"/>
+        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
         <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
@@ -168,25 +160,26 @@
         </span>
       </div>
 
-      <!-- Gráfica (con selector de escala Años/Meses/Días y selector de calidad) -->
-      <div class="chart-card">
+      <!-- Gráfica -->
+      <div class="calc" style="margin-top:20px;">
         <div class="chart-head">
-          <h2 class="chart-title"><span class="emoji">📈</span>Gráfica</h2>
-
-          <div class="segmented" id="escala-grupo">
-            <button type="button" class="seg" data-escala="years">Años</button>
-            <button type="button" class="seg active" data-escala="months">Meses</button>
-            <button type="button" class="seg" data-escala="days">Días</button>
+          <h2><span class="emoji">📈</span>Gráfica</h2>
+          <div class="segmented">
+            <button id="btn-years"  class="seg">Años</button>
+            <button id="btn-months" class="seg">Meses</button>
+            <button id="btn-days"   class="seg">Días</button>
           </div>
-
-          <select id="grafico-tipo">
-            <option value="virgen_extra">Virgen Extra</option>
-            <option value="virgen">Virgen</option>
-            <option value="lampante">Lampante</option>
-          </select>
         </div>
 
-        <canvas id="grafico-precios" style="margin-top:12px;max-height:320px;"></canvas>
+        <select id="grafico-tipo" style="margin-top:8px;">
+          <option value="virgen_extra">Virgen Extra</option>
+          <option value="virgen">Virgen</option>
+          <option value="lampante">Lampante</option>
+        </select>
+
+        <div class="chart-canvas-wrap">
+          <canvas id="grafico-precios"></canvas>
+        </div>
         <div id="grafico-msg" class="muted" style="margin-top:8px;">No hay datos históricos para mostrar.</div>
       </div>
     </div>
