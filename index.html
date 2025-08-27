@@ -147,12 +147,12 @@
       font-weight: 700;
     }
 
-    /* Enlace “fuente” debajo de la tabla */
+    /* Enlace “fuente” debajo de la tabla, pequeño e IZQUIERDA */
     .tabla-footer {
       margin-top: 8px;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: flex-start; /* izquierda */
     }
     .fuente {
       font-size: 12px;
@@ -170,7 +170,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,.45);
-      display: none;
+      display: none;          /* oculto por defecto */
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -198,25 +198,28 @@
       background:#1f6feb; color:#fff; border-color:#1f6feb;
     }
 
-    /* Gráfica */
-    .chart-card {
-      margin-top: 22px;
-      padding: 16px;
-      border: 1px solid var(--card-bd);
-      border-radius: 12px;
-      background: #fff;
+    @media (max-width: 640px) {
+      .price-table thead { display: none; }
+      .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
+      .price-table tr { border-bottom: 1px solid #f0f0f0; }
+      .price-table td { display: flex; justify-content: space-between; gap: 12px; }
+      .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
+      .price-table .precio { text-align: left; }
     }
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
+    .noscript {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #ffe0a6;
+      background: #fff8e6;
+      color: #8a5a00;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+      <!-- Título -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
       <noscript>
@@ -227,13 +230,24 @@
 
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
-        <input id="rendimiento" type="number" min="0" max="100" step="0.1" value="20" />
-        <small class="ayuda">Introduce un número entre 0 y 100.</small>
+        <input
+          id="rendimiento"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          max="100"
+          step="0.1"
+          placeholder="Ej: 20"
+          aria-describedby="rend-help"
+          value="20"
+          autocomplete="off"
+        />
+        <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
       <div class="campo">
         <label for="tipo">Calidad del Aceite</label>
-        <select id="tipo">
+        <select id="tipo" autocomplete="off">
           <option value="">-- Elegir calidad --</option>
           <option value="virgen_extra">Virgen Extra</option>
           <option value="virgen">Virgen</option>
@@ -246,8 +260,10 @@
       <!-- Calculadora -->
       <div class="calc">
         <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
-        <p class="muted">Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.</p>
-        <div id="resultado" class="resultado"></div>
+        <p class="muted" style="margin: 4px 0 8px;">
+          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
+        </p>
+        <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
       </div>
 
       <!-- Rótulo de fecha encima de la tabla -->
@@ -256,44 +272,43 @@
       <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
 
-      <!-- Enlace fuente -->
+      <!-- Enlace a la fuente -->
       <div class="tabla-footer">
         <span class="fuente">
-          <a id="fuente-link" href="#">De dónde obtenemos los precios</a>
+          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
+            De dónde obtenemos los precios
+          </a>
         </span>
       </div>
 
       <!-- Gráfica -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>📈 Gráfica — evolución últimos 24 meses</h3>
-          <select id="grafico-tipo">
-            <option value="virgen_extra">Virgen Extra</option>
-            <option value="virgen">Virgen</option>
-            <option value="lampante">Lampante</option>
-          </select>
-        </div>
-        <canvas id="grafico-precios" height="120"></canvas>
-        <div id="grafico-msg" class="muted">No hay datos históricos para mostrar.</div>
+      <div class="calc" style="margin-top:20px;">
+        <h2><span class="emoji">📈</span>Gráfica — evolución últimos 24 meses</h2>
+        <select id="grafico-tipo" style="margin-top:8px;">
+          <option value="virgen_extra">Virgen Extra</option>
+          <option value="virgen">Virgen</option>
+          <option value="lampante">Lampante</option>
+        </select>
+        <canvas id="grafico-precios" style="margin-top:15px;max-height:320px;"></canvas>
+        <div id="grafico-msg" class="muted" style="margin-top:8px;">No hay datos históricos para mostrar.</div>
       </div>
     </div>
   </div>
 
   <!-- MODAL -->
-  <div id="fuente-modal" class="modal-overlay">
+  <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-content">
-      <h3>Fuente de los precios</h3>
-      <p>Obtenemos los datos de <strong>Infaoliva</strong>.</p>
+      <h3 id="modal-title">Fuente de los precios</h3>
+      <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
       <div class="modal-actions">
-        <a class="btn primary" href="https://www.infaoliva.com/" target="_blank">Ir a Infaoliva</a>
-        <button id="modal-close" class="btn">Cerrar</button>
+        <a class="btn primary" href="https://www.infaoliva.com/" target="_blank" rel="noopener">Ir a Infaoliva</a>
+        <button id="modal-close" class="btn" type="button">Cerrar</button>
       </div>
     </div>
   </div>
 
   <!-- Chart.js local -->
-  <script src="libs/chart.umd.min.js"></script>
-  <!-- Tu app -->
+  <script src="chart.umd.min.js"></script>
   <script src="app.js" defer></script>
 </body>
 </html>
