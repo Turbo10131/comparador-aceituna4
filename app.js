@@ -2,65 +2,50 @@
 
 // ====== Mapeo etiquetas -> claves del JSON ======
 const TIPO_LABEL = {
-  virgen_extra: "Aceite de oliva virgen extra",
-  virgen: "Aceite de oliva virgen",
-  lampante: "Aceite de oliva lampante",
+  virgen_extra: 'Aceite de oliva virgen extra',
+  virgen:       'Aceite de oliva virgen',
+  lampante:     'Aceite de oliva lampante',
 };
 
 let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
-let chartInstance = null; // instancia Chart.js para poder destruir/recargar
+let HISTORICO = {};   // JSON histórico
+let grafico = null;   // referencia al gráfico Chart.js
 
 // ====== Utilidades ======
-function setTexto(el, txt) {
-  if (el) el.textContent = txt;
-}
-function euros(n) {
-  return `${Number(n).toFixed(3)} €/kg`;
-}
-function getEl(id) {
-  return document.getElementById(id);
-}
+function setTexto(el, txt) { if (el) el.textContent = txt; }
+function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
-// ====== Normalizar precios actuales (del JSON diario) ======
 function normalizaPrecios(preciosRaw) {
   const map = {};
-  const ve = preciosRaw["Aceite de oliva virgen extra"]?.precio_eur_kg ?? null;
-  const v = preciosRaw["Aceite de oliva virgen"]?.precio_eur_kg ?? null;
-  const l = preciosRaw["Aceite de oliva lampante"]?.precio_eur_kg ?? null;
+  const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
+  const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
+  const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
 
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
-  if (v && v > 0 && v < 20) map.virgen = Number(v);
-  if (l && l > 0 && l < 20) map.lampante = Number(l);
+  if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
+  if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
   return map;
 }
 
 // ====== Tabla de precios principal ======
 function renderTabla(preciosRaw) {
-  const cont = getEl("tabla-precios");
+  const cont = document.getElementById('tabla-precios');
   if (!cont) return;
 
   const rows = [
-    [
-      "Aceite de oliva virgen extra",
-      preciosRaw["Aceite de oliva virgen extra"]?.precio_eur_kg,
-    ],
-    ["Aceite de oliva virgen", preciosRaw["Aceite de oliva virgen"]?.precio_eur_kg],
-    [
-      "Aceite de oliva lampante",
-      preciosRaw["Aceite de oliva lampante"]?.precio_eur_kg,
-    ],
+    ['Aceite de oliva virgen extra', preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg],
+    ['Aceite de oliva virgen',       preciosRaw['Aceite de oliva virgen']?.precio_eur_kg],
+    ['Aceite de oliva lampante',     preciosRaw['Aceite de oliva lampante']?.precio_eur_kg],
   ];
 
-  const cuerpo = rows
-    .map(([label, val]) => {
-      const precioTxt = val && val > 0 && val < 20 ? euros(val) : "—";
-      return `
+  const cuerpo = rows.map(([label, val]) => {
+    const precioTxt = (val && val > 0 && val < 20) ? euros(val) : '—';
+    return `
       <tr>
         <td class="tipo" data-label="Tipo de aceite de oliva">${label}</td>
         <td class="precio" data-label="Precio €/kg">${precioTxt}</td>
       </tr>`;
-    })
-    .join("");
+  }).join('');
 
   cont.innerHTML = `
     <table class="price-table">
@@ -77,27 +62,27 @@ function renderTabla(preciosRaw) {
 
 // ====== Precio seleccionado (debajo del selector) ======
 function actualizarPrecioSeleccion() {
-  const sel = getEl("tipo");
-  const precioEl = getEl("precio");
+  const sel = document.getElementById('tipo');
+  const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
 
-  const key = sel.value; // virgen_extra | virgen | lampante | ""
+  const key = sel.value; 
   const precio = PRECIOS_MAP[key];
 
   if (precio) {
     setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
   } else if (key) {
-    setTexto(precioEl, "— Precio no disponible —");
+    setTexto(precioEl, '— Precio no disponible —');
   } else {
-    setTexto(precioEl, "");
+    setTexto(precioEl, '');
   }
 }
 
-// ====== Calculadora (tabla 4 columnas) ======
+// ====== Calculadora ======
 function calcular() {
-  const sel = getEl("tipo");
-  const res = getEl("resultado");
-  const rEl = getEl("rendimiento");
+  const sel = document.getElementById('tipo');
+  const res = document.getElementById('resultado');
+  const rEl = document.getElementById('rendimiento');
   if (!sel || !res || !rEl) return;
 
   const key = sel.value;
@@ -105,7 +90,7 @@ function calcular() {
   const precio = PRECIOS_MAP[key];
 
   if (!key || !precio || isNaN(rendimiento) || rendimiento < 0 || rendimiento > 100) {
-    res.classList.add("error");
+    res.classList.add('error');
     res.innerHTML = `
       <strong>Falta información:</strong> selecciona una calidad con precio disponible y
       escribe un rendimiento entre 0 y 100.
@@ -115,7 +100,7 @@ function calcular() {
 
   const precioAceituna = (rendimiento / 100) * precio;
 
-  res.classList.remove("error");
+  res.classList.remove('error');
   res.innerHTML = `
     <table class="calc-table">
       <thead>
@@ -131,9 +116,7 @@ function calcular() {
           <td data-label="Rendimiento (%)">${rendimiento}%</td>
           <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
           <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
-          <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(
-            3
-          )} €/kg</strong></td>
+          <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
         </tr>
       </tbody>
     </table>
@@ -142,216 +125,138 @@ function calcular() {
 
 // ====== Modal “De dónde obtenemos los precios” ======
 function setupFuenteModal() {
-  const link = getEl("fuente-link");
-  const modal = getEl("fuente-modal");
-  const closeBtn = getEl("modal-close");
+  const link = document.getElementById('fuente-link');
+  const modal = document.getElementById('fuente-modal');
+  const cerrar = document.getElementById('modal-close');
 
-  if (!link || !modal || !closeBtn) return;
+  if (!link || !modal || !cerrar) return;
 
-  const open = () => modal.classList.add("open");
-  const close = () => modal.classList.remove("open");
-
-  link.addEventListener("click", (e) => {
+  link.addEventListener('click', (e) => {
     e.preventDefault();
-    open();
+    modal.classList.add('open');
   });
-  closeBtn.addEventListener("click", close);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
+
+  cerrar.addEventListener('click', () => {
+    modal.classList.remove('open');
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("open")) close();
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('open');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') modal.classList.remove('open');
   });
 }
 
-// ====== Gráfica (Chart.js) ======
-function renderChartFor(labels, data, datasetLabel) {
-  const canvas = getEl("grafico-canvas");
+// ====== Render gráfico ======
+function renderChart(tipo) {
+  const canvas = document.getElementById('grafico-precios');
+  const msg = document.getElementById('grafico-msg');
   if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
-
-  // Si no hay Chart cargado, mostramos un fallback simple en el canvas
-  if (typeof window.Chart === "undefined") {
-    if (ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.fillStyle = "#666";
-      ctx.fillText("No se pudo cargar la librería de gráficos.", 10, 40);
-    }
+  const datos = HISTORICO[TIPO_LABEL[tipo]];
+  if (!datos || datos.length === 0) {
+    if (msg) msg.textContent = 'No hay datos históricos para mostrar.';
+    if (grafico) { grafico.destroy(); grafico = null; }
     return;
   }
 
-  // Si ya había una instancia, destruirla para recrear
-  if (chartInstance) chartInstance.destroy();
+  if (msg) msg.textContent = '';
 
-  if (!labels || labels.length === 0) {
-    // Dibujo un mensaje en el canvas si no hay datos
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    ctx.fillStyle = "#666";
-    ctx.fillText("No hay datos históricos para mostrar.", 10, 40);
-    return;
-  }
+  const labels = datos.map(d => d.fecha);
+  const valores = datos.map(d => d.precio_eur_kg);
 
-  chartInstance = new Chart(ctx, {
-    type: "line",
+  if (grafico) grafico.destroy();
+
+  grafico = new Chart(canvas, {
+    type: 'line',
     data: {
       labels,
-      datasets: [
-        {
-          label: datasetLabel,
-          data,
-          borderWidth: 2,
-          // no definimos colores específicos en línea base por si cambian estilos;
-          // si quieres forzar, puedes descomentar estas dos líneas:
-          borderColor: "#1f6feb",
-          backgroundColor: "rgba(31,111,235,.15)",
-          fill: true,
-          pointRadius: 2.5,
-          tension: 0.25,
-        },
-      ],
+      datasets: [{
+        label: TIPO_LABEL[tipo],
+        data: valores,
+        borderColor: '#1f6feb',
+        backgroundColor: 'rgba(31,111,235,0.1)',
+        fill: true,
+        tension: 0.2
+      }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
       plugins: {
         legend: { display: true },
-        tooltip: { enabled: true },
+        tooltip: { mode: 'index', intersect: false }
       },
       scales: {
-        x: {
-          title: { display: true, text: "Fecha" },
-          ticks: { maxRotation: 0, autoSkip: true },
-        },
-        y: {
-          title: { display: true, text: "€/kg" },
-          beginAtZero: false,
-        },
-      },
-    },
+        x: { title: { display: true, text: 'Fecha' } },
+        y: { title: { display: true, text: '€/kg' } }
+      }
+    }
   });
 }
 
-async function cargarHistorico() {
-  const sel = getEl("grafico-tipo");
-  if (!sel) return;
-
-  try {
-    const res = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const historico = await res.json();
-
-    // Mapeo de clave (selector) -> etiqueta del JSON histórico
-    const MAPEO = {
-      virgen_extra: "Aceite de oliva virgen extra",
-      virgen: "Aceite de oliva virgen",
-      lampante: "Aceite de oliva lampante",
-    };
-
-    const key = sel.value;
-    const etiqueta = MAPEO[key];
-    const arr = historico[etiqueta] || [];
-
-    if (!Array.isArray(arr) || arr.length === 0) {
-      renderChartFor([], [], TIPO_LABEL[key]);
-      return;
-    }
-
-    // labels y valores
-    const labels = arr.map((p) => p.fecha);
-    const values = arr.map((p) => p.precio_eur_kg);
-
-    renderChartFor(labels, values, TIPO_LABEL[key]);
-  } catch (err) {
-    console.error("[cargarHistorico] Error:", err);
-    // fallback: mostrar mensaje en el canvas
-    renderChartFor([], [], "");
-  }
-}
-
-function setupGrafico() {
-  const sel = getEl("grafico-tipo");
-  if (!sel) return;
-  sel.addEventListener("change", cargarHistorico);
-  cargarHistorico(); // primera carga
-}
-
-// ====== Carga de datos del día ======
+// ====== Carga de datos ======
 async function cargarDatos() {
-  const fechaEl = getEl("fecha"); // puede no existir
-  const precioEl = getEl("precio");
-  const tablaInfoEl = getEl("tabla-info");
+  const fechaEl     = document.getElementById('fecha');
+  const precioEl    = document.getElementById('precio');
+  const tablaInfoEl = document.getElementById('tabla-info');
 
   try {
-    const res = await fetch(`precio-aceite.json?v=${Date.now()}`, {
-      cache: "no-store",
-    });
+    // JSON precios actuales
+    const res = await fetch(`precio-aceite.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    // Fecha legible (misma para rótulo de la tabla)
-    let fechaTxt = datos.fecha || "desconocida";
+    // JSON histórico
     try {
-      const f = new Date(
-        datos.ultima_actualizacion || datos.generated_at || datos.fecha
-      );
-      if (!isNaN(f)) fechaTxt = f.toLocaleString("es-ES");
-    } catch {
-      /* noop */
-    }
+      const resHist = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: 'no-store' });
+      if (resHist.ok) HISTORICO = await resHist.json();
+    } catch { HISTORICO = {}; }
 
-    // Si existe #fecha en la cabecera, lo actualizamos (tu HTML puede no tenerlo ya)
+    // Fecha legible
+    let fechaTxt = datos.fecha || 'desconocida';
+    try {
+      const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
+      if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
+    } catch {/* noop */}
+
     setTexto(fechaEl, fechaTxt);
-    // Rótulo encima de la tabla
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
-    // Tabla de precios
     renderTabla(datos.precios || {});
 
-    // Normaliza a nuestro selector y autoselecciona
+    // Normalizar selector
     PRECIOS_MAP = normalizaPrecios(datos.precios || {});
-    const sel = getEl("tipo");
+    const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
-      if (PRECIOS_MAP.virgen_extra) sel.value = "virgen_extra";
-      else if (PRECIOS_MAP.virgen) sel.value = "virgen";
-      else if (PRECIOS_MAP.lampante) sel.value = "lampante";
+      if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
+      else if (PRECIOS_MAP.virgen)   sel.value = 'virgen';
+      else if (PRECIOS_MAP.lampante) sel.value = 'lampante';
     }
 
-    // Pintar precio y cálculo inicial
     actualizarPrecioSeleccion();
     calcular();
 
-    // Listeners calculadora
-    sel?.addEventListener("change", () => {
-      actualizarPrecioSeleccion();
-      calcular();
-    });
-    getEl("rendimiento")?.addEventListener("input", calcular);
+    // Listener calculadora
+    sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
+    document.getElementById('rendimiento')?.addEventListener('input', calcular);
+
+    // Listener gráfico
+    const selGraf = document.getElementById('grafico-tipo');
+    selGraf?.addEventListener('change', () => renderChart(selGraf.value));
+    if (selGraf) renderChart(selGraf.value);
+
   } catch (err) {
-    console.error("[cargarDatos] Error:", err);
-    setTexto(fechaEl, "Error cargando datos");
-    setTexto(precioEl, "No se pudieron cargar los precios.");
-    setTexto(tablaInfoEl, "Precios actualizados — (error al cargar)");
-
-    const tabla = getEl("tabla-precios");
-    if (tabla) tabla.innerHTML = "";
-
-    const res = getEl("resultado");
-    if (res) {
-      res.classList.add("error");
-      res.textContent = "No se pudo calcular.";
-    }
+    console.error('[cargarDatos] Error:', err);
+    setTexto(fechaEl, 'Error cargando datos');
+    setTexto(precioEl, 'No se pudieron cargar los precios.');
+    setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
   }
 }
 
 // ====== Inicio ======
-document.addEventListener("DOMContentLoaded", () => {
-  setupFuenteModal(); // modal “De dónde obtenemos los precios”
-  cargarDatos(); // datos del día (tabla + calculadora)
-  setupGrafico(); // histórico (gráfica)
+document.addEventListener('DOMContentLoaded', () => {
+  cargarDatos();
+  setupFuenteModal();
 });
