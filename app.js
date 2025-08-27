@@ -7,13 +7,16 @@ const TIPO_LABEL = {
   lampante:     'Aceite de oliva lampante',
 };
 
-let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
-let HISTORICO = {};   // JSON histórico
-let grafico = null;   // referencia al gráfico Chart.js
+let PRECIOS_MAP = {};  // precios actuales normalizados
+let HISTORICO   = {};  // JSON histórico
+let grafico     = null; // referencia Chart.js
+let ESCALA_ACTUAL = 'months'; // years | months | days
 
 // ====== Utilidades ======
 function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
+function parseYMD(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, (m??1)-1, d||1); }
+function fmtYMD(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
 
 function normalizaPrecios(preciosRaw) {
   const map = {};
@@ -66,7 +69,7 @@ function actualizarPrecioSeleccion() {
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
 
-  const key = sel.value; 
+  const key = sel.value;
   const precio = PRECIOS_MAP[key];
 
   if (precio) {
@@ -131,22 +134,59 @@ function setupFuenteModal() {
 
   if (!link || !modal || !cerrar) return;
 
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    modal.classList.add('open');
-  });
+  link.addEventListener('click', (e) => { e.preventDefault(); modal.classList.add('open'); });
+  cerrar.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
+}
 
-  cerrar.addEventListener('click', () => {
-    modal.classList.remove('open');
-  });
+/* ====== Serie para la gráfica según escala ======
+   - months: usa los puntos tal cual (mensuales)
+   - years: media anual
+   - days:  interpolación lineal entre meses a resolución diaria
+*/
+function prepararSerie(tipo, escala){
+  const serie = HISTORICO[TIPO_LABEL[tipo]];
+  if(!Array.isArray(serie) || !serie.length) return {labels:[],data:[]};
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('open');
-  });
+  const orden = [...serie].sort((a,b)=>parseYMD(a.fecha)-parseYMD(b.fecha));
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') modal.classList.remove('open');
-  });
+  if(escala==='months'){
+    return { labels: orden.map(x=>x.fecha), data: orden.map(x=>+x.precio_eur_kg) };
+  }
+
+  if(escala==='years'){
+    const agreg = new Map(); // año -> {sum, n}
+    for(const p of orden){
+      const y = parseYMD(p.fecha).getFullYear();
+      const cur = agreg.get(y) || {sum:0, n:0};
+      cur.sum += +p.precio_eur_kg; cur.n++;
+      agreg.set(y, cur);
+    }
+    const years = [...agreg.keys()].sort((a,b)=>a-b);
+    return { labels: years.map(String), data: years.map(y => agreg.get(y).sum/agreg.get(y).n) };
+  }
+
+  // days (interpolado)
+  const labels = [], data = [];
+  for(let i=0;i<orden.length-1;i++){
+    const a = orden[i], b = orden[i+1];
+    const da = parseYMD(a.fecha), db = parseYMD(b.fecha);
+    const pa = +a.precio_eur_kg, pb = +b.precio_eur_kg;
+
+    const ONE = 86400000;
+    const total = Math.max(1, Math.round((db - da)/ONE));
+    for(let t=0;t<total;t++){
+      const cur = new Date(da.getTime() + t*ONE);
+      const frac = t/total;
+      labels.push(fmtYMD(cur));
+      data.push(pa + (pb - pa)*frac);
+    }
+  }
+  // último punto real
+  const last = orden[orden.length-1];
+  labels.push(last.fecha); data.push(+last.precio_eur_kg);
+  return {labels, data};
 }
 
 // ====== Render gráfico ======
@@ -155,17 +195,13 @@ function renderChart(tipo) {
   const msg = document.getElementById('grafico-msg');
   if (!canvas) return;
 
-  const datos = HISTORICO[TIPO_LABEL[tipo]];
-  if (!datos || datos.length === 0) {
+  const {labels, data} = prepararSerie(tipo, ESCALA_ACTUAL);
+  if (!labels.length) {
     if (msg) msg.textContent = 'No hay datos históricos para mostrar.';
     if (grafico) { grafico.destroy(); grafico = null; }
     return;
   }
-
   if (msg) msg.textContent = '';
-
-  const labels = datos.map(d => d.fecha);
-  const valores = datos.map(d => d.precio_eur_kg);
 
   if (grafico) grafico.destroy();
 
@@ -175,11 +211,12 @@ function renderChart(tipo) {
       labels,
       datasets: [{
         label: TIPO_LABEL[tipo],
-        data: valores,
+        data,
         borderColor: '#1f6feb',
         backgroundColor: 'rgba(31,111,235,0.1)',
         fill: true,
-        tension: 0.2
+        tension: ESCALA_ACTUAL === 'days' ? 0.15 : 0.25,
+        pointRadius: ESCALA_ACTUAL === 'days' ? 0 : 3
       }]
     },
     options: {
@@ -189,10 +226,26 @@ function renderChart(tipo) {
         tooltip: { mode: 'index', intersect: false }
       },
       scales: {
-        x: { title: { display: true, text: 'Fecha' } },
+        x: { title: { display: true, text: (ESCALA_ACTUAL === 'years' ? 'Año' : 'Fecha') } },
         y: { title: { display: true, text: '€/kg' } }
       }
     }
+  });
+}
+
+// ====== Botones de escala (Años / Meses / Días) ======
+function setupEscala() {
+  const grupo = document.getElementById('escala-grupo');
+  const selTipo = document.getElementById('grafico-tipo');
+  if (!grupo) return;
+
+  grupo.addEventListener('click', (e) => {
+    const btn = e.target.closest('.seg[data-escala]');
+    if (!btn) return;
+    grupo.querySelectorAll('.seg').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ESCALA_ACTUAL = btn.dataset.escala;
+    renderChart(selTipo.value);
   });
 }
 
@@ -226,7 +279,7 @@ async function cargarDatos() {
 
     renderTabla(datos.precios || {});
 
-    // Normalizar selector
+    // Normaliza selector
     PRECIOS_MAP = normalizaPrecios(datos.precios || {});
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
@@ -238,11 +291,11 @@ async function cargarDatos() {
     actualizarPrecioSeleccion();
     calcular();
 
-    // Listener calculadora
+    // Listeners calculadora
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
 
-    // Listener gráfico
+    // Listeners gráfica
     const selGraf = document.getElementById('grafico-tipo');
     selGraf?.addEventListener('change', () => renderChart(selGraf.value));
     if (selGraf) renderChart(selGraf.value);
@@ -259,4 +312,5 @@ async function cargarDatos() {
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
   setupFuenteModal();
+  setupEscala();
 });
