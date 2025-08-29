@@ -1,38 +1,49 @@
 // app.js
 
+// ====== Mapeo etiquetas -> claves del JSON ======
 const TIPO_LABEL = {
   virgen_extra: 'Aceite de oliva virgen extra',
   virgen:       'Aceite de oliva virgen',
   lampante:     'Aceite de oliva lampante',
 };
 
-let PRECIOS_MAP = {};
-let HISTORICO = {};
-let grafico = null;
-let modoGraf = 'years'; // 'years' | 'months' | 'days'
+let PRECIOS_MAP = {}; // { virgen_extra: 3.694, virgen: 3.369, lampante: 3.177 }
+let HISTORICO = {};   // { 'Aceite de oliva virgen extra': [{fecha:'YYYY-MM-DD', precio_eur_kg:Number}, ...], ... }
+let grafico = null;   // referencia al Chart.js
+let modoGrafico = 'anios'; // 'anios' | 'meses' | 'dias'
 
-const setTexto = (el, txt) => { if (el) el.textContent = txt; };
-const euros = (n) => `${Number(n).toFixed(3)} €/kg`;
-
+// ====== Utilidades ======
+function setTexto(el, txt) { if (el) el.textContent = txt; }
+function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
+function toISOfromDMY(dmy) {
+  // dd-mm-yyyy -> yyyy-mm-dd
+  const m = dmy.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
 function normalizaPrecios(preciosRaw) {
   const map = {};
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
   const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
   const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
+
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
   return map;
 }
 
+// ====== Tabla de precios principal ======
 function renderTabla(preciosRaw) {
   const cont = document.getElementById('tabla-precios');
   if (!cont) return;
+
   const rows = [
     ['Aceite de oliva virgen extra', preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg],
     ['Aceite de oliva virgen',       preciosRaw['Aceite de oliva virgen']?.precio_eur_kg],
     ['Aceite de oliva lampante',     preciosRaw['Aceite de oliva lampante']?.precio_eur_kg],
   ];
+
   const cuerpo = rows.map(([label, val]) => {
     const precioTxt = (val && val > 0 && val < 20) ? euros(val) : '—';
     return `
@@ -41,27 +52,39 @@ function renderTabla(preciosRaw) {
         <td class="precio" data-label="Precio €/kg">${precioTxt}</td>
       </tr>`;
   }).join('');
+
   cont.innerHTML = `
     <table class="price-table">
       <thead>
-        <tr><th>Tipo de aceite de oliva</th><th>Precio €/kg</th></tr>
+        <tr>
+          <th>Tipo de aceite de oliva</th>
+          <th>Precio €/kg</th>
+        </tr>
       </thead>
       <tbody>${cuerpo}</tbody>
     </table>
   `;
 }
 
+// ====== Precio seleccionado (debajo del selector) ======
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
   if (!sel || !precioEl) return;
-  const key = sel.value;
+
+  const key = sel.value; 
   const precio = PRECIOS_MAP[key];
-  if (precio) setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
-  else if (key) setTexto(precioEl, '— Precio no disponible —');
-  else setTexto(precioEl, '');
+
+  if (precio) {
+    setTexto(precioEl, `Precio ${TIPO_LABEL[key]}: ${euros(precio)}`);
+  } else if (key) {
+    setTexto(precioEl, '— Precio no disponible —');
+  } else {
+    setTexto(precioEl, '');
+  }
 }
 
+// ====== Calculadora ======
 function calcular() {
   const sel = document.getElementById('tipo');
   const res = document.getElementById('resultado');
@@ -80,6 +103,7 @@ function calcular() {
     `;
     return;
   }
+
   const precioAceituna = (rendimiento / 100) * precio;
 
   res.classList.remove('error');
@@ -95,242 +119,298 @@ function calcular() {
       </thead>
       <tbody>
         <tr>
-          <td>${rendimiento}%</td>
-          <td>${TIPO_LABEL[key]}</td>
-          <td>${precio.toFixed(3)} €/kg</td>
-          <td><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
+          <td data-label="Rendimiento (%)">${rendimiento}%</td>
+          <td data-label="Calidad del Aceite">${TIPO_LABEL[key]}</td>
+          <td data-label="Precio del Aceite">${precio.toFixed(3)} €/kg</td>
+          <td data-label="Precio aceituna (€/kg)"><strong>${precioAceituna.toFixed(3)} €/kg</strong></td>
         </tr>
       </tbody>
     </table>
   `;
 }
 
+// ====== Modal “De dónde obtenemos los precios” ======
 function setupFuenteModal() {
   const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
   const cerrar = document.getElementById('modal-close');
+
   if (!link || !modal || !cerrar) return;
 
-  link.addEventListener('click', (e) => { e.preventDefault(); modal.classList.add('open'); });
-  cerrar.addEventListener('click', () => modal.classList.remove('open'));
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    modal.classList.add('open');
+  });
+
+  cerrar.addEventListener('click', () => {
+    modal.classList.remove('open');
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('open');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') modal.classList.remove('open');
+  });
 }
 
-/* ------------ Parser historico.txt ------------- */
-function parseHistoricoTxt(txt) {
-  const out = {
+// ====== Parseo de historico.txt ======
+function parseHistoricoTexto(txt) {
+  // Construye HISTORICO a partir del TXT
+  // Formato esperado (bloques): 3 líneas de precio (extra/virgen/lampante) y luego la fecha "dd-mm-yyyy"
+  // También puede haber líneas "Sin cierre..." y otros ruidos (se ignoran).
+  const lineas = txt.split(/\r?\n/);
+  const precioRe = /(Aceite de oliva virgen extra|Aceite de oliva virgen|Aceite de oliva lampante)[^0-9]*([\d.,]+)\s*€/i;
+  const fechaRe  = /^(\d{2}-\d{2}-\d{4})$/;
+
+  // Inicializa estructuras
+  HISTORICO = {
     'Aceite de oliva virgen extra': [],
     'Aceite de oliva virgen': [],
-    'Aceite de oliva lampante': []
+    'Aceite de oliva lampante': [],
   };
-  const lines = txt.split(/\r?\n/);
-  let fechaActual = null;
-  const fechaRegexp = /^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/;
 
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (!line) continue;
+  let pendientes = []; // [{tipo:'Aceite de ...', valor:Number}]
+  for (const raw of lineas) {
+    const linea = raw.trim();
 
-    const fm = line.match(fechaRegexp);
-    if (fm) {
-      const d = fm[1].padStart(2,'0'), m = fm[2].padStart(2,'0');
-      let y = fm[3]; if (y.length===2) y = (Number(y)>50?'19':'20') + y;
-      fechaActual = `${y}-${m}-${d}`;
+    // precio
+    const mp = linea.match(precioRe);
+    if (mp) {
+      const tipo = mp[1];
+      const val = parseFloat(String(mp[2]).replace(',', '.'));
+      if (!isNaN(val) && val > 0 && val < 20) {
+        pendientes.push({ tipo, valor: val });
+      }
       continue;
     }
-    if (/Sin\s+cierre/i.test(line)) continue;
 
-    for (const tipo of Object.keys(out)) {
-      if (line.toLowerCase().includes(tipo.toLowerCase())) {
-        const numMatch = line.match(/(\d+[.,]?\d*)/g);
-        if (!numMatch || !fechaActual) break;
-        const numRaw = numMatch[numMatch.length - 1].replace(',', '.');
-        const valor = Number(numRaw);
-        if (!isNaN(valor) && valor > 0 && valor < 20) {
-          out[tipo].push({ fecha: fechaActual, precio_eur_kg: valor });
+    // fecha
+    const mf = linea.match(fechaRe);
+    if (mf) {
+      const iso = toISOfromDMY(mf[1]); // yyyy-mm-dd
+      if (iso && pendientes.length) {
+        for (const p of pendientes) {
+          HISTORICO[p.tipo].push({ fecha: iso, precio_eur_kg: p.valor });
         }
-        break;
+        pendientes = [];
       }
+      continue;
     }
+
+    // Si llega aquí: línea no relevante; ignorar.
   }
-  for (const tipo of Object.keys(out)) {
-    const map = new Map();
-    for (const p of out[tipo]) map.set(p.fecha, p.precio_eur_kg);
-    out[tipo] = [...map.entries()].map(([fecha, precio_eur_kg]) => ({fecha, precio_eur_kg}))
-      .sort((a,b)=>a.fecha.localeCompare(b.fecha));
+
+  // Orden cronológico ascendente
+  for (const k of Object.keys(HISTORICO)) {
+    HISTORICO[k].sort((a, b) => a.fecha.localeCompare(b.fecha));
   }
-  return out;
 }
 
-/* ------------ Series según modo ------------- */
-function seriePorAnios(datos) {
-  const buckets = {};
-  datos.forEach(d => {
-    const y = d.fecha.slice(0,4);
-    if (!buckets[y]) buckets[y]=[];
-    buckets[y].push(d.precio_eur_kg);
-  });
-  const labels = Object.keys(buckets).sort((a,b)=>a.localeCompare(b));
-  const values = labels.map(y=>{
-    const arr=buckets[y]; return Number((arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3));
-  });
-  return {labels, values};
-}
-function seriePorMeses(datos, n=24) {
-  const buckets = {};
-  datos.forEach(d=>{
-    const ym = d.fecha.slice(0,7);
-    if(!buckets[ym]) buckets[ym]=[];
-    buckets[ym].push(d.precio_eur_kg);
-  });
-  let labels = Object.keys(buckets).sort((a,b)=>a.localeCompare(b));
-  let values = labels.map(k=>{
-    const arr=buckets[k]; return Number((arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3));
-  });
-  if (labels.length>n){ labels=labels.slice(-n); values=values.slice(-n); }
-  labels = labels.map(ym=>{
-    const [y,m]=ym.split('-'); const date=new Date(Number(y), Number(m)-1,1);
-    return date.toLocaleDateString('es-ES',{month:'short', year:'numeric'});
-  });
-  return {labels, values};
-}
-function seriePorDias(datos, n=90) {
-  let arr=[...datos].sort((a,b)=>a.fecha.localeCompare(b.fecha));
-  if (arr.length>n) arr=arr.slice(-n);
-  return {
-    labels: arr.map(d=> new Date(d.fecha).toLocaleDateString('es-ES')),
-    values: arr.map(d=> d.precio_eur_kg)
-  };
+// ====== Agregación para el gráfico ======
+function agrega(datos, modo) {
+  // datos: [{fecha:'YYYY-MM-DD', precio_eur_kg}]
+  if (!datos || !datos.length) return { labels: [], valores: [] };
+
+  const byKey = new Map();
+  const toDate = (s) => new Date(s + 'T00:00:00');
+
+  if (modo === 'anios') {
+    for (const d of datos) {
+      const y = d.fecha.slice(0, 4); // yyyy
+      const arr = byKey.get(y) || [];
+      arr.push(d.precio_eur_kg);
+      byKey.set(y, arr);
+    }
+    const labels = Array.from(byKey.keys()).sort((a, b) => a.localeCompare(b));
+    const valores = labels.map(k => {
+      const xs = byKey.get(k);
+      return xs.reduce((acc, v) => acc + v, 0) / xs.length;
+    });
+    return { labels, valores, xTitle: 'Año' };
+  }
+
+  if (modo === 'meses') {
+    // últimos 24 meses
+    const ultimo = toDate(datos[datos.length - 1].fecha);
+    const limite = new Date(ultimo);
+    limite.setMonth(limite.getMonth() - 23); // incluir 24 meses
+
+    for (const d of datos) {
+      const dt = toDate(d.fecha);
+      if (dt < limite) continue;
+      const ym = d.fecha.slice(0, 7); // yyyy-mm
+      const arr = byKey.get(ym) || [];
+      arr.push(d.precio_eur_kg);
+      byKey.set(ym, arr);
+    }
+    const labels = Array.from(byKey.keys()).sort((a, b) => a.localeCompare(b));
+    const valores = labels.map(k => {
+      const xs = byKey.get(k);
+      return xs.reduce((acc, v) => acc + v, 0) / xs.length;
+    });
+    return { labels, valores, xTitle: 'Mes' };
+  }
+
+  // 'dias' -> últimos 60 días (último valor del día)
+  const ultimo = toDate(datos[datos.length - 1].fecha);
+  const limite = new Date(ultimo);
+  limite.setDate(limite.getDate() - 59);
+
+  const mapUltimo = new Map(); // yyyy-mm-dd -> último valor visto
+  for (const d of datos) {
+    const dt = toDate(d.fecha);
+    if (dt < limite) continue;
+    mapUltimo.set(d.fecha, d.precio_eur_kg);
+  }
+  const labels = Array.from(mapUltimo.keys()).sort((a, b) => a.localeCompare(b));
+  const valores = labels.map(k => mapUltimo.get(k));
+  return { labels, valores, xTitle: 'Día' };
 }
 
-/* ------------ Render Chart ------------- */
+// ====== Render gráfico ======
 function renderChart(tipo) {
   const canvas = document.getElementById('grafico-precios');
   const msg = document.getElementById('grafico-msg');
   if (!canvas) return;
 
   const datos = HISTORICO[TIPO_LABEL[tipo]];
-  if (!datos || !datos.length) {
+  if (!datos || datos.length === 0) {
     if (msg) msg.textContent = 'No hay datos históricos para mostrar.';
-    if (grafico) { grafico.destroy(); grafico=null; }
+    if (grafico) { grafico.destroy(); grafico = null; }
     return;
   }
   if (msg) msg.textContent = '';
 
-  let series;
-  if (modoGraf === 'years')   series = seriePorAnios(datos);
-  else if (modoGraf === 'months') series = seriePorMeses(datos, 24);
-  else                         series = seriePorDias(datos, 90);
+  const { labels, valores, xTitle } = agrega(datos, modoGrafico);
 
   if (grafico) grafico.destroy();
-
   grafico = new Chart(canvas, {
     type: 'line',
     data: {
-      labels: series.labels,
+      labels,
       datasets: [{
         label: TIPO_LABEL[tipo],
-        data: series.values,
+        data: valores,
         borderColor: '#1f6feb',
         backgroundColor: 'rgba(31,111,235,0.10)',
-        pointRadius: 3,
         fill: true,
-        tension: 0.25
+        tension: 0.2,
+        pointRadius: 3
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend:{display:true}, tooltip:{mode:'index', intersect:false} },
+      plugins: {
+        legend: { display: true },
+        tooltip: { mode: 'index', intersect: false }
+      },
       scales: {
-        x: {
-          title:{display:true, text: modoGraf==='years'?'Año':(modoGraf==='months'?'Mes':'Fecha')},
-          ticks:{ autoSkip: modoGraf!=='years', maxRotation:0 }
-        },
-        y: { title:{display:true, text:'€/kg'} }
+        x: { title: { display: true, text: xTitle || '' } },
+        y: { title: { display: true, text: '€/kg' } }
       }
     }
   });
 }
 
-/* ------------ Carga de datos ------------- */
+// ====== Estado visual de botones ======
+function setModoAndButtons(nuevo) {
+  modoGrafico = nuevo;
+  const bA = document.getElementById('btn-anios');
+  const bM = document.getElementById('btn-meses');
+  const bD = document.getElementById('btn-dias');
+  const on  = 'background:#1f6feb;color:#fff;border-color:#1f6feb;';
+  const off = '';
+
+  if (bA) bA.style = (nuevo === 'anios') ? on : off;
+  if (bM) bM.style = (nuevo === 'meses') ? on : off;
+  if (bD) bD.style = (nuevo === 'dias')  ? on : off;
+
+  const selGraf = document.getElementById('grafico-tipo');
+  if (selGraf) renderChart(selGraf.value);
+}
+
+// ====== Carga de datos ======
 async function cargarDatos() {
   const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
   try {
+    // JSON precios actuales
     const res = await fetch(`precio-aceite.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    HISTORICO = {};
+    // TXT histórico
     try {
-      const resHist = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: 'no-store' });
+      const resHist = await fetch(`historico.txt?v=${Date.now()}`, { cache: 'no-store' });
       if (resHist.ok) {
-        HISTORICO = await resHist.json();
+        const txt = await resHist.text();
+        parseHistoricoTexto(txt);
       } else {
-        const resTxt = await fetch(`historico.txt?v=${Date.now()}`, { cache: 'no-store' });
-        if (resTxt.ok) {
-          const txt = await resTxt.text();
-          HISTORICO = parseHistoricoTxt(txt);
-        }
+        HISTORICO = {};
       }
-    } catch {}
+    } catch { HISTORICO = {}; }
 
+    // Fecha legible
     let fechaTxt = datos.fecha || 'desconocida';
     try {
       const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
-    } catch {}
+    } catch {/* noop */}
+
     setTexto(fechaEl, fechaTxt);
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
     renderTabla(datos.precios || {});
-    PRECIOS_MAP = normalizaPrecios(datos.precios || {});
 
+    // Normalizar selector
+    PRECIOS_MAP = normalizaPrecios(datos.precios || {});
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
       if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
       else if (PRECIOS_MAP.virgen)   sel.value = 'virgen';
       else if (PRECIOS_MAP.lampante) sel.value = 'lampante';
     }
+
     actualizarPrecioSeleccion();
     calcular();
 
-    const selGraf = document.getElementById('grafico-tipo');
-    if (selGraf && !selGraf.value) selGraf.value = sel?.value || 'virgen_extra';
+    // Listeners calculadora
+    sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
 
-    sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); renderChart(selGraf.value); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
+
+    // Listeners gráfico
+    const selGraf = document.getElementById('grafico-tipo');
     selGraf?.addEventListener('change', () => renderChart(selGraf.value));
 
-    // Botones de rango
-    const btnYears  = document.getElementById('btn-years');
-    const btnMonths = document.getElementById('btn-months');
-    const btnDays   = document.getElementById('btn-days');
+    // Botones Años/Meses/Días (asegúrate de que existan con estos IDs)
+    document.getElementById('btn-anios')?.addEventListener('click', () => setModoAndButtons('anios'));
+    document.getElementById('btn-meses')?.addEventListener('click', () => setModoAndButtons('meses'));
+    document.getElementById('btn-dias') ?.addEventListener('click', () => setModoAndButtons('dias'));
 
-    const setActive = (btn) => {
-      [btnYears, btnMonths, btnDays].forEach(b => b?.classList.remove('active'));
-      btn?.classList.add('active');
-    };
-    btnYears?.addEventListener('click',  () => { modoGraf='years';  setActive(btnYears);  renderChart(selGraf.value); });
-    btnMonths?.addEventListener('click', () => { modoGraf='months'; setActive(btnMonths); renderChart(selGraf.value); });
-    btnDays?.addEventListener('click',   () => { modoGraf='days';   setActive(btnDays);   renderChart(selGraf.value); });
-
-    // Estado inicial: Años activo
-    setActive(btnYears);
-    renderChart(selGraf?.value || 'virgen_extra');
+    // Render inicial
+    setModoAndButtons('anios'); // por defecto: años
 
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
     setTexto(fechaEl, 'Error cargando datos');
     setTexto(precioEl, 'No se pudieron cargar los precios.');
     setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
+
+    const tabla = document.getElementById('tabla-precios');
+    if (tabla) tabla.innerHTML = '';
+
+    const res = document.getElementById('resultado');
+    if (res) { res.classList.add('error'); res.textContent = 'No se pudo calcular.'; }
   }
 }
 
+// ====== Inicio ======
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
   setupFuenteModal();
