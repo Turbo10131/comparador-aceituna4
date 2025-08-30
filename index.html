@@ -16,146 +16,80 @@
       --olive: #8a9b0f;
       --olive-dark: #6f7d0c;
     }
-    * { box-sizing: border-box; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 0;
-      background: #f6f8fa;
-      color: #222;
-    }
-    .wrap { max-width: 1000px; margin: 40px auto; padding: 0 16px; }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-bd);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 10px 20px rgba(0,0,0,.04);
-    }
-    h1 {
-      margin: 0 0 6px;
-      font-size: clamp(22px, 2.9vw, 32px);
-      display: flex; align-items: center; gap: .6rem;
-    }
-    h1 .dot { font-size: 28px; }
-    .muted { color: var(--muted); margin: 0 0 24px; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f6f8fa;color:#222}
+    .wrap{max-width:1000px;margin:40px auto;padding:0 16px}
+    .card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:12px;padding:24px;box-shadow:0 10px 20px rgba(0,0,0,.04)}
+    h1{margin:0 0 6px;font-size:clamp(22px,2.9vw,32px);display:flex;align-items:center;gap:.6rem}
+    h1 .dot{font-size:28px}
+    .muted{color:var(--muted);margin:0 0 24px}
 
-    /* Campos */
-    .campo { margin-bottom: 16px; }
-    label { font-weight: 600; display: block; margin-bottom: 6px; }
-    input[type="number"], select {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid var(--card-bd);
-      background: #fff;
-      outline: none;
-      transition: border .15s, box-shadow .15s;
+    .campo{margin-bottom:16px}
+    label{font-weight:600;display:block;margin-bottom:6px}
+    input[type="number"],select{
+      width:100%;padding:10px 12px;font-size:16px;border-radius:8px;border:1px solid var(--card-bd);
+      background:#fff;outline:none;transition:border .15s,box-shadow .15s
     }
-    input[type="number"]:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31,111,235,.12);
-    }
-    :focus:not(:focus-visible){ outline: none; box-shadow:none; }
-    small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
-    #precio {
-      margin-top: 14px; font-weight: 700; padding: 10px 12px;
-      background: var(--pill-bg); border-radius: 10px; min-height: 42px;
-      display: flex; align-items: center;
-    }
+    input[type="number"]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,111,235,.12)}
+    :focus:not(:focus-visible){outline:none;box-shadow:none}
+    small.ayuda{color:var(--muted);display:block;margin-top:6px}
+    #precio{margin-top:14px;font-weight:700;padding:10px 12px;background:var(--pill-bg);border-radius:10px;min-height:42px;display:flex;align-items:center}
 
-    /* Calculadora */
-    .calc {
-      margin-top: 20px; padding: 16px;
-      border: 1px dashed var(--card-bd);
-      border-radius: 10px; background: #fcfefd;
-    }
-    .calc h2 { margin: 0 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-    .calc h2 .emoji { font-size: 20px; }
-    .resultado {
-      margin-top: 10px; padding: 12px 14px; border-radius: 10px;
-      font-weight: 700; min-height: 44px; display:flex; align-items:center; justify-content:center;
-    }
-    .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
+    .calc{margin-top:20px;padding:16px;border:1px dashed var(--card-bd);border-radius:10px;background:#fcfefd}
+    .calc h2{margin:0 0 6px;font-size:18px;display:flex;align-items:center;gap:8px}
+    .calc h2 .emoji{font-size:20px}
+    .resultado{margin-top:10px;padding:12px 14px;border-radius:10px;font-weight:700;min-height:44px;display:flex;align-items:center;justify-content:center}
+    .resultado.error{background:#fff6f6;border:1px solid #ffd1d1;color:#a40000}
 
-    /* Nota encima de la tabla (fecha) */
-    .tabla-info{
-      margin-top:22px; margin-bottom:8px; padding:10px 12px;
-      background:#f5f7fb; border:1px solid var(--card-bd);
-      border-radius:10px; color:#334; font-weight:600;
+    .tabla-info{margin-top:22px;margin-bottom:8px;padding:10px 12px;background:#f5f7fb;border:1px solid var(--card-bd);border-radius:10px;color:#334;font-weight:600}
+
+    .tabla-wrap{border:1px solid var(--card-bd);border-radius:12px;overflow:hidden;background:#fff}
+    table.price-table{width:100%;border-collapse:collapse}
+    .price-table thead th{background:linear-gradient(0deg,var(--olive),var(--olive-dark));color:#fff;text-align:left;padding:14px 16px;font-weight:700;letter-spacing:.2px}
+    .price-table tbody td{padding:14px 16px;border-top:1px solid #f0f0f0}
+    .price-table tbody tr:nth-child(even){background:#fbfcf7}
+    .price-table .tipo{font-weight:600}
+    .price-table .precio{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+
+    .tabla-footer{margin-top:8px;display:flex;align-items:center;justify-content:flex-start}
+    .fuente{font-size:12px;color:#666}
+    .fuente a{font-size:12px;color:#1f6feb;text-decoration:underline;cursor:pointer}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}
+    .modal-overlay.open{display:flex}
+    .modal-content{background:#fff;max-width:480px;width:90%;border-radius:12px;padding:20px 18px;box-shadow:0 15px 35px rgba(0,0,0,.25);text-align:center}
+    .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:6px}
+    .btn{padding:8px 12px;border-radius:8px;border:1px solid #d0d7de;background:#fff;cursor:pointer}
+    .btn.primary{background:#1f6feb;color:#fff;border-color:#1f6feb}
+
+    @media (max-width:640px){
+      .price-table thead{display:none}
+      .price-table,.price-table tbody,.price-table tr,.price-table td{display:block;width:100%}
+      .price-table tr{border-bottom:1px solid #f0f0f0}
+      .price-table td{display:flex;justify-content:space-between;gap:12px}
+      .price-table td::before{content:attr(data-label);color:var(--muted);font-weight:600}
+      .price-table .precio{text-align:left}
     }
 
-    /* Tabla de precios */
-    .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
-    table.price-table { width: 100%; border-collapse: collapse; }
-    .price-table thead th {
-      background: linear-gradient(0deg, var(--olive), var(--olive-dark));
-      color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; letter-spacing: .2px;
-    }
-    .price-table tbody td { padding: 14px 16px; border-top: 1px solid #f0f0f0; }
-    .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
-    .price-table .tipo { font-weight: 600; }
-    .price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .noscript{margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid #ffe0a6;background:#fff8e6;color:#8a5a00}
 
-    /* Enlace fuente */
-    .tabla-footer{ margin-top:8px; display:flex; align-items:center; justify-content:flex-start; }
-    .fuente{ font-size:12px; color:#666; }
-    .fuente a{ font-size:12px; color:#1f6feb; text-decoration: underline; cursor: pointer; }
-
-    /* Modal */
-    .modal-overlay{
-      position: fixed; inset: 0; background: rgba(0,0,0,.45);
-      display: none; align-items: center; justify-content: center; z-index: 9999;
-    }
-    .modal-overlay.open{ display:flex; }
-    .modal-content{
-      background:#fff; max-width: 480px; width: 90%; border-radius: 12px; padding: 20px 18px;
-      box-shadow: 0 15px 35px rgba(0,0,0,.25); text-align: center;
-    }
-    .modal-content h3{ margin: 0 0 6px; }
-    .modal-content p{ margin: 0 0 14px; color:#444; }
-    .modal-actions{ display:flex; gap:10px; justify-content:center; margin-top: 6px; }
-    .btn{ padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de; background:#fff; cursor:pointer; }
-    .btn.primary{ background:#1f6feb; color:#fff; border-color:#1f6feb; }
-
-    /* Botones vista gráfica */
-    .chart-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top: 20px; }
-    .chart-controls{ display:flex; align-items:center; gap:12px; flex-wrap: wrap; }
-    .segmented{ display:flex; gap:8px; }
-    .segmented .seg-btn{
-      padding:8px 12px; border:1px solid #d0d7de; background:#fff; color:#333;
-      border-radius:10px; cursor:pointer; font-weight:600;
-    }
-    .segmented .seg-btn.active{ background:#1f6feb; color:#fff; border-color:#1f6feb; }
-
-    @media (max-width: 640px) {
-      .price-table thead { display: none; }
-      .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
-      .price-table tr { border-bottom: 1px solid #f0f0f0; }
-      .price-table td { display: flex; justify-content: space-between; gap: 12px; }
-      .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
-      .price-table .precio { text-align: left; }
-    }
-    .noscript{
-      margin-top: 12px; padding: 12px 14px; border-radius: 10px;
-      border: 1px solid #ffe0a6; background: #fff8e6; color: #8a5a00;
-    }
+    /* Botones modo gráfico */
+    .modebar{display:flex;gap:10px;align-items:center}
+    .pill{border:1px solid #d0d7de;background:#fff;padding:6px 10px;border-radius:999px;cursor:pointer}
+    .pill.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+    .graf-controls{display:flex;gap:12px;align-items:center;margin:.5rem 0}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- Título -->
       <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
-      <noscript>
-        <div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div>
-      </noscript>
+      <noscript><div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div></noscript>
 
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
-        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1"
-               placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
+        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off"/>
         <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
@@ -171,52 +105,47 @@
 
       <div id="precio" role="status" aria-live="polite"></div>
 
-      <!-- Calculadora -->
       <div class="calc">
         <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
         <p class="muted" style="margin: 4px 0 8px;">Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.</p>
         <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
       </div>
 
-      <!-- Rótulo de fecha encima de la tabla -->
       <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
-
-      <!-- Tabla de precios -->
       <div id="tabla-precios" class="tabla-wrap"></div>
 
-      <!-- Enlace a la fuente -->
       <div class="tabla-footer">
         <span class="fuente">
-          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
-            De dónde obtenemos los precios
-          </a>
+          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">De dónde obtenemos los precios</a>
         </span>
       </div>
 
-      <!-- Gráfica -->
-      <div class="calc">
-        <div class="chart-head">
-          <h2><span class="emoji">📈</span>Gráfica</h2>
-          <div class="segmented" role="tablist" aria-label="Vista de la gráfica">
-            <button id="btn-anios" class="seg-btn" aria-pressed="false">Años</button>
-            <button id="btn-meses" class="seg-btn active" aria-pressed="true">Meses</button>
-            <button id="btn-dias" class="seg-btn" aria-pressed="false">Días</button>
-          </div>
-        </div>
+      <!-- BLOQUE GRÁFICA -->
+      <div class="calc" style="margin-top:20px;">
+        <h2><span class="emoji">📈</span>Gráfica</h2>
 
-        <div class="chart-controls">
-          <select id="grafico-tipo" aria-label="Tipo de aceite">
+        <div class="graf-controls">
+          <!-- Calidad a graficar -->
+          <select id="grafico-tipo" style="min-width:190px">
             <option value="virgen_extra">Virgen Extra</option>
             <option value="virgen">Virgen</option>
             <option value="lampante">Lampante</option>
           </select>
 
-          <select id="grafico-anio" aria-label="Seleccionar año">
-            <!-- Se rellena dinámicamente: "Todos los años", 2012..2025 -->
+          <!-- Selector de año dinámico -->
+          <select id="grafico-year" style="min-width:170px">
+            <option value="todos">Todos los años</option>
           </select>
+
+          <!-- Botones de modo -->
+          <div class="modebar" style="margin-left:auto">
+            <button id="btn-anos"  class="pill">Años</button>
+            <button id="btn-meses" class="pill active">Meses</button>
+            <button id="btn-dias"  class="pill">Días</button>
+          </div>
         </div>
 
-        <canvas id="grafico-precios" style="margin-top:15px;max-height:360px;"></canvas>
+        <canvas id="grafico-precios" style="margin-top:10px;max-height:360px"></canvas>
         <div id="grafico-msg" class="muted" style="margin-top:8px;">No hay datos históricos para mostrar.</div>
       </div>
     </div>
