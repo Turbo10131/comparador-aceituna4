@@ -1,70 +1,77 @@
-import json
+# convertir_historico.py
 import re
-from datetime import datetime
+import json
+from collections import defaultdict
 
-# Rutas de entrada/salida
-INPUT_FILE = "historico.txt"
+INPUT_FILE  = "historico.txt"
 OUTPUT_FILE = "precio-aceite-historico.json"
 
-# Diccionario inicial para guardar los datos
+# Estructura final
 data = {
     "Aceite de oliva virgen extra": [],
     "Aceite de oliva virgen": [],
     "Aceite de oliva lampante": []
 }
 
-# Expresiones regulares
-regex_fecha = re.compile(r"(\d{2}-\d{2}-\d{4})")  # formato DD-MM-YYYY
-regex_precio = re.compile(r"([0-9]+\,[0-9]+)")   # precio con coma decimal
+# Fechas tipo 01-11-2012
+regex_fecha   = re.compile(r"(\d{2}-\d{2}-\d{4})")
+# Precios con coma decimal (2,345)
+regex_precio  = re.compile(r"([0-9]+,[0-9]+)")
 
-# Función para normalizar precio (de "2,345 €" a 2.345)
-def normaliza_precio(txt):
-    return float(txt.replace(",", "."))
+def normaliza_precio(txt: str) -> float:
+    return float(txt.replace(",", ".").strip())
+
+def to_iso(dmy: str) -> str:
+    d, m, y = dmy.split("-")
+    return f"{y}-{m}-{d}"
+
+# Guardamos temporalmente: fecha -> tipo -> precio
+tmp = defaultdict(dict)
 
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    lines = f.readlines()
+    fecha_actual = None
 
-fecha_actual = None
+    for raw in f:
+        line = raw.strip()
+        if not line:
+            continue
 
-for line in lines:
-    line = line.strip()
+        # Detectar fecha
+        m_fecha = regex_fecha.search(line)
+        if m_fecha:
+            fecha_actual = to_iso(m_fecha.group(1))
+            continue
 
-    # Detectar fechas
-    if regex_fecha.search(line):
-        fecha_actual = regex_fecha.search(line).group(1)
-        # Convertimos a formato ISO (YYYY-MM-DD)
-        fecha_actual = datetime.strptime(fecha_actual, "%d-%m-%Y").strftime("%Y-%m-%d")
-        continue
+        if not fecha_actual:
+            continue
 
-    # Si no hay fecha actual, ignoramos
-    if not fecha_actual:
-        continue
+        lower = line.lower()
 
-    # Buscar precios en cada línea
-    if "virgen extra" in line.lower():
-        precio = regex_precio.search(line)
-        if precio:
-            data["Aceite de oliva virgen extra"].append({
-                "fecha": fecha_actual,
-                "precio_eur_kg": normaliza_precio(precio.group(1))
+        # Detectar precio
+        m_precio = regex_precio.search(line)
+        if not m_precio:
+            continue
+
+        precio = normaliza_precio(m_precio.group(1))
+
+        # Clasificación básica por keywords
+        if "virgen extra" in lower:
+            tmp[fecha_actual]["Aceite de oliva virgen extra"] = precio
+        elif "lampante" in lower:
+            tmp[fecha_actual]["Aceite de oliva lampante"] = precio
+        elif "virgen" in lower:  # cualquier virgen no-extra
+            tmp[fecha_actual]["Aceite de oliva virgen"] = precio
+
+# Pasar a la estructura final (ordenado por fecha)
+for fecha in sorted(tmp.keys()):
+    for tipo in data.keys():
+        if tipo in tmp[fecha]:
+            data[tipo].append({
+                "fecha": fecha,
+                "precio_eur_kg": tmp[fecha][tipo]
             })
-    elif re.search(r"\bvirgen\b", line.lower()) and "extra" not in line.lower():
-        precio = regex_precio.search(line)
-        if precio:
-            data["Aceite de oliva virgen"].append({
-                "fecha": fecha_actual,
-                "precio_eur_kg": normaliza_precio(precio.group(1))
-            })
-    elif "lampante" in line.lower():
-        precio = regex_precio.search(line)
-        if precio:
-            data["Aceite de oliva lampante"].append({
-                "fecha": fecha_actual,
-                "precio_eur_kg": normaliza_precio(precio.group(1))
-            })
 
-# Guardar el JSON final
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 
-print(f"✅ Archivo convertido y guardado en {OUTPUT_FILE}")
+print(f"OK → {OUTPUT_FILE} generado.")
