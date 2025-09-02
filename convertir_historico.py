@@ -14,25 +14,32 @@ data = {
     "Aceite de oliva lampante": []
 }
 
-# Fechas: 1/2 dígitos de día y mes, año 2 ó 4 dígitos. Separador '-' o '/'
-regex_fecha = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b")
-# Precio: 3,456 € o 3.456 € (coma o punto) con símbolo €
+# Fechas admitidas:
+#  - 06-11-2012, 06/11/2012, 6-11-12, 6/11/12  (DD-MM-YYYY / DD/MM/YYYY con año 2 o 4 dígitos)
+#  - 2012-11-06, 2012/11/06                    (YYYY-MM-DD / YYYY/MM/DD)
+regex_fecha_ddmm = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b")
+regex_fecha_yymm = re.compile(r"\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b")
+
+# Precio como "3,456 €" o "3.456 €"
 regex_precio = re.compile(r"([0-9]+[.,][0-9]+)\s*€")
 
-def parse_date(dd, mm, yy):
-    """Devuelve fecha ISO YYYY-MM-DD. Admite YY -> 20YY."""
-    d = int(dd)
-    m = int(mm)
-    y = int(yy)
-    if len(yy) <= 2:
+def to_iso_from_ddmm(dd, mm, yy):
+    d = int(dd); m = int(mm); y = int(yy)
+    if len(yy) <= 2:  # 12 -> 2012
         y += 2000
     try:
         return datetime(y, m, d).strftime("%Y-%m-%d")
     except ValueError:
         return None
 
+def to_iso_from_yymm(yyyy, mm, dd):
+    try:
+        return datetime(int(yyyy), int(mm), int(dd)).strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
 def normaliza_precio(txt):
-    # "2,345" -> 2.345 | "2.345" -> 2.345
+    # "2,345" -> 2.345  |  "2.345" -> 2.345
     txt = txt.replace(".", "#").replace(",", ".").replace("#", "")
     try:
         return float(txt)
@@ -44,14 +51,13 @@ def detect_tipo(line_lower):
         return "Aceite de oliva lampante"
     if "virgen extra" in line_lower:
         return "Aceite de oliva virgen extra"
-    # "virgen" pero NO "extra"
     if "virgen" in line_lower and "extra" not in line_lower:
         return "Aceite de oliva virgen"
     return None
 
 def main():
     with open(INPUT_FILE, "r", encoding="utf-8") as f:
-        lines = [ln.strip() for ln in f.readlines()]
+        lines = [ln.strip() for ln in f]
 
     fecha_actual = None
 
@@ -59,39 +65,47 @@ def main():
         if not line:
             continue
 
-        # detectar fecha
-        m = regex_fecha.search(line)
-        if m:
-            iso = parse_date(m.group(1), m.group(2), m.group(3))
+        # 1) Fecha en formato DD-MM-YYYY / DD/MM/YYYY
+        m1 = regex_fecha_ddmm.search(line)
+        if m1:
+            iso = to_iso_from_ddmm(m1.group(1), m1.group(2), m1.group(3))
             if iso:
                 fecha_actual = iso
             continue
 
-        # ignorar “sin cierre”
+        # 2) Fecha en formato YYYY-MM-DD / YYYY/MM/DD
+        m2 = regex_fecha_yymm.search(line)
+        if m2:
+            iso = to_iso_from_yymm(m2.group(1), m2.group(2), m2.group(3))
+            if iso:
+                fecha_actual = iso
+            continue
+
         low = line.lower()
+        # Ignorar "Sin cierre de operaciones"
         if "sin cierre de operaciones" in low or "sin cierre" in low:
             continue
 
-        # detectar tipo + precio
         tipo = detect_tipo(low)
         if tipo and fecha_actual:
-            p = regex_precio.search(line)
-            if p:
-                valor = normaliza_precio(p.group(1))
+            mprecio = regex_precio.search(line)
+            if mprecio:
+                valor = normaliza_precio(mprecio.group(1))
                 if valor and 0 < valor < 20:
                     data[tipo].append({
                         "fecha": fecha_actual,
                         "precio_eur_kg": round(valor, 3)
                     })
 
-    # ordenar por fecha cada lista
+    # Ordenar por fecha cada lista
     for k in data:
         data[k].sort(key=lambda x: x["fecha"])
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print(f"Generado {OUTPUT_FILE} con {sum(len(v) for v in data.values())} registros")
+    total = sum(len(v) for v in data.values())
+    print(f"Generado {OUTPUT_FILE} con {total} registros")
 
 if __name__ == "__main__":
     main()
