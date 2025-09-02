@@ -1,111 +1,98 @@
 # convertir_historico.py
-# Convierte historico.txt -> precio-aceite-historico.json
+# Lee "historico.txt" y genera "precio-aceite-historico.json" con TODO el histórico (sin recortar años).
 
 import json
 import re
 from datetime import datetime
 
-INPUT_FILE  = "historico.txt"
+INPUT_FILE = "historico.txt"
 OUTPUT_FILE = "precio-aceite-historico.json"
 
+# Estructura base
 data = {
     "Aceite de oliva virgen extra": [],
     "Aceite de oliva virgen": [],
     "Aceite de oliva lampante": []
 }
 
-# Fechas admitidas:
-#  - 06-11-2012, 06/11/2012, 6-11-12, 6/11/12  (DD-MM-YYYY / DD/MM/YYYY con año 2 o 4 dígitos)
-#  - 2012-11-06, 2012/11/06                    (YYYY-MM-DD / YYYY/MM/DD)
-regex_fecha_ddmm = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b")
-regex_fecha_yymm = re.compile(r"\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b")
-
-# Precio como "3,456 €" o "3.456 €"
-regex_precio = re.compile(r"([0-9]+[.,][0-9]+)\s*€")
-
-def to_iso_from_ddmm(dd, mm, yy):
-    d = int(dd); m = int(mm); y = int(yy)
-    if len(yy) <= 2:  # 12 -> 2012
-        y += 2000
-    try:
-        return datetime(y, m, d).strftime("%Y-%m-%d")
-    except ValueError:
-        return None
-
-def to_iso_from_yymm(yyyy, mm, dd):
-    try:
-        return datetime(int(yyyy), int(mm), int(dd)).strftime("%Y-%m-%d")
-    except ValueError:
-        return None
+# Regex
+regex_fecha = re.compile(r"(\d{2}-\d{2}-\d{4})")           # dd-mm-aaaa
+regex_precio = re.compile(r"([0-9]+,[0-9]+)")              # 3,25 por ejemplo
 
 def normaliza_precio(txt):
-    # "2,345" -> 2.345  |  "2.345" -> 2.345
-    txt = txt.replace(".", "#").replace(",", ".").replace("#", "")
-    try:
-        return float(txt)
-    except:
-        return None
+    # "2,345" -> 2.345
+    return float(txt.replace(",", "."))
 
-def detect_tipo(line_lower):
-    if "lampante" in line_lower:
-        return "Aceite de oliva lampante"
-    if "virgen extra" in line_lower:
+def categoria_de_linea(line):
+    l = line.lower()
+    # Aceptamos que aparezcan variantes con "picual" o sin ella; y espacios extra.
+    if "virgen extra" in l:
         return "Aceite de oliva virgen extra"
-    if "virgen" in line_lower and "extra" not in line_lower:
+    if re.search(r"\bvirgen\b(?!\s*extra)", l):            # virgen pero NO "virgen extra"
         return "Aceite de oliva virgen"
+    if "lampante" in l:
+        return "Aceite de oliva lampante"
     return None
 
-def main():
-    with open(INPUT_FILE, "r", encoding="utf-8") as f:
-        lines = [ln.strip() for ln in f]
+# Leemos
+with open(INPUT_FILE, "r", encoding="utf-8") as f:
+    lines = f.readlines()
 
-    fecha_actual = None
+fecha_actual_iso = None
+pendiente = {"Aceite de oliva virgen extra": None,
+             "Aceite de oliva virgen": None,
+             "Aceite de oliva lampante": None}
 
-    for line in lines:
-        if not line:
-            continue
+# Recorremos líneas
+for raw in lines:
+    line = raw.strip()
 
-        # 1) Fecha en formato DD-MM-YYYY / DD/MM/YYYY
-        m1 = regex_fecha_ddmm.search(line)
-        if m1:
-            iso = to_iso_from_ddmm(m1.group(1), m1.group(2), m1.group(3))
-            if iso:
-                fecha_actual = iso
-            continue
+    # Detectar fecha
+    m_fecha = regex_fecha.search(line)
+    if m_fecha:
+        # Guardamos la fecha (en ISO, yyyy-mm-dd)
+        dd, mm, yyyy = m_fecha.group(1).split("-")
+        try:
+            fecha_actual_iso = datetime(int(yyyy), int(mm), int(dd)).strftime("%Y-%m-%d")
+        except ValueError:
+            fecha_actual_iso = None
+        # al cambiar de fecha, reseteamos pendientes
+        pendiente = {k: None for k in pendiente}
+        continue
 
-        # 2) Fecha en formato YYYY-MM-DD / YYYY/MM/DD
-        m2 = regex_fecha_yymm.search(line)
-        if m2:
-            iso = to_iso_from_yymm(m2.group(1), m2.group(2), m2.group(3))
-            if iso:
-                fecha_actual = iso
-            continue
+    # Si hay precio y una categoría, lo añadimos
+    if fecha_actual_iso:
+        cat = categoria_de_linea(line)
+        m_precio = regex_precio.search(line)
+        if cat and m_precio:
+            precio = normaliza_precio(m_precio.group(1))
+            pendiente[cat] = precio
+            # Añadimos el registro en cuanto lo tenemos para esa categoría
+            data[cat].append({"fecha": fecha_actual_iso, "precio_eur_kg": precio})
 
-        low = line.lower()
-        # Ignorar "Sin cierre de operaciones"
-        if "sin cierre de operaciones" in low or "sin cierre" in low:
-            continue
+# ---- Depuración de datos ----
+# 1) Ordenar por fecha
+for cat in list(data.keys()):
+    data[cat].sort(key=lambda d: d["fecha"])
 
-        tipo = detect_tipo(low)
-        if tipo and fecha_actual:
-            mprecio = regex_precio.search(line)
-            if mprecio:
-                valor = normaliza_precio(mprecio.group(1))
-                if valor and 0 < valor < 20:
-                    data[tipo].append({
-                        "fecha": fecha_actual,
-                        "precio_eur_kg": round(valor, 3)
-                    })
+# 2) Deduplicar por mes (nos quedamos con el último valor del mes)
+def dedup_por_mes(items):
+    seen = {}
+    for item in items:
+        ym = item["fecha"][:7]   # yyyy-mm
+        # nos quedamos con el último de ese mes (al estar ordenados, vamos sobrescribiendo)
+        seen[ym] = item
+    # devolver ordenado por fecha
+    return sorted(seen.values(), key=lambda d: d["fecha"])
 
-    # Ordenar por fecha cada lista
-    for k in data:
-        data[k].sort(key=lambda x: x["fecha"])
+for cat in list(data.keys()):
+    data[cat] = dedup_por_mes(data[cat])
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+# 3) Nada de recortes por años: se escribe todo lo disponible.
 
-    total = sum(len(v) for v in data.values())
-    print(f"Generado {OUTPUT_FILE} con {total} registros")
+# Guardamos JSON bonito
+with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
+    json.dump(data, out, ensure_ascii=False, indent=2)
 
-if __name__ == "__main__":
-    main()
+print(f"OK → Generado {OUTPUT_FILE} con {len(data['Aceite de oliva virgen extra'])} VE, "
+      f"{len(data['Aceite de oliva virgen'])} V y {len(data['Aceite de oliva lampante'])} L registros.")
