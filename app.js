@@ -1,140 +1,138 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const tipoAceiteSelect = document.getElementById("tipoAceite");
-  const periodoBtns = document.querySelectorAll(".periodo-btn");
-  const chartCanvas = document.getElementById("chart");
-  const yearSelect = document.getElementById("yearSelect");
+const ctx = document.getElementById("chart").getContext("2d");
 
-  let periodo = "Años";
-  let chart;
+let chart;
+let historico = {};
+let periodo = "Años";
+let aceiteSeleccionado = "Aceite de oliva virgen extra";
+let yearSeleccionado = "Todos";
 
-  // ✅ Generar timestamp dinámico para evitar caché
-  const timestamp = new Date().getTime();
-  const urlHistorico = `https://raw.githubusercontent.com/Turbo10131/comparador-aceituna4/main/precio-aceite-historico.json?v=${timestamp}`;
-  const urlActual = `https://raw.githubusercontent.com/Turbo10131/comparador-aceituna4/main/precio-aceite.json?v=${timestamp}`;
+const yearSelect = document.getElementById("yearSelect");
+const tipoAceite = document.getElementById("tipoAceite");
 
-  // Cargar datos JSON
-  async function cargarDatos() {
-    try {
-      const response = await fetch(urlHistorico);
-      return await response.json();
-    } catch (error) {
-      console.error("Error cargando datos:", error);
-      return {};
-    }
-  }
+// URL con ?v=timestamp para evitar caché
+const urlHistorico = `https://raw.githubusercontent.com/Turbo10131/comparador-aceituna4/main/precio-aceite-historico.json?v=${Date.now()}`;
 
-  // Agrupar datos por periodo
-  function agruparDatosPorPeriodo(datos, periodo, yearFilter = "Todos") {
-    const agrupados = {};
+async function cargarHistorico() {
+  const res = await fetch(urlHistorico);
+  historico = await res.json();
 
-    datos.forEach((item) => {
-      const fecha = new Date(item.fecha);
-      const year = fecha.getFullYear();
+  // Inicializar gráfico
+  actualizarGrafica();
 
-      if (yearFilter !== "Todos" && year !== parseInt(yearFilter)) return;
+  // Llenar selector de años
+  actualizarSelectorAnios();
+}
 
-      let clave;
-      if (periodo === "Años") {
-        clave = year;
-      } else if (periodo === "Meses") {
-        clave = `${year}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
-      } else {
-        clave = item.fecha;
-      }
+function actualizarSelectorAnios() {
+  const datos = historico[aceiteSeleccionado] || [];
+  const anios = [...new Set(datos.map(d => new Date(d.fecha).getFullYear()))].sort();
 
-      if (!agrupados[clave]) agrupados[clave] = [];
-      agrupados[clave].push(item.precio_eur_kg);
-    });
-
-    return Object.keys(agrupados).map((clave) => ({
-      fecha: clave,
-      precio: (
-        agrupados[clave].reduce((a, b) => a + b, 0) / agrupados[clave].length
-      ).toFixed(3),
-    }));
-  }
-
-  // Renderizar gráfico
-  function renderChart(data, tipo) {
-    if (chart) chart.destroy();
-
-    chart = new Chart(chartCanvas, {
-      type: "line",
-      data: {
-        labels: data.map((d) => d.fecha),
-        datasets: [
-          {
-            label: `Aceite de oliva ${tipo}`,
-            data: data.map((d) => d.precio),
-            borderColor: "rgba(0, 123, 255, 1)",
-            backgroundColor: "rgba(0, 123, 255, 0.2)",
-            fill: true,
-            tension: 0.3,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: true },
-        },
-        scales: {
-          x: {
-            title: { display: true, text: periodo.slice(0, -1) },
-          },
-          y: {
-            title: { display: true, text: "€/kg" },
-          },
-        },
-      },
-    });
-  }
-
-  // Poblar selector de años dinámicamente
-  function poblarSelectorAnios(datos) {
-    const years = [
-      ...new Set(datos.map((item) => new Date(item.fecha).getFullYear())),
-    ].sort((a, b) => a - b);
-
-    yearSelect.innerHTML =
-      `<option value="Todos">Todos los años</option>` +
-      years.map((y) => `<option value="${y}">${y}</option>`).join("");
-  }
-
-  // Actualizar gráfico
-  async function actualizarGrafico() {
-    const datos = await cargarDatos();
-    const tipo = tipoAceiteSelect.value;
-
-    if (!datos[tipo]) return;
-
-    const yearFilter = yearSelect.value || "Todos";
-    const datosFiltrados = agruparDatosPorPeriodo(
-      datos[tipo],
-      periodo,
-      yearFilter
-    );
-
-    renderChart(datosFiltrados, tipo);
-  }
-
-  // Eventos
-  periodoBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      periodoBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      periodo = btn.textContent;
-      actualizarGrafico();
-    });
+  yearSelect.innerHTML = `<option value="Todos">Todos los años</option>`;
+  anios.forEach(anio => {
+    const option = document.createElement("option");
+    option.value = anio;
+    option.textContent = anio;
+    yearSelect.appendChild(option);
   });
+}
 
-  tipoAceiteSelect.addEventListener("change", actualizarGrafico);
-  yearSelect.addEventListener("change", actualizarGrafico);
+function actualizarGrafica() {
+  if (!historico[aceiteSeleccionado]) return;
 
-  // Inicialización
-  const datos = await cargarDatos();
-  if (datos["Aceite de oliva virgen extra"]) {
-    poblarSelectorAnios(datos["Aceite de oliva virgen extra"]);
+  let datos = historico[aceiteSeleccionado];
+
+  // Filtrar por año si corresponde
+  if (yearSeleccionado !== "Todos") {
+    datos = datos.filter(d => new Date(d.fecha).getFullYear() == yearSeleccionado);
   }
-  actualizarGrafico();
+
+  let labels, values;
+
+  if (periodo === "Años") {
+    const agrupado = {};
+    datos.forEach(d => {
+      const anio = new Date(d.fecha).getFullYear();
+      if (!agrupado[anio]) agrupado[anio] = [];
+      agrupado[anio].push(d.precio_eur_kg);
+    });
+
+    labels = Object.keys(agrupado).sort();
+    values = labels.map(anio =>
+      (agrupado[anio].reduce((a, b) => a + b, 0) / agrupado[anio].length).toFixed(2)
+    );
+  } else if (periodo === "Meses") {
+    const agrupado = {};
+    datos.forEach(d => {
+      const fecha = new Date(d.fecha);
+      const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+      if (!agrupado[clave]) agrupado[clave] = [];
+      agrupado[clave].push(d.precio_eur_kg);
+    });
+
+    labels = Object.keys(agrupado).sort();
+    values = labels.map(mes =>
+      (agrupado[mes].reduce((a, b) => a + b, 0) / agrupado[mes].length).toFixed(2)
+    );
+  } else {
+    labels = datos.map(d => d.fecha);
+    values = datos.map(d => d.precio_eur_kg);
+  }
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: aceiteSeleccionado,
+          data: values,
+          fill: true,
+          borderColor: "blue",
+          backgroundColor: "rgba(0, 0, 255, 0.1)",
+          tension: 0.2,
+          pointRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: periodo === "Años" ? "Año" : periodo === "Meses" ? "Mes" : "Día" }
+        },
+        y: {
+          title: { display: true, text: "€/kg" }
+        }
+      }
+    }
+  });
+}
+
+// Eventos
+document.querySelectorAll(".periodo-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".periodo-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    periodo = btn.textContent;
+    actualizarGrafica();
+  });
 });
+
+tipoAceite.addEventListener("change", e => {
+  aceiteSeleccionado = e.target.value;
+  actualizarSelectorAnios();
+  actualizarGrafica();
+});
+
+yearSelect.addEventListener("change", e => {
+  yearSeleccionado = e.target.value;
+  actualizarGrafica();
+});
+
+// Cargar al inicio
+cargarHistorico();
