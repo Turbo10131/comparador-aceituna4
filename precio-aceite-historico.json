@@ -1,10 +1,6 @@
 {
   "Aceite de oliva virgen extra": [
     {
-      "fecha": "2023-09-01",
-      "precio_eur_kg": 3.25
-    },
-    {
       "fecha": "2023-10-01",
       "precio_eur_kg": 3.35
     },
@@ -151,13 +147,13 @@
     {
       "fecha": "2025-09-13",
       "precio_eur_kg": 4.0
+    },
+    {
+      "fecha": "2025-09-14",
+      "precio_eur_kg": 4.0
     }
   ],
   "Aceite de oliva virgen": [
-    {
-      "fecha": "2023-09-01",
-      "precio_eur_kg": 3.0
-    },
     {
       "fecha": "2023-10-01",
       "precio_eur_kg": 3.05
@@ -305,13 +301,13 @@
     {
       "fecha": "2025-09-13",
       "precio_eur_kg": 3.58
+    },
+    {
+      "fecha": "2025-09-14",
+      "precio_eur_kg": 3.58
     }
   ],
   "Aceite de oliva lampante": [
-    {
-      "fecha": "2023-09-01",
-      "precio_eur_kg": 2.8
-    },
     {
       "fecha": "2023-10-01",
       "precio_eur_kg": 2.85
@@ -458,6 +454,10 @@
     },
     {
       "fecha": "2025-09-13",
+      "precio_eur_kg": 3.45
+    },
+    {
+      "fecha": "2025-09-14",
       "precio_eur_kg": 3.45
     }
   ]
