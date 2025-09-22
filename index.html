@@ -12,7 +12,6 @@
       --muted: #666;
       --pill-bg: #f5f7fb;
       --accent: #1f6feb;
-      --okay: #18a957;
       --olive: #8a9b0f;
       --olive-dark: #6f7d0c;
     }
@@ -147,7 +146,7 @@
       font-weight: 700;
     }
 
-    /* Enlace “fuente” debajo de la tabla, pequeño e IZQUIERDA */
+    /* Enlace “fuente” debajo de la tabla */
     .tabla-footer {
       margin-top: 8px;
       display: flex;
@@ -170,7 +169,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,.45);
-      display: none;          /* oculto por defecto */
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -228,6 +227,7 @@
         </div>
       </noscript>
 
+      <!-- Rendimiento -->
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
         <input
@@ -245,6 +245,7 @@
         <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
+      <!-- Calidad -->
       <div class="campo">
         <label for="tipo">Calidad del Aceite</label>
         <select id="tipo" autocomplete="off">
@@ -255,6 +256,7 @@
         </select>
       </div>
 
+      <!-- Precio seleccionado -->
       <div id="precio" role="status" aria-live="polite"></div>
 
       <!-- Calculadora -->
@@ -280,18 +282,6 @@
           </a>
         </span>
       </div>
-
-      <!-- Gráfica -->
-      <div class="calc" style="margin-top:20px;">
-        <h2><span class="emoji">📈</span>Gráfica — evolución últimos 24 meses</h2>
-        <select id="grafico-tipo" style="margin-top:8px;">
-          <option value="virgen_extra">Virgen Extra</option>
-          <option value="virgen">Virgen</option>
-          <option value="lampante">Lampante</option>
-        </select>
-        <canvas id="grafico-precios" style="margin-top:15px;max-height:320px;"></canvas>
-        <div id="grafico-msg" class="muted" style="margin-top:8px;">No hay datos históricos para mostrar.</div>
-      </div>
     </div>
   </div>
 
@@ -307,8 +297,6 @@
     </div>
   </div>
 
-  <!-- Chart.js local -->
-  <script src="chart.umd.min.js"></script>
   <script src="app.js" defer></script>
 </body>
 </html>
