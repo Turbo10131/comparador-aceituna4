@@ -1,4 +1,5 @@
-// ===== Etiquetas <-> claves =====
+// app.js (sin gráfica)
+
 const TIPO_LABEL = {
   virgen_extra: 'Aceite de oliva virgen extra',
   virgen:       'Aceite de oliva virgen',
@@ -6,68 +7,29 @@ const TIPO_LABEL = {
 };
 
 let PRECIOS_MAP = {};
-let HISTORICO_MAP = {};
-let chart = null;
 
-const setTexto = (el, txt) => { if (el) el.textContent = txt; };
-const euros = n => `${Number(n).toFixed(3)} €/kg`;
+function setTexto(el, txt) { if (el) el.textContent = txt; }
+function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
-// Normaliza precios actuales desde objeto plano o dentro de `precios`
 function normalizaPrecios(preciosRaw) {
   const map = {};
-  const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? preciosRaw['Aceite de oliva virgen extra'];
-  const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg       ?? preciosRaw['Aceite de oliva virgen'];
-  const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg     ?? preciosRaw['Aceite de oliva lampante'];
+  const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
+  const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
+  const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
   return map;
 }
 
-// Normaliza histórico (24 meses máx.)
-function normalizaHistorico(h) {
-  const out = { virgen_extra: [], virgen: [], lampante: [] };
-  if (!h || typeof h !== 'object') return out;
-
-  const keyMap = {
-    'Aceite de oliva virgen extra': 'virgen_extra',
-    'Aceite de oliva virgen': 'virgen',
-    'Aceite de oliva lampante': 'lampante',
-    virgen_extra: 'virgen_extra',
-    virgen: 'virgen',
-    lampante: 'lampante',
-  };
-
-  Object.keys(h).forEach(k => {
-    const key = keyMap[k];
-    if (!key || !Array.isArray(h[k])) return;
-    out[key] = h[k]
-      .map(p => ({
-        fecha: p.fecha,
-        precio: Number(
-          (typeof p.precio_eur_kg !== 'undefined') ? p.precio_eur_kg : p.precio
-        )
-      }))
-      .filter(p => p.fecha && !Number.isNaN(p.precio) && p.precio > 0 && p.precio < 20)
-      .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-  });
-
-  Object.keys(out).forEach(k => {
-    if (out[k].length > 24) out[k] = out[k].slice(-24);
-  });
-
-  return out;
-}
-
-// Render tabla principal
 function renderTabla(preciosRaw) {
   const cont = document.getElementById('tabla-precios');
   if (!cont) return;
 
   const rows = [
-    ['Aceite de oliva virgen extra', preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? preciosRaw['Aceite de oliva virgen extra']],
-    ['Aceite de oliva virgen',       preciosRaw['Aceite de oliva virgen']?.precio_eur_kg       ?? preciosRaw['Aceite de oliva virgen']],
-    ['Aceite de oliva lampante',     preciosRaw['Aceite de oliva lampante']?.precio_eur_kg     ?? preciosRaw['Aceite de oliva lampante']],
+    ['Aceite de oliva virgen extra', preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg],
+    ['Aceite de oliva virgen',       preciosRaw['Aceite de oliva virgen']?.precio_eur_kg],
+    ['Aceite de oliva lampante',     preciosRaw['Aceite de oliva lampante']?.precio_eur_kg],
   ];
 
   const cuerpo = rows.map(([label, val]) => {
@@ -82,14 +44,16 @@ function renderTabla(preciosRaw) {
   cont.innerHTML = `
     <table class="price-table">
       <thead>
-        <tr><th>Tipo de aceite de oliva</th><th>Precio €/kg</th></tr>
+        <tr>
+          <th>Tipo de aceite de oliva</th>
+          <th>Precio €/kg</th>
+        </tr>
       </thead>
       <tbody>${cuerpo}</tbody>
     </table>
   `;
 }
 
-// Precio debajo del selector
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
@@ -103,7 +67,6 @@ function actualizarPrecioSeleccion() {
   else setTexto(precioEl, '');
 }
 
-// Calculadora
 function calcular() {
   const sel = document.getElementById('tipo');
   const res = document.getElementById('resultado');
@@ -116,7 +79,10 @@ function calcular() {
 
   if (!key || !precio || isNaN(rendimiento) || rendimiento < 0 || rendimiento > 100) {
     res.classList.add('error');
-    res.innerHTML = `<strong>Falta información:</strong> selecciona una calidad con precio disponible y escribe un rendimiento entre 0 y 100.`;
+    res.innerHTML = `
+      <strong>Falta información:</strong> selecciona una calidad con precio disponible y
+      escribe un rendimiento entre 0 y 100.
+    `;
     return;
   }
 
@@ -145,49 +111,6 @@ function calcular() {
   `;
 }
 
-// Gráfica (usa ids grafico-tipo, grafico-precios, grafico-msg)
-function renderChartFor(key) {
-  const msg = document.getElementById('grafico-msg');
-  const canvas = document.getElementById('grafico-precios');
-  if (!canvas) return;
-
-  const serie = HISTORICO_MAP[key] ?? [];
-  if (!serie.length) {
-    if (chart) { chart.destroy(); chart = null; }
-    if (msg) msg.style.display = '';
-    return;
-  }
-  if (msg) msg.style.display = 'none';
-
-  const labels = serie.map(p => p.fecha);
-  const data   = serie.map(p => p.precio);
-
-  if (chart) chart.destroy();
-
-  chart = new Chart(canvas.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: `${TIPO_LABEL[key]} (€/kg)`,
-        data,
-        tension: 0.25,
-        pointRadius: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { x: { grid: { display:false } }, y: { beginAtZero: false } },
-      plugins: {
-        legend: { display: true },
-        tooltip: { callbacks: { label: (ctx) => ` ${euros(ctx.parsed.y)}` } }
-      }
-    }
-  });
-}
-
-// Modal fuente
 function setupFuenteModal() {
   const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
@@ -203,8 +126,8 @@ function setupFuenteModal() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
-// Carga de datos con soporte a JSON plano o con `precios`
 async function cargarDatos() {
+  const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
   const tablaInfoEl = document.getElementById('tabla-info');
 
@@ -213,57 +136,45 @@ async function cargarDatos() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const datos = await res.json();
 
-    // fecha
-    let fechaTxt = datos.fecha || datos.ultima_actualizacion || datos.generated_at || '';
+    let fechaTxt = datos.fecha || 'desconocida';
     try {
-      const f = new Date(fechaTxt);
+      const f = new Date(datos.ultima_actualizacion || datos.generated_at || datos.fecha);
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
     } catch {}
-    if (!fechaTxt) fechaTxt = 'desconocida';
+
+    setTexto(fechaEl, fechaTxt);
     setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
-    // preciosRaw acepta plano o dentro de .precios
-    const preciosRaw = datos.precios || datos;
-    renderTabla(preciosRaw);
+    renderTabla(datos.precios || {});
 
-    PRECIOS_MAP = normalizaPrecios(preciosRaw);
+    PRECIOS_MAP = normalizaPrecios(datos.precios || {});
     const sel = document.getElementById('tipo');
     if (sel && !sel.value) {
       if (PRECIOS_MAP.virgen_extra) sel.value = 'virgen_extra';
       else if (PRECIOS_MAP.virgen)   sel.value = 'virgen';
       else if (PRECIOS_MAP.lampante) sel.value = 'lampante';
     }
+
     actualizarPrecioSeleccion();
     calcular();
 
-    // histórico
-    HISTORICO_MAP = normalizaHistorico(datos.historico || datos.historical || {});
-    const grafSel = document.getElementById('grafico-tipo');
-    let grafKey = sel?.value || 'virgen_extra';
-    if (!HISTORICO_MAP[grafKey]?.length) {
-      grafKey = ['virgen_extra','virgen','lampante'].find(k => HISTORICO_MAP[k]?.length) || grafKey;
-    }
-    if (grafSel) grafSel.value = grafKey;
-    renderChartFor(grafKey);
-
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
-    grafSel?.addEventListener('change', () => renderChartFor(grafSel.value));
 
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
+    setTexto(fechaEl, 'Error cargando datos');
     setTexto(precioEl, 'No se pudieron cargar los precios.');
     setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
+
     const tabla = document.getElementById('tabla-precios');
     if (tabla) tabla.innerHTML = '';
-    const resBox = document.getElementById('resultado');
-    if (resBox) { resBox.classList.add('error'); resBox.textContent = 'No se pudo calcular.'; }
-    const msg = document.getElementById('grafico-msg');
-    if (msg) msg.style.display = '';
+
+    const res = document.getElementById('resultado');
+    if (res) { res.classList.add('error'); res.textContent = 'No se pudo calcular.'; }
   }
 }
 
-// Inicio
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
   setupFuenteModal();
