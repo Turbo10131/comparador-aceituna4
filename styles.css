@@ -87,7 +87,7 @@ table.price-table { width: 100%; border-collapse: collapse; }
 }
 .modal-overlay.open{ display:flex; }
 .modal-content{
-  background:#fff; max-width: 680px; width: 95%; border-radius: 12px;
+  background:#fff; max-width: 720px; width: 95%; border-radius: 12px;
   padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25);
   text-align: left; overflow-y: auto; max-height: 90vh;
 }
@@ -99,18 +99,64 @@ table.price-table { width: 100%; border-collapse: collapse; }
 .btn:hover{ background:#f0f0f0; }
 .btn.primary:hover{ background:#1558c0; }
 
-/* Histórico dentro del modal */
-#contenedor-historico h4 {
-  margin: 18px 0 8px;
-  font-size: 16px;
-  color: var(--olive-dark);
-}
-#contenedor-historico table.price-table thead th {
-  background: var(--olive-dark);
-}
-#contenedor-historico table.price-table tbody td {
-  padding: 8px 10px;
+/* ===================== */
+/* Estilos tabla histórica */
+/* ===================== */
+#contenedor-historico table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 10px;
   font-size: 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 6px rgba(0,0,0,.08);
+}
+
+#contenedor-historico thead th {
+  background: linear-gradient(90deg, #a4b357, #d9b310); /* oliva -> dorado */
+  color: #fff;
+  padding: 10px;
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+#contenedor-historico tbody tr:nth-child(even) {
+  background: #faf6ef; /* beige claro */
+}
+
+#contenedor-historico tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+#contenedor-historico tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Celda de fecha */
+#contenedor-historico tbody td:first-child {
+  background: rgba(164, 179, 87, 0.15); /* verde oliva translúcido */
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+  color: #444;
+  border-right: 1px solid #ddd;
+}
+
+/* Tipo de aceite */
+#contenedor-historico tbody td:nth-child(2) {
+  font-style: italic;
+  color: #555;
+}
+
+/* Precio */
+#contenedor-historico tbody td:last-child {
+  text-align: right;
+  font-weight: 600;
+  color: #222;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Responsive */
@@ -121,6 +167,15 @@ table.price-table { width: 100%; border-collapse: collapse; }
   .price-table td { display: flex; justify-content: space-between; gap: 12px; }
   .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
   .price-table .precio { text-align: left; }
+
+  /* Histórico: scroll horizontal */
+  #contenedor-historico {
+    overflow-x: auto;
+  }
+  #contenedor-historico table {
+    min-width: 480px;
+    font-size: 13px;
+  }
 }
 
 .noscript {
