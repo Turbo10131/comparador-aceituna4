@@ -25,29 +25,38 @@ function setupHistoricoModal() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      if (!Array.isArray(data)) {
+      if (typeof data !== 'object') {
         contenedor.innerHTML = "<p>No hay datos disponibles.</p>";
         return;
       }
 
-      let html = `<table class="price-table" style="width:100%; border-collapse: collapse;">
-        <thead>
-          <tr>
-            <th style="text-align:left; padding: 8px;">Fecha</th>
-            <th style="text-align:right; padding: 8px;">Precio €/kg</th>
-          </tr>
-        </thead>
-        <tbody>`;
+      let html = "";
 
-      data.forEach(item => {
-        html += `<tr>
-          <td style="padding: 6px 8px;">${item.fecha}</td>
-          <td style="text-align:right; padding: 6px 8px;">${Number(item.precio).toFixed(3)}</td>
-        </tr>`;
+      // Recorremos cada tipo de aceite
+      Object.entries(data).forEach(([tipo, registros]) => {
+        if (!Array.isArray(registros) || registros.length === 0) return;
+
+        html += `<h4 style="margin-top:20px; margin-bottom:8px;">${tipo}</h4>`;
+        html += `<table class="price-table" style="width:100%; border-collapse: collapse; margin-bottom:16px;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding: 8px;">Fecha</th>
+              <th style="text-align:right; padding: 8px;">Precio €/kg</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        registros.forEach(item => {
+          html += `<tr>
+            <td style="padding: 6px 8px;">${item.fecha}</td>
+            <td style="text-align:right; padding: 6px 8px;">${Number(item.precio_eur_kg).toFixed(3)}</td>
+          </tr>`;
+        });
+
+        html += "</tbody></table>";
       });
 
-      html += '</tbody></table>';
-      contenedor.innerHTML = html;
+      contenedor.innerHTML = html || "<p>No hay datos disponibles.</p>";
 
     } catch (err) {
       console.error('[cargarHistorico] Error:', err);
