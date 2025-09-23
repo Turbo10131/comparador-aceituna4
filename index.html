@@ -93,7 +93,7 @@
     .modal-overlay.open{ display:flex; }
     .modal-content{
       background:#fff; max-width: 480px; width: 90%; border-radius: 12px;
-      padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25); text-align: center;
+      padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25);
     }
     .modal-content h3{ margin: 0 0 6px; }
     .modal-content p { margin: 0 0 14px; color:#444; }
@@ -160,6 +160,7 @@
     </div>
   </div>
 
+  <!-- Modal Fuente -->
   <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-content">
       <h3 id="modal-title">Fuente de los precios</h3>
@@ -171,9 +172,9 @@
     </div>
   </div>
 
-  <!-- Modal Histórico de Precios -->
+  <!-- Modal Histórico -->
   <div id="modal-historico" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-content" style="max-width: 680px; text-align: left;">
+    <div class="modal-content" style="max-width: 680px;">
       <h3 id="modal-historico-title">Histórico de precios del aceite de oliva</h3>
       <div id="contenedor-historico" style="max-height: 400px; overflow-y: auto; margin-top: 14px;">
         <p>Cargando datos...</p>
@@ -186,63 +187,63 @@
 
   <script src="app.js" defer></script>
 
-  <!-- Script extra para manejar el histórico -->
+  <!-- Script para el modal histórico -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('btnConsultarHistorial');
-      const modal = document.getElementById('modal-historico');
-      const btnCerrar = document.getElementById('modal-historico-close');
-      const contenedor = document.getElementById('contenedor-historico');
+    const btnHistorial = document.getElementById('btnConsultarHistorial');
+    const modalHistorial = document.getElementById('modal-historico');
+    const cerrarHistorial = document.getElementById('modal-historico-close');
+    const contenedorHistorial = document.getElementById('contenedor-historico');
 
-      btn.addEventListener('click', () => {
-        modal.classList.add('open');
+    if (btnHistorial && modalHistorial && cerrarHistorial) {
+      btnHistorial.addEventListener('click', () => {
+        modalHistorial.classList.add('open');
         cargarHistorico();
       });
 
-      btnCerrar.addEventListener('click', () => {
-        modal.classList.remove('open');
+      cerrarHistorial.addEventListener('click', () => {
+        modalHistorial.classList.remove('open');
       });
 
       window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.classList.remove('open');
+        if (e.target === modalHistorial) {
+          modalHistorial.classList.remove('open');
         }
       });
+    }
 
-      function cargarHistorico() {
-        fetch('precio-aceite-historico.json')
-          .then(res => res.json())
-          .then(data => {
-            if (!Array.isArray(data)) {
-              contenedor.innerHTML = "<p>No hay datos disponibles.</p>";
-              return;
-            }
+    function cargarHistorico() {
+      fetch('precio-aceite-historico.json')
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data)) {
+            contenedorHistorial.innerHTML = "<p>No hay datos disponibles.</p>";
+            return;
+          }
 
-            let html = `<table class="price-table" style="width:100%; border-collapse: collapse;">
-              <thead>
-                <tr>
-                  <th style="text-align:left; padding: 8px;">Fecha</th>
-                  <th style="text-align:right; padding: 8px;">Precio €/kg</th>
-                </tr>
-              </thead>
-              <tbody>`;
+          let html = `<table class="price-table" style="width:100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding: 8px;">Fecha</th>
+                <th style="text-align:right; padding: 8px;">Precio €/kg</th>
+              </tr>
+            </thead>
+            <tbody>`;
 
-            data.forEach(item => {
-              html += `<tr>
-                <td style="padding: 6px 8px;">${item.fecha}</td>
-                <td style="text-align:right; padding: 6px 8px;">${Number(item.precio).toFixed(3)}</td>
-              </tr>`;
-            });
-
-            html += '</tbody></table>';
-            contenedor.innerHTML = html;
-          })
-          .catch(err => {
-            console.error(err);
-            contenedor.innerHTML = "<p>Error al cargar los datos.</p>";
+          data.forEach(item => {
+            html += `<tr>
+              <td style="padding: 6px 8px;">${item.fecha}</td>
+              <td style="text-align:right; padding: 6px 8px;">${Number(item.precio).toFixed(3)}</td>
+            </tr>`;
           });
-      }
-    });
+
+          html += '</tbody></table>';
+          contenedorHistorial.innerHTML = html;
+        })
+        .catch(err => {
+          console.error(err);
+          contenedorHistorial.innerHTML = "<p>Error al cargar los datos.</p>";
+        });
+    }
   </script>
 </body>
 </html>
