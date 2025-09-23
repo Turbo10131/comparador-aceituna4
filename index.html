@@ -1,372 +1,627 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Precios del Aceite de Oliva</title>
-  <meta name="color-scheme" content="light" />
-  <style>
-    :root {
-      --card-bg: #fff;
-      --card-bd: #e6e6e6;
-      --muted: #666;
-      --pill-bg: #f5f7fb;
-      --accent: #1f6feb;
-      --olive: #8a9b0f;
-      --olive-dark: #6f7d0c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 0;
-      background: #f6f8fa;
-      color: #222;
-    }
-    .wrap {
-      max-width: 1000px;
-      margin: 40px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-bd);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 10px 20px rgba(0,0,0,.04);
-    }
-    h1 {
-      margin: 0 0 6px;
-      font-size: clamp(22px, 2.9vw, 32px);
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-    }
-    h1 .dot { font-size: 28px; }
-    .muted { color: var(--muted); margin: 0 0 24px; }
 
-    /* Campos */
-    .campo { margin-bottom: 16px; }
-    label { font-weight: 600; display: block; margin-bottom: 6px; }
-    input[type="number"], select {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid var(--card-bd);
-      background: #fff;
-      outline: none;
-      transition: border .15s, box-shadow .15s;
-    }
-    input[type="number"]:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31,111,235,.12);
-    }
-    :focus:not(:focus-visible){ outline: none; box-shadow:none; }
-    small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
-    #precio {
-      margin-top: 14px;
-      font-weight: 700;
-      padding: 10px 12px;
-      background: var(--pill-bg);
-      border-radius: 10px;
-      min-height: 42px;
-      display: flex;
-      align-items: center;
-    }
+&nbsp; <meta charset="UTF-8" />
 
-    /* Calculadora */
-    .calc {
-      margin-top: 20px;
-      padding: 16px;
-      border: 1px dashed var(--card-bd);
-      border-radius: 10px;
-      background: #fcfefd;
-    }
-    .calc h2 {
-      margin: 0 0 6px;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .calc h2 .emoji { font-size: 20px; }
-    .resultado {
-      margin-top: 10px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .resultado.error {
-      background: #fff6f6;
-      border: 1px solid #ffd1d1;
-      color: #a40000;
-    }
+&nbsp; <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    /* Nota encima de la tabla (fecha) */
-    .tabla-info{
-      margin-top:22px;
-      margin-bottom:8px;
-      padding:10px 12px;
-      background:#f5f7fb;
-      border:1px solid var(--card-bd);
-      border-radius:10px;
-      color:#334;
-      font-weight:600;
-    }
+&nbsp; <title>Precios del Aceite de Oliva</title>
 
-    /* Tabla de precios */
-    .tabla-wrap {
-      border: 1px solid var(--card-bd);
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-    }
-    table.price-table { width: 100%; border-collapse: collapse; }
-    .price-table thead th {
-      background: linear-gradient(0deg, var(--olive), var(--olive-dark));
-      color: #fff;
-      text-align: left;
-      padding: 14px 16px;
-      font-weight: 700;
-      letter-spacing: .2px;
-    }
-    .price-table tbody td {
-      padding: 14px 16px;
-      border-top: 1px solid #f0f0f0;
-    }
-    .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
-    .price-table .tipo { font-weight: 600; }
-    .price-table .precio {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-    }
+&nbsp; <meta name="color-scheme" content="light" />
 
-    /* Enlace “fuente” debajo de la tabla + botón consultar precios */
-    .tabla-footer {
-      margin-top: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .fuente {
-      font-size: 12px;
-      color: #666;
-    }
-    .fuente a {
-      font-size: 12px;
-      color: #1f6feb;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    .btn{
-      padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de;
-      background:#fff; cursor:pointer;
-    }
-    .btn.primary{
-      background:#1f6feb; color:#fff; border-color:#1f6feb;
-    }
+&nbsp; <style>
 
-    /* Modal base (ya lo tenías) */
-    .modal-overlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-    .modal-overlay.open{ display:flex; }
-    .modal-content{
-      background:#fff;
-      max-width: 480px;
-      width: 90%;
-      border-radius: 12px;
-      padding: 20px 18px;
-      box-shadow: 0 15px 35px rgba(0,0,0,.25);
-      text-align: center;
-    }
-    .modal-content h3{ margin: 0 0 6px; }
-    .modal-content p { margin: 0 0 14px; color:#444; }
-    .modal-actions{
-      display:flex; gap:10px; justify-content:center; margin-top: 6px;
-    }
+&nbsp;   :root {
 
-    /* Modal grande (histórico) */
-    .modal-content.modal-lg{
-      text-align: left;
-      width: min(920px, 96vw);
-      max-height: 86vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-header{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom:10px;
-    }
-    .modal-table{
-      border: 1px solid var(--card-bd);
-      border-radius: 10px;
-      overflow: hidden;
-      max-height: 65vh;
-      overflow-y: auto;
-    }
-    .modal-table .price-table th{
-      position: sticky; top: 0; z-index: 1;
-      background: linear-gradient(0deg, var(--olive), var(--olive-dark));
-      color: #fff;
-    }
+&nbsp;     --card-bg: #fff;
 
-    @media (max-width: 640px) {
-      .price-table thead { display: none; }
-      .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
-      .price-table tr { border-bottom: 1px solid #f0f0f0; }
-      .price-table td { display: flex; justify-content: space-between; gap: 12px; }
-      .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
-      .price-table .precio { text-align: left; }
-    }
+&nbsp;     --card-bd: #e6e6e6;
 
-    .noscript {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid #ffe0a6;
-      background: #fff8e6;
-      color: #8a5a00;
-    }
-  </style>
+&nbsp;     --muted: #666;
+
+&nbsp;     --pill-bg: #f5f7fb;
+
+&nbsp;     --accent: #1f6feb;
+
+&nbsp;     --okay: #18a957;
+
+&nbsp;     --olive: #8a9b0f;
+
+&nbsp;     --olive-dark: #6f7d0c;
+
+&nbsp;   }
+
+&nbsp;   \* { box-sizing: border-box; }
+
+&nbsp;   body {
+
+&nbsp;     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+&nbsp;     margin: 0;
+
+&nbsp;     background: #f6f8fa;
+
+&nbsp;     color: #222;
+
+&nbsp;   }
+
+&nbsp;   .wrap {
+
+&nbsp;     max-width: 1000px;
+
+&nbsp;     margin: 40px auto;
+
+&nbsp;     padding: 0 16px;
+
+&nbsp;   }
+
+&nbsp;   .card {
+
+&nbsp;     background: var(--card-bg);
+
+&nbsp;     border: 1px solid var(--card-bd);
+
+&nbsp;     border-radius: 12px;
+
+&nbsp;     padding: 24px;
+
+&nbsp;     box-shadow: 0 10px 20px rgba(0,0,0,.04);
+
+&nbsp;   }
+
+&nbsp;   h1 {
+
+&nbsp;     margin: 0 0 6px;
+
+&nbsp;     font-size: clamp(22px, 2.9vw, 32px);
+
+&nbsp;     display: flex;
+
+&nbsp;     align-items: center;
+
+&nbsp;     gap: .6rem;
+
+&nbsp;   }
+
+&nbsp;   h1 .dot { font-size: 28px; }
+
+&nbsp;   .muted { color: var(--muted); margin: 0 0 24px; }
+
+
+
+&nbsp;   /\* Campos \*/
+
+&nbsp;   .campo { margin-bottom: 16px; }
+
+&nbsp;   label { font-weight: 600; display: block; margin-bottom: 6px; }
+
+&nbsp;   input\[type="number"], select {
+
+&nbsp;     width: 100%;
+
+&nbsp;     padding: 10px 12px;
+
+&nbsp;     font-size: 16px;
+
+&nbsp;     border-radius: 8px;
+
+&nbsp;     border: 1px solid var(--card-bd);
+
+&nbsp;     background: #fff;
+
+&nbsp;     outline: none;
+
+&nbsp;     transition: border .15s, box-shadow .15s;
+
+&nbsp;   }
+
+&nbsp;   input\[type="number"]:focus, select:focus {
+
+&nbsp;     border-color: var(--accent);
+
+&nbsp;     box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+
+&nbsp;   }
+
+&nbsp;   :focus:not(:focus-visible){ outline: none; box-shadow:none; }
+
+&nbsp;   small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
+
+&nbsp;   #precio {
+
+&nbsp;     margin-top: 14px;
+
+&nbsp;     font-weight: 700;
+
+&nbsp;     padding: 10px 12px;
+
+&nbsp;     background: var(--pill-bg);
+
+&nbsp;     border-radius: 10px;
+
+&nbsp;     min-height: 42px;
+
+&nbsp;     display: flex;
+
+&nbsp;     align-items: center;
+
+&nbsp;   }
+
+
+
+&nbsp;   /\* Calculadora \*/
+
+&nbsp;   .calc {
+
+&nbsp;     margin-top: 20px;
+
+&nbsp;     padding: 16px;
+
+&nbsp;     border: 1px dashed var(--card-bd);
+
+&nbsp;     border-radius: 10px;
+
+&nbsp;     background: #fcfefd;
+
+&nbsp;   }
+
+&nbsp;   .calc h2 {
+
+&nbsp;     margin: 0 0 6px;
+
+&nbsp;     font-size: 18px;
+
+&nbsp;     display: flex;
+
+&nbsp;     align-items: center;
+
+&nbsp;     gap: 8px;
+
+&nbsp;   }
+
+&nbsp;   .calc h2 .emoji { font-size: 20px; }
+
+&nbsp;   .resultado {
+
+&nbsp;     margin-top: 10px;
+
+&nbsp;     padding: 12px 14px;
+
+&nbsp;     border-radius: 10px;
+
+&nbsp;     font-weight: 700;
+
+&nbsp;     min-height: 44px;
+
+&nbsp;     display: flex;
+
+&nbsp;     align-items: center;
+
+&nbsp;     justify-content: center;
+
+&nbsp;   }
+
+&nbsp;   .resultado.error {
+
+&nbsp;     background: #fff6f6;
+
+&nbsp;     border: 1px solid #ffd1d1;
+
+&nbsp;     color: #a40000;
+
+&nbsp;   }
+
+
+
+&nbsp;   /\* Nota encima de la tabla (fecha) \*/
+
+&nbsp;   .tabla-info{
+
+&nbsp;     margin-top:22px;
+
+&nbsp;     margin-bottom:8px;
+
+&nbsp;     padding:10px 12px;
+
+&nbsp;     background:#f5f7fb;
+
+&nbsp;     border:1px solid var(--card-bd);
+
+&nbsp;     border-radius:10px;
+
+&nbsp;     color:#334;
+
+&nbsp;     font-weight:600;
+
+&nbsp;   }
+
+
+
+&nbsp;   /\* Tabla de precios \*/
+
+&nbsp;   .tabla-wrap {
+
+&nbsp;     border: 1px solid var(--card-bd);
+
+&nbsp;     border-radius: 12px;
+
+&nbsp;     overflow: hidden;
+
+&nbsp;     background: #fff;
+
+&nbsp;   }
+
+&nbsp;   table.price-table { width: 100%; border-collapse: collapse; }
+
+&nbsp;   .price-table thead th {
+
+&nbsp;     background: linear-gradient(0deg, var(--olive), var(--olive-dark));
+
+&nbsp;     color: #fff;
+
+&nbsp;     text-align: left;
+
+&nbsp;     padding: 14px 16px;
+
+&nbsp;     font-weight: 700;
+
+&nbsp;     letter-spacing: .2px;
+
+&nbsp;   }
+
+&nbsp;   .price-table tbody td {
+
+&nbsp;     padding: 14px 16px;
+
+&nbsp;     border-top: 1px solid #f0f0f0;
+
+&nbsp;   }
+
+&nbsp;   .price-table tbody tr:nth-child(even) { background: #fbfcf7; }
+
+&nbsp;   .price-table .tipo { font-weight: 600; }
+
+&nbsp;   .price-table .precio {
+
+&nbsp;     text-align: right;
+
+&nbsp;     font-variant-numeric: tabular-nums;
+
+&nbsp;     font-weight: 700;
+
+&nbsp;   }
+
+
+
+&nbsp;   /\* Enlace “fuente” debajo de la tabla, pequeño e IZQUIERDA \*/
+
+&nbsp;   .tabla-footer {
+
+&nbsp;     margin-top: 8px;
+
+&nbsp;     display: flex;
+
+&nbsp;     align-items: center;
+
+&nbsp;     justify-content: flex-start; /\* izquierda \*/
+
+&nbsp;   }
+
+&nbsp;   .fuente {
+
+&nbsp;     font-size: 12px;
+
+&nbsp;     color: #666;
+
+&nbsp;   }
+
+&nbsp;   .fuente a {
+
+&nbsp;     font-size: 12px;
+
+&nbsp;     color: #1f6feb;
+
+&nbsp;     text-decoration: underline;
+
+&nbsp;     cursor: pointer;
+
+&nbsp;   }
+
+
+
+&nbsp;   /\* Modal \*/
+
+&nbsp;   .modal-overlay{
+
+&nbsp;     position: fixed;
+
+&nbsp;     inset: 0;
+
+&nbsp;     background: rgba(0,0,0,.45);
+
+&nbsp;     display: none;          /\* oculto por defecto \*/
+
+&nbsp;     align-items: center;
+
+&nbsp;     justify-content: center;
+
+&nbsp;     z-index: 9999;
+
+&nbsp;   }
+
+&nbsp;   .modal-overlay.open{ display:flex; }
+
+&nbsp;   .modal-content{
+
+&nbsp;     background:#fff;
+
+&nbsp;     max-width: 480px;
+
+&nbsp;     width: 90%;
+
+&nbsp;     border-radius: 12px;
+
+&nbsp;     padding: 20px 18px;
+
+&nbsp;     box-shadow: 0 15px 35px rgba(0,0,0,.25);
+
+&nbsp;     text-align: center;
+
+&nbsp;   }
+
+&nbsp;   .modal-content h3{ margin: 0 0 6px; }
+
+&nbsp;   .modal-content p { margin: 0 0 14px; color:#444; }
+
+&nbsp;   .modal-actions{
+
+&nbsp;     display:flex; gap:10px; justify-content:center; margin-top: 6px;
+
+&nbsp;   }
+
+&nbsp;   .btn{
+
+&nbsp;     padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de;
+
+&nbsp;     background:#fff; cursor:pointer;
+
+&nbsp;   }
+
+&nbsp;   .btn.primary{
+
+&nbsp;     background:#1f6feb; color:#fff; border-color:#1f6feb;
+
+&nbsp;   }
+
+
+
+&nbsp;   @media (max-width: 640px) {
+
+&nbsp;     .price-table thead { display: none; }
+
+&nbsp;     .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
+
+&nbsp;     .price-table tr { border-bottom: 1px solid #f0f0f0; }
+
+&nbsp;     .price-table td { display: flex; justify-content: space-between; gap: 12px; }
+
+&nbsp;     .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
+
+&nbsp;     .price-table .precio { text-align: left; }
+
+&nbsp;   }
+
+&nbsp;   .noscript {
+
+&nbsp;     margin-top: 12px;
+
+&nbsp;     padding: 12px 14px;
+
+&nbsp;     border-radius: 10px;
+
+&nbsp;     border: 1px solid #ffe0a6;
+
+&nbsp;     background: #fff8e6;
+
+&nbsp;     color: #8a5a00;
+
+&nbsp;   }
+
+&nbsp; </style>
+
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card">
-      <!-- Título -->
-      <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
-      <noscript>
-        <div class="noscript">
-          ⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.
-        </div>
-      </noscript>
+&nbsp; <div class="wrap">
 
-      <!-- Rendimiento -->
-      <div class="campo">
-        <label for="rendimiento">Rendimiento (%)</label>
-        <input
-          id="rendimiento"
-          type="number"
-          inputmode="decimal"
-          min="0"
-          max="100"
-          step="0.1"
-          placeholder="Ej: 20"
-          aria-describedby="rend-help"
-          value="20"
-          autocomplete="off"
-        />
-        <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
-      </div>
+&nbsp;   <div class="card">
 
-      <!-- Calidad -->
-      <div class="campo">
-        <label for="tipo">Calidad del Aceite</label>
-        <select id="tipo" autocomplete="off">
-          <option value="">-- Elegir calidad --</option>
-          <option value="virgen_extra">Virgen Extra</option>
-          <option value="virgen">Virgen</option>
-          <option value="lampante">Lampante</option>
-        </select>
-      </div>
+&nbsp;     <!-- Título -->
 
-      <!-- Precio seleccionado -->
-      <div id="precio" role="status" aria-live="polite"></div>
+&nbsp;     <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
-      <!-- Calculadora -->
-      <div class="calc">
-        <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
-        <p class="muted" style="margin: 4px 0 8px;">
-          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
-        </p>
-        <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
-      </div>
 
-      <!-- Rótulo de fecha encima de la tabla -->
-      <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
 
-      <!-- Tabla de precios -->
-      <div id="tabla-precios" class="tabla-wrap"></div>
+&nbsp;     <noscript>
 
-      <!-- Enlaces/acciones bajo la tabla -->
-      <div class="tabla-footer">
-        <span class="fuente">
-          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
-            De dónde obtenemos los precios
-          </a>
-        </span>
+&nbsp;       <div class="noscript">
 
-        <!-- NUEVO: botón para abrir el modal con la tabla histórica -->
-        <button id="btn-historial" class="btn primary" type="button">
-          Consultar precios
-        </button>
-      </div>
-    </div>
-  </div>
+&nbsp;         ⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.
 
-  <!-- MODAL: Fuente de datos (ya lo tenías) -->
-  <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-content">
-      <h3 id="modal-title">Fuente de los precios</h3>
-      <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
-      <div class="modal-actions">
-        <a class="btn primary" href="https://www.infaoliva.com/" target="_blank" rel="noopener">Ir a Infaoliva</a>
-        <button id="modal-close" class="btn" type="button">Cerrar</button>
-      </div>
-    </div>
-  </div>
+&nbsp;       </div>
 
-  <!-- NUEVO MODAL: Historial de precios -->
-  <div id="hist-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="hist-modal-title">
-    <div class="modal-content modal-lg">
-      <div class="modal-header">
-        <h3 id="hist-modal-title" style="margin:0;">Histórico reciente de precios</h3>
+&nbsp;     </noscript>
 
-        <!-- Selector límite -->
-        <label style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-          Mostrar últimos
-          <select id="hist-limite" style="padding:6px 8px;border-radius:8px;border:1px solid #d0d7de;">
-            <option value="7">7 días</option>
-            <option value="10">10 días</option>
-            <option value="15" selected>15 días</option>
-            <option value="30">30 días</option>
-          </select>
-        </label>
 
-        <button id="hist-close" class="btn" type="button" aria-label="Cerrar">Cerrar</button>
-      </div>
 
-      <!-- Tabla historial -->
-      <div class="modal-table">
-        <table class="price-table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Tipo de aceite de oliva</th>
-              <th>Variedad</th>
-              <th style="text-align:right;">Precio €/kg</th>
-            </tr>
-          </thead>
-          <tbody id="historial-body"><!-- JS insertará aquí las filas --></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+&nbsp;     <div class="campo">
 
-  <script src="app.js" defer></script>
+&nbsp;       <label for="rendimiento">Rendimiento (%)</label>
+
+&nbsp;       <input
+
+&nbsp;         id="rendimiento"
+
+&nbsp;         type="number"
+
+&nbsp;         inputmode="decimal"
+
+&nbsp;         min="0"
+
+&nbsp;         max="100"
+
+&nbsp;         step="0.1"
+
+&nbsp;         placeholder="Ej: 20"
+
+&nbsp;         aria-describedby="rend-help"
+
+&nbsp;         value="20"
+
+&nbsp;         autocomplete="off"
+
+&nbsp;       />
+
+&nbsp;       <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
+
+&nbsp;     </div>
+
+
+
+&nbsp;     <div class="campo">
+
+&nbsp;       <label for="tipo">Calidad del Aceite</label>
+
+&nbsp;       <select id="tipo" autocomplete="off">
+
+&nbsp;         <option value="">-- Elegir calidad --</option>
+
+&nbsp;         <option value="virgen\_extra">Virgen Extra</option>
+
+&nbsp;         <option value="virgen">Virgen</option>
+
+&nbsp;         <option value="lampante">Lampante</option>
+
+&nbsp;       </select>
+
+&nbsp;     </div>
+
+
+
+&nbsp;     <div id="precio" role="status" aria-live="polite"></div>
+
+
+
+&nbsp;     <!-- Calculadora -->
+
+&nbsp;     <div class="calc">
+
+&nbsp;       <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
+
+&nbsp;       <p class="muted" style="margin: 4px 0 8px;">
+
+&nbsp;         Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
+
+&nbsp;       </p>
+
+&nbsp;       <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
+
+&nbsp;     </div>
+
+
+
+&nbsp;     <!-- Rótulo de fecha encima de la tabla -->
+
+&nbsp;     <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
+
+
+
+&nbsp;     <!-- Tabla de precios -->
+
+&nbsp;     <div id="tabla-precios" class="tabla-wrap"></div>
+
+
+
+&nbsp;     <!-- Enlace a la fuente -->
+
+&nbsp;     <div class="tabla-footer">
+
+&nbsp;       <span class="fuente">
+
+&nbsp;         <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
+
+&nbsp;           De dónde obtenemos los precios
+
+&nbsp;         </a>
+
+&nbsp;       </span>
+
+&nbsp;     </div>
+
+
+
+&nbsp;     <!-- Gráfica -->
+
+&nbsp;     <div class="calc" style="margin-top:20px;">
+
+&nbsp;       <h2><span class="emoji">📈</span>Gráfica — evolución últimos 24 meses</h2>
+
+&nbsp;       <select id="grafico-tipo" style="margin-top:8px;">
+
+&nbsp;         <option value="virgen\_extra">Virgen Extra</option>
+
+&nbsp;         <option value="virgen">Virgen</option>
+
+&nbsp;         <option value="lampante">Lampante</option>
+
+&nbsp;       </select>
+
+&nbsp;       <canvas id="grafico-precios" style="margin-top:15px;max-height:320px;"></canvas>
+
+&nbsp;       <div id="grafico-msg" class="muted" style="margin-top:8px;">No hay datos históricos para mostrar.</div>
+
+&nbsp;     </div>
+
+&nbsp;   </div>
+
+&nbsp; </div>
+
+
+
+&nbsp; <!-- MODAL -->
+
+&nbsp; <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+&nbsp;   <div class="modal-content">
+
+&nbsp;     <h3 id="modal-title">Fuente de los precios</h3>
+
+&nbsp;     <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
+
+&nbsp;     <div class="modal-actions">
+
+&nbsp;       <a class="btn primary" href="https://www.infaoliva.com/" target="\_blank" rel="noopener">Ir a Infaoliva</a>
+
+&nbsp;       <button id="modal-close" class="btn" type="button">Cerrar</button>
+
+&nbsp;     </div>
+
+&nbsp;   </div>
+
+&nbsp; </div>
+
+
+
+&nbsp; <!-- Chart.js local -->
+
+&nbsp; <script src="chart.umd.min.js"></script>
+
+&nbsp; <script src="app.js" defer></script>
+
 </body>
+
 </html>
