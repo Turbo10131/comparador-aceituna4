@@ -1,333 +1,352 @@
-/* ===========================================================
-   Utilidades
-=========================================================== */
-const $ = (sel, ctx = document) => ctx.querySelector(sel);
-const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+/* ===========================================
+   Configuración de rutas para los JSON
+   - Deja DATA_BASE = '' si Netlify sirve los ficheros
+   - O usa el raw de GitHub:
+     const DATA_BASE = 'https://raw.githubusercontent.com/Turbo10131/grafica-aceite/main/';
+   =========================================== */
+const DATA_BASE = ''; // <-- cambia a raw de GitHub si lo prefieres
 
-const fmt = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-const fmt2 = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Nodos UI
+const $rend      = document.querySelector('#rendimiento');
+const $tipo      = document.querySelector('#tipo');
+const $precio    = document.querySelector('#precio');
+const $resultado = document.querySelector('#resultado');
+const $tablaInfo = document.querySelector('#tabla-info');
+const $tablaWrap = document.querySelector('#tabla-precios');
 
-const LABELS = {
-  virgen_extra: 'Aceite de oliva virgen extra',
-  virgen:       'Aceite de oliva virgen',
-  lampante:     'Aceite de oliva lampante'
+// Modal fuente (ya lo tienes en tu HTML)
+const $modalFuente  = document.querySelector('#fuente-modal');
+const $fuenteLink   = document.querySelector('#fuente-link');
+const $modalClose   = document.querySelector('#modal-close');
+
+// Modal “Consultar precios” (solo si añadiste el bloque del modal)
+const $btnConsultar = document.querySelector('#btn-consultar-precios');
+const $modalPrecios = document.querySelector('#precios-modal');
+const $modalClose2  = document.querySelector('#precios-modal-close');
+const $modalBody2   = document.querySelector('#precios-modal-body');
+
+/* ============ Helpers ============ */
+function normalizaClave(str){
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function parseNumero(valor){
+  if (typeof valor === 'number') return valor;
+  if (typeof valor !== 'string') return NaN;
+  // "3.392 €/kg" | "3,392 €" | "4,025"
+  const limpio = valor.replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.');
+  return parseFloat(limpio);
+}
+function extraePrecioDeItem(item){
+  if (!item || typeof item !== 'object') return null;
+  if ('precio_eur_kg' in item) {
+    const n = parseNumero(item.precio_eur_kg);
+    return Number.isFinite(n) ? n : null;
+  }
+  if ('precio' in item) {
+    const n = parseNumero(item.precio);
+    return Number.isFinite(n) ? n : null;
+  }
+  for (const k of Object.keys(item)) {
+    if (/precio/i.test(k)) {
+      const n = parseNumero(item[k]);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+const fmtEur = (n) => `${(n ?? 0).toFixed(3)} €/kg`;
+const fmtDate = (d) => {
+  try {
+    const dt = (d instanceof Date) ? d : new Date(d);
+    return dt.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch {
+    return String(d ?? '');
+  }
 };
 
-const ORDER_TIPOS = ['virgen_extra', 'virgen', 'lampante'];
+/* ============ Parser robusto: precio-aceite.json ============ */
+function parsearPrecioActual(json){
+  // Devuelve { ve, v, l, actualizado? }
+  const out = { ve: null, v: null, l: null, actualizado: null };
 
-/* ===========================================================
-   Referencias DOM
-=========================================================== */
-const elRend   = $('#rendimiento');
-const elTipo   = $('#tipo');
-const elPrecio = $('#precio');
-const elRes    = $('#resultado');
-
-const elTablaInfo   = $('#tabla-info');
-const elTablaWrap   = $('#tabla-precios');
-
-const fuenteLink  = $('#fuente-link');
-const fuenteModal = $('#fuente-modal');
-const fuenteClose = $('#modal-close');
-
-const btnHist        = $('#btn-historial');
-const histModal      = $('#hist-modal');
-const histClose      = $('#hist-close');
-const histLimiteSel  = $('#hist-limite');
-const histBody       = $('#historial-body');
-
-/* Estado en memoria */
-let preciosActuales = null;  // { virgen_extra: num, virgen: num, lampante: num, actualizado?: str }
-let historicoPlano  = null;  // [{fechaISO, fechaOrg, tipoKey, variedad, precio}...]
-
-/* ===========================================================
-   Carga de precios actuales
-=========================================================== */
-async function cargarPreciosActuales() {
-  const url = `precio-aceite.json?v=${Date.now()}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`No se pudo cargar ${url}`);
-  const data = await res.json();
-
-  // Intentamos mapear a una estructura común
-  function pick(obj, paths) {
-    for (const p of paths) {
-      const parts = p.split('.');
-      let cur = obj;
-      let ok = true;
-      for (const k of parts) {
-        if (cur && Object.prototype.hasOwnProperty.call(cur, k)) cur = cur[k];
-        else { ok = false; break; }
-      }
-      if (ok && (typeof cur === 'number')) return cur;
-    }
-    return null;
-  }
-
-  const out = {
-    virgen_extra: pick(data, [
-      'Aceite de oliva virgen extra', 'virgen_extra', 'extra',
-      've', 'virgenExtra.precio', 'virgen_extra.precio'
-    ]),
-    virgen: pick(data, [
-      'Aceite de oliva virgen', 'virgen', 'aov_virgen',
-      'virgen.precio'
-    ]),
-    lampante: pick(data, [
-      'Aceite de oliva lampante', 'lampante', 'aov_lampante',
-      'lampante.precio'
-    ]),
-    actualizado: data.actualizado || data.fecha || data.updated_at || null
+  const mapea = (tipo, precio) => {
+    const t = normalizaClave(tipo);
+    if (t.includes('virgen extra')) out.ve = precio;
+    else if (t === 'virgen' || (t.includes(' virgen') && !t.includes('extra'))) out.v = precio;
+    else if (t.includes('lampante')) out.l = precio;
   };
 
-  // Si aún no se han encontrado, quizá vienen como {label: {precio_eur_kg:n}}
-  const intentosEtiquetas = [
-    ['Aceite de oliva virgen extra', 'virgen_extra'],
-    ['Aceite de oliva virgen', 'virgen'],
-    ['Aceite de oliva lampante', 'lampante']
-  ];
-  for (const [label, key] of intentosEtiquetas) {
-    if (out[key] == null && data[label] && typeof data[label].precio_eur_kg === 'number') {
-      out[key] = data[label].precio_eur_kg;
+  const intentaObjeto = (o) => {
+    for (const k of Object.keys(o)) {
+      if (normalizaClave(k) === 'actualizado') { out.actualizado = o[k]; continue; }
+      const val = o[k];
+      let precio = null;
+
+      if (typeof val === 'number' || typeof val === 'string') {
+        const n = parseNumero(val);
+        if (Number.isFinite(n)) precio = n;
+      } else if (val && typeof val === 'object') {
+        precio = extraePrecioDeItem(val);
+      }
+      if (precio != null) mapea(k, precio);
+    }
+  };
+
+  const intentaArray = (arr) => {
+    for (const it of arr) {
+      if (!it || typeof it !== 'object') continue;
+      const tipo = it.tipo || it.nombre || it.calidad || it.TIPO || it['Tipo'] || it['Aceite'];
+      const precio = extraePrecioDeItem(it);
+      if (tipo && precio != null) mapea(tipo, precio);
+      if (!out.actualizado && it.actualizado) out.actualizado = it.actualizado;
+    }
+  };
+
+  if (Array.isArray(json)) {
+    intentaArray(json);
+  } else if (json && typeof json === 'object') {
+    intentaObjeto(json);
+    // por si vienen anidados
+    for (const k of Object.keys(json)) {
+      const v = json[k];
+      if (Array.isArray(v)) intentaArray(v);
+      else if (v && typeof v === 'object') intentaObjeto(v);
     }
   }
 
-  // Requisito mínimo: al menos una cifra válida
-  if (out.virgen_extra == null && out.virgen == null && out.lampante == null) {
-    throw new Error('Formato de precio-aceite.json no reconocido');
-  }
-  preciosActuales = out;
+  if (out.ve == null && out.v == null && out.l == null) return null;
+  return out;
 }
 
-/* Render de la tabla actual y textos */
-function renderPreciosActuales() {
-  if (!preciosActuales) return;
-
-  // Rótulo fecha
-  const f = preciosActuales.actualizado
-    ? preciosActuales.actualizado
-    : new Date().toLocaleString('es-ES');
-  elTablaInfo.textContent = `Precios actualizados — ${f}`;
-
-  // Tabla
-  const rows = ORDER_TIPOS
-    .map(k => {
-      const val = preciosActuales[k];
-      if (typeof val !== 'number') return '';
-      return `
-        <tr>
-          <td class="tipo" data-label="Tipo de aceite de oliva">${LABELS[k]}</td>
-          <td class="precio" data-label="Precio €/kg">${fmt.format(val)} €/kg</td>
-        </tr>`;
-    })
-    .filter(Boolean)
-    .join('');
-
-  elTablaWrap.innerHTML = `
-    <table class="price-table" aria-label="Tabla de precios actual">
-      <thead>
-        <tr>
-          <th>Tipo de aceite de oliva</th>
-          <th style="text-align:right;">Precio €/kg</th>
-        </tr>
-      </thead>
-      <tbody>${rows || '<tr><td colspan="2">No hay datos históricos para mostrar.</td></tr>'}</tbody>
-    </table>`;
-
-  // Texto superior (precio del tipo seleccionado)
-  actualizarPrecioSeleccionado();
-  // Resultado calculadora
-  calcularResultado();
-}
-
-/* Precio seleccionado bajo los inputs */
-function actualizarPrecioSeleccionado() {
-  const key = elTipo.value;
-  const precio = preciosActuales && preciosActuales[key];
-  if (precio == null) {
-    elPrecio.textContent = '';
-    return;
-  }
-  elPrecio.textContent = `Precio ${LABELS[key]}: ${fmt.format(precio)} €/kg`;
-}
-
-/* Calculadora de €/kg aceituna = precio_aceite * rendimiento(%) */
-function calcularResultado() {
-  const key = elTipo.value;
-  const precio = preciosActuales && preciosActuales[key];
-  const r = parseFloat(elRend.value.replace(',', '.'));
-  if (!precio || isNaN(r) || r < 0 || r > 100) {
-    elRes.classList.remove('error');
-    elRes.textContent = '';
-    return;
-  }
-  const res = precio * (r / 100);
-  elRes.classList.remove('error');
-  elRes.textContent = `${fmt2.format(res)} €/kg`;
-}
-
-/* ===========================================================
-   Modal "Fuente"
-=========================================================== */
-function abrirModal(modal) { modal.classList.add('open'); }
-function cerrarModal(modal) { modal.classList.remove('open'); }
-
-fuenteLink?.addEventListener('click', (e) => {
-  e.preventDefault();
-  abrirModal(fuenteModal);
-});
-fuenteClose?.addEventListener('click', () => cerrarModal(fuenteModal));
-fuenteModal?.addEventListener('click', (e) => {
-  if (e.target === fuenteModal) cerrarModal(fuenteModal);
-});
-
-/* ===========================================================
-   Histórico (modal grande)
-=========================================================== */
-async function cargarHistorico() {
-  if (historicoPlano) return; // ya cargado
-
-  const url = `precio-aceite-historico.json?v=${Date.now()}`;
+/* ============ Cargar precios actuales ============ */
+async function cargarPreciosActuales(){
+  const url = `${DATA_BASE}precio-aceite.json?v=${Date.now()}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`No se pudo cargar ${url}`);
-  const data = await res.json();
+  if (!res.ok) throw new Error(`No se pudo descargar precio-aceite.json (${res.status})`);
+  const json = await res.json();
 
-  // Intentamos reconocer 2 formas:
-  // 1) Array de entradas {fecha, tipo, variedad, precio_eur_kg}
-  // 2) Objeto con claves de tipo -> array de {fecha, precio_eur_kg, variedad?}
-  let out = [];
+  const parsed = parsearPrecioActual(json);
+  if (!parsed) throw new Error('Formato de precio-aceite.json no reconocido');
 
-  function normalizaFecha(s) {
-    // Admite "YYYY-MM-DD" o "DD-MM-YYYY"
-    if (!s) return null;
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s;
-    const m = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
-    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-    return s; // fallback
-  }
+  return {
+    virgen_extra: parsed.ve,
+    virgen: parsed.v,
+    lampante: parsed.l,
+    actualizado: parsed.actualizado || null
+  };
+}
 
-  function keyFromLabel(label) {
-    // Devuelve virgen_extra | virgen | lampante
-    label = (label || '').toLowerCase();
-    if (label.includes('extra'))   return 'virgen_extra';
-    if (label.includes('lamp'))    return 'lampante';
-    if (label.includes('virgen'))  return 'virgen';
-    return 'virgen_extra';
-  }
+/* ============ Parser robusto: histórico ============ */
+function parsearHistorico(json){
+  // Devuelve un array normalizado: [{fecha, tipo, variedad?, precio}]
+  const salida = [];
 
-  if (Array.isArray(data)) {
-    out = data.map(d => ({
-      fechaISO: normalizaFecha(d.fecha),
-      fechaOrg: d.fecha,
-      tipoKey: keyFromLabel(d.tipo),
-      variedad: d.variedad || 'Picual',
-      precio: typeof d.precio_eur_kg === 'number' ? d.precio_eur_kg : parseFloat(d.precio_eur_kg)
-    })).filter(x => x.precio && x.fechaISO);
-  } else if (data && typeof data === 'object') {
-    // Ej: { "Aceite de oliva virgen extra": [ {fecha, precio_eur_kg}, ... ], ... }
-    for (const k of Object.keys(data)) {
-      const arr = Array.isArray(data[k]) ? data[k] : [];
-      const tKey = keyFromLabel(k);
-      for (const it of arr) {
-        const precio = typeof it.precio_eur_kg === 'number' ? it.precio_eur_kg : parseFloat(it.precio_eur_kg);
-        const fechaISO = normalizaFecha(it.fecha);
-        if (!precio || !fechaISO) continue;
-        out.push({
-          fechaISO,
-          fechaOrg: it.fecha,
-          tipoKey: tKey,
-          variedad: it.variedad || 'Picual',
-          precio
-        });
+  const pushItem = (fecha, tipo, variedad, precio) => {
+    if (!fecha || precio == null) return;
+    salida.push({ fecha, tipo, variedad: variedad || '', precio: +precio });
+  };
+
+  const nomVE = 'Aceite de oliva virgen extra';
+  const nomV  = 'Aceite de oliva virgen';
+  const nomL  = 'Aceite de oliva lampante';
+
+  const procesaArray = (arr, tipoForzado) => {
+    for (const it of arr) {
+      if (!it || typeof it !== 'object') continue;
+      const tipo  = tipoForzado || it.tipo || it.nombre || it.aceite || it['Tipo'] || '';
+      const fecha = it.fecha || it.date || it['Fecha'];
+      const varid = it.variedad || it['Variedad'] || '';
+      const precio = extraePrecioDeItem(it);
+      if (fecha && precio != null) pushItem(fecha, tipo, varid, precio);
+    }
+  };
+
+  const procesaObjeto = (o) => {
+    for (const k of Object.keys(o)) {
+      const nk = normalizaClave(k);
+      const v = o[k];
+
+      if (Array.isArray(v)) {
+        let tipoForzado = k;
+        if (nk.includes('virgen extra')) tipoForzado = nomVE;
+        else if (nk === 'virgen' || (nk.includes(' virgen') && !nk.includes('extra'))) tipoForzado = nomV;
+        else if (nk.includes('lampante')) tipoForzado = nomL;
+        procesaArray(v, tipoForzado);
+      } else if (v && typeof v === 'object') {
+        procesaObjeto(v);
       }
     }
+  };
+
+  if (Array.isArray(json)) {
+    procesaArray(json, '');
+  } else if (json && typeof json === 'object') {
+    // si está en el formato esperado agrupado por claves
+    if (json[nomVE] || json[nomV] || json[nomL]) {
+      if (Array.isArray(json[nomVE])) procesaArray(json[nomVE], nomVE);
+      if (Array.isArray(json[nomV]))  procesaArray(json[nomV],  nomV);
+      if (Array.isArray(json[nomL]))  procesaArray(json[nomL],  nomL);
+    }
+    procesaObjeto(json); // por si hay más niveles
   }
 
-  // Ordenar por fecha desc, después por orden de tipo
-  out.sort((a, b) => {
-    if (a.fechaISO < b.fechaISO) return 1;
-    if (a.fechaISO > b.fechaISO) return -1;
-    return ORDER_TIPOS.indexOf(a.tipoKey) - ORDER_TIPOS.indexOf(b.tipoKey);
-  });
-
-  historicoPlano = out;
+  // orden por fecha descendente
+  salida.sort((a,b)=> new Date(b.fecha) - new Date(a.fecha));
+  return salida;
 }
 
-function renderHistorico(limiteDias = 15) {
-  if (!historicoPlano || historicoPlano.length === 0) {
-    histBody.innerHTML = `<tr><td colspan="4" style="padding:12px;">No hay histórico para mostrar.</td></tr>`;
-    return;
+/* ============ Cargar histórico ============ */
+async function cargarHistorico(){
+  const url = `${DATA_BASE}precio-aceite-historico.json?v=${Date.now()}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`No se pudo descargar el histórico (${res.status})`);
+  const json = await res.json();
+  return parsearHistorico(json);
+}
+
+/* ============ UI: tabla histórica ============ */
+function creaTablaHistorico(items){
+  if (!items.length) {
+    return `<p style="margin:0;color:#444">No hay histórico para mostrar.</p>`;
   }
-
-  // Filtrar por “últimos N días distintos”
-  const picked = [];
-  const fechasVistas = new Set();
-
-  for (const item of historicoPlano) {
-    if (!fechasVistas.has(item.fechaISO)) {
-      if (fechasVistas.size >= Number(limiteDias)) break;
-      fechasVistas.add(item.fechaISO);
-    }
-    picked.push(item);
-  }
-
-  const rows = picked.map(it => `
+  const cab = `
+    <table class="price-table" style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:10px 12px;background:#f5f7fb">Fecha</th>
+          <th style="text-align:left;padding:10px 12px;background:#f5f7fb">Tipo</th>
+          <th style="text-align:left;padding:10px 12px;background:#f5f7fb">Variedad</th>
+          <th style="text-align:right;padding:10px 12px;background:#f5f7fb">Precio €/kg</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  const filas = items.map(it => `
     <tr>
-      <td data-label="Fecha">${it.fechaOrg || it.fechaISO}</td>
-      <td data-label="Tipo de aceite de oliva">${LABELS[it.tipoKey] || it.tipoKey}</td>
-      <td data-label="Variedad">${it.variedad || '—'}</td>
-      <td class="precio" data-label="Precio €/kg">${fmt.format(it.precio)} €/kg</td>
+      <td style="padding:10px 12px;border-top:1px solid #eee">${fmtDate(it.fecha)}</td>
+      <td style="padding:10px 12px;border-top:1px solid #eee">${it.tipo || ''}</td>
+      <td style="padding:10px 12px;border-top:1px solid #eee">${it.variedad || '—'}</td>
+      <td style="padding:10px 12px;border-top:1px solid #eee;text-align:right">${fmtEur(it.precio)}</td>
     </tr>
   `).join('');
-
-  histBody.innerHTML = rows || `<tr><td colspan="4" style="padding:12px;">No hay histórico para mostrar.</td></tr>`;
+  return cab + filas + '</tbody></table>';
 }
 
-/* Abrir / cerrar modal historial */
-btnHist?.addEventListener('click', async () => {
-  try {
-    await cargarHistorico();
-    renderHistorico(Number(histLimiteSel.value || 15));
-    abrirModal(histModal);
-  } catch (e) {
-    console.error(e);
-    alert('No se pudo cargar el histórico.');
-  }
-});
-histClose?.addEventListener('click', () => cerrarModal(histModal));
-histModal?.addEventListener('click', (e) => {
-  if (e.target === histModal) cerrarModal(histModal);
-});
-histLimiteSel?.addEventListener('change', () => renderHistorico(Number(histLimiteSel.value || 15)));
+/* ============ Mostrar precio seleccionado & calculadora ============ */
+function pintaPrecioSeleccionado(precios){
+  const t = $tipo.value; // virgen_extra | virgen | lampante | ''
+  let val = null;
+  if (t === 'virgen_extra') val = precios?.virgen_extra ?? null;
+  else if (t === 'virgen')  val = precios?.virgen ?? null;
+  else if (t === 'lampante') val = precios?.lampante ?? null;
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    cerrarModal(fuenteModal);
-    cerrarModal(histModal);
+  if (!t) {
+    $precio.textContent = '';
+    return;
   }
-});
-
-/* ===========================================================
-   Eventos de UI existentes
-=========================================================== */
-elTipo.addEventListener('change', () => {
-  actualizarPrecioSeleccionado();
-  calcularResultado();
-});
-elRend.addEventListener('input', calcularResultado);
-
-/* ===========================================================
-   Inicio
-=========================================================== */
-(async function init() {
-  try {
-    await cargarPreciosActuales();
-    renderPreciosActuales();
-  } catch (e) {
-    console.error(e);
-    elTablaInfo.textContent = '';
-    elTablaWrap.innerHTML = `
-      <div style="padding:12px;">No hay datos históricos para mostrar.</div>
-    `;
+  if (val == null) {
+    $precio.textContent = 'No hay precio disponible para esta calidad.';
+  } else {
+    const texto = t === 'virgen_extra' ? 'Precio Aceite de oliva virgen extra: '
+                : t === 'virgen'       ? 'Precio Aceite de oliva virgen: '
+                : 'Precio Aceite de oliva lampante: ';
+    $precio.textContent = texto + fmtEur(val);
   }
-})();
+}
+
+function pintaFechaActualizada(precios){
+  const f = precios?.actualizado ? ` — ${precios.actualizado}` : '';
+  $tablaInfo.textContent = `Precios actualizados${f}`;
+}
+
+function calculaAceituna(rend, precioAceite){
+  // fórmula ejemplo: precio aceituna = (rend% / 100) * precio aceite
+  if (!Number.isFinite(rend) || !Number.isFinite(precioAceite)) return null;
+  const res = (rend/100) * precioAceite;
+  return res;
+}
+function pintaResultado(precios){
+  const t = $tipo.value;
+  const rend = parseFloat($rend.value);
+  let pAceite = null;
+  if (t === 'virgen_extra') pAceite = precios?.virgen_extra ?? null;
+  else if (t === 'virgen')   pAceite = precios?.virgen ?? null;
+  else if (t === 'lampante') pAceite = precios?.lampante ?? null;
+
+  $resultado.classList.remove('error');
+  if (!t || !Number.isFinite(rend) || pAceite == null) {
+    $resultado.textContent = '';
+    return;
+  }
+  const r = calculaAceituna(rend, pAceite);
+  if (!Number.isFinite(r)) {
+    $resultado.classList.add('error');
+    $resultado.textContent = 'No se ha podido calcular. Revisa los datos.';
+  } else {
+    $resultado.textContent = `Con ${rend}% y la calidad elegida ⇒ ${r.toFixed(3)} €/kg de aceituna`;
+  }
+}
+
+/* ============ init ============ */
+async function init(){
+  try{
+    const precios = await cargarPreciosActuales();
+    pintaFechaActualizada(precios);
+    pintaPrecioSeleccionado(precios);
+    pintaResultado(precios);
+
+    // Eventos
+    $tipo?.addEventListener('change', ()=>{
+      pintaPrecioSeleccionado(precios);
+      pintaResultado(precios);
+    });
+    $rend?.addEventListener('input', ()=> pintaResultado(precios));
+
+    // Modal fuente
+    if ($fuenteLink && $modalFuente) {
+      $fuenteLink.addEventListener('click', (e)=>{
+        e.preventDefault();
+        $modalFuente.classList.add('open');
+      });
+      $modalClose?.addEventListener('click', ()=> $modalFuente.classList.remove('open'));
+      $modalFuente?.addEventListener('click', (e)=> {
+        if (e.target === $modalFuente) $modalFuente.classList.remove('open');
+      });
+    }
+
+    // Consultar precios (modal histórico)
+    if ($btnConsultar && $modalPrecios && $modalBody2) {
+      $btnConsultar.addEventListener('click', async ()=>{
+        $modalPrecios.classList.add('open');
+        $modalBody2.innerHTML = '<p style="margin:0;color:#444">Cargando…</p>';
+        try{
+          const hist = await cargarHistorico();
+          // Muestra últimos 15 registros (o todos si prefieres)
+          const sub = hist.slice(0, 15);
+          $modalBody2.innerHTML = creaTablaHistorico(sub);
+        }catch(err){
+          console.error(err);
+          $modalBody2.innerHTML = `<p style="margin:0;color:#b00">No se pudo cargar el histórico.</p>`;
+        }
+      });
+      $modalClose2?.addEventListener('click', ()=> $modalPrecios.classList.remove('open'));
+      $modalPrecios?.addEventListener('click', (e)=> {
+        if (e.target === $modalPrecios) $modalPrecios.classList.remove('open');
+      });
+    }
+
+  }catch(err){
+    console.error(err);
+    // Mensajes visibles si falla la carga del JSON
+    $tablaInfo.textContent = 'No hay datos históricos para mostrar.';
+    $precio.textContent = '';
+    $resultado.classList.add('error');
+    $resultado.textContent = 'No se pudieron cargar los precios.';
+  }
+}
+
+init();
