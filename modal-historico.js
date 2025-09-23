@@ -30,33 +30,49 @@ function setupHistoricoModal() {
         return;
       }
 
-      let html = "";
+      // --- Reorganizar por fecha ---
+      const agrupado = {};
 
-      // Recorremos cada tipo de aceite
       Object.entries(data).forEach(([tipo, registros]) => {
-        if (!Array.isArray(registros) || registros.length === 0) return;
-
-        html += `<h4 style="margin-top:20px; margin-bottom:8px;">${tipo}</h4>`;
-        html += `<table class="price-table" style="width:100%; border-collapse: collapse; margin-bottom:16px;">
-          <thead>
-            <tr>
-              <th style="text-align:left; padding: 8px;">Fecha</th>
-              <th style="text-align:right; padding: 8px;">Precio €/kg</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
         registros.forEach(item => {
-          html += `<tr>
-            <td style="padding: 6px 8px;">${item.fecha}</td>
-            <td style="text-align:right; padding: 6px 8px;">${Number(item.precio_eur_kg).toFixed(3)}</td>
-          </tr>`;
+          if (!agrupado[item.fecha]) agrupado[item.fecha] = {};
+          agrupado[item.fecha][tipo] = item.precio_eur_kg;
         });
-
-        html += "</tbody></table>";
       });
 
-      contenedor.innerHTML = html || "<p>No hay datos disponibles.</p>";
+      // Ordenar fechas descendente
+      const fechas = Object.keys(agrupado).sort((a, b) => new Date(b) - new Date(a));
+
+      // --- Generar tabla ---
+      let html = `<table class="price-table" style="width:100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding: 8px;">Fecha</th>
+            <th style="text-align:left; padding: 8px;">Tipo de aceite</th>
+            <th style="text-align:right; padding: 8px;">Precio €/kg</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      fechas.forEach(fecha => {
+        const precios = agrupado[fecha];
+        const tipos = [
+          "Aceite de oliva virgen extra",
+          "Aceite de oliva virgen",
+          "Aceite de oliva lampante"
+        ];
+
+        tipos.forEach((tipo, idx) => {
+          html += `<tr>
+            ${idx === 0 ? `<td rowspan="3" style="padding: 6px 8px; font-weight:600;">${fecha}</td>` : ""}
+            <td style="padding: 6px 8px;">${tipo}</td>
+            <td style="text-align:right; padding: 6px 8px;">${precios[tipo] ? Number(precios[tipo]).toFixed(3) : "—"}</td>
+          </tr>`;
+        });
+      });
+
+      html += "</tbody></table>";
+      contenedor.innerHTML = html;
 
     } catch (err) {
       console.error('[cargarHistorico] Error:', err);
