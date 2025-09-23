@@ -12,7 +12,6 @@
       --muted: #666;
       --pill-bg: #f5f7fb;
       --accent: #1f6feb;
-      --okay: #18a957;
       --olive: #8a9b0f;
       --olive-dark: #6f7d0c;
     }
@@ -38,19 +37,19 @@
     .campo { margin-bottom: 16px; }
     label { font-weight: 600; display: block; margin-bottom: 6px; }
     input[type="number"], select {
-      width: 100%; padding: 10px 12px; font-size: 16px; border-radius: 8px;
-      border: 1px solid var(--card-bd); background: #fff; outline: none;
-      transition: border .15s, box-shadow .15s;
+      width: 100%; padding: 10px 12px; font-size: 16px;
+      border-radius: 8px; border: 1px solid var(--card-bd);
+      background: #fff; outline: none; transition: border .15s, box-shadow .15s;
     }
     input[type="number"]:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,235,.12);
     }
     :focus:not(:focus-visible){ outline: none; box-shadow:none; }
     small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
     #precio {
-      margin-top: 14px; font-weight: 700; padding: 10px 12px; background: var(--pill-bg);
-      border-radius: 10px; min-height: 42px; display: flex; align-items: center;
+      margin-top: 14px; font-weight: 700; padding: 10px 12px;
+      background: var(--pill-bg); border-radius: 10px; min-height: 42px;
+      display: flex; align-items: center;
     }
 
     .calc {
@@ -66,8 +65,9 @@
     .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
 
     .tabla-info{
-      margin-top:22px; margin-bottom:8px; padding:10px 12px; background:#f5f7fb;
-      border:1px solid var(--card-bd); border-radius:10px; color:#334; font-weight:600;
+      margin-top:22px; margin-bottom:8px; padding:10px 12px;
+      background:#f5f7fb; border:1px solid var(--card-bd);
+      border-radius:10px; color:#334; font-weight:600;
     }
 
     .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
@@ -81,10 +81,11 @@
     .price-table .tipo { font-weight: 600; }
     .price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 
-    .tabla-footer { margin-top: 8px; display: flex; align-items: center; justify-content: flex-start; }
-    .fuente { font-size: 12px; color: #666; }
-    .fuente a { font-size: 12px; color: #1f6feb; text-decoration: underline; cursor: pointer; }
+    .tabla-footer { margin-top: 8px; display:flex; align-items:center; justify-content:flex-start; }
+    .fuente { font-size:12px; color:#666; }
+    .fuente a { font-size:12px; color:#1f6feb; text-decoration: underline; cursor:pointer; }
 
+    /* Modal */
     .modal-overlay{
       position: fixed; inset: 0; background: rgba(0,0,0,.45);
       display: none; align-items: center; justify-content: center; z-index: 9999;
@@ -109,8 +110,8 @@
       .price-table .precio { text-align: left; }
     }
     .noscript {
-      margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid #ffe0a6;
-      background: #fff8e6; color: #8a5a00;
+      margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+      border: 1px solid #ffe0a6; background: #fff8e6; color: #8a5a00;
     }
   </style>
 </head>
@@ -123,7 +124,8 @@
 
       <div class="campo">
         <label for="rendimiento">Rendimiento (%)</label>
-        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
+        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1"
+               placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
         <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
       </div>
 
@@ -141,30 +143,16 @@
 
       <div class="calc">
         <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
-        <p class="muted" style="margin: 4px 0 8px;">
-          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
-        </p>
+        <p class="muted" style="margin: 4px 0 8px;">Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.</p>
         <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
       </div>
 
       <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
+
       <div id="tabla-precios" class="tabla-wrap"></div>
 
       <div class="tabla-footer">
-        <span class="fuente">
-          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">De dónde obtenemos los precios</a>
-        </span>
-      </div>
-
-      <div class="calc" style="margin-top:20px;">
-        <h2><span class="emoji">📈</span>Gráfica — evolución últimos 24 meses</h2>
-        <select id="grafico-tipo" style="margin-top:8px;">
-          <option value="virgen_extra">Virgen Extra</option>
-          <option value="virgen">Virgen</option>
-          <option value="lampante">Lampante</option>
-        </select>
-        <canvas id="grafico-precios" style="margin-top:15px;max-height:320px;"></canvas>
-        <div id="grafico-msg" class="muted" style="margin-top:8px;">No hay datos históricos para mostrar.</div>
+        <span class="fuente"><a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">De dónde obtenemos los precios</a></span>
       </div>
     </div>
   </div>
@@ -180,7 +168,6 @@
     </div>
   </div>
 
-  <script src="chart.umd.min.js"></script>
   <script src="app.js" defer></script>
 </body>
 </html>
