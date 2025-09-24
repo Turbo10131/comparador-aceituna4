@@ -100,63 +100,44 @@ table.price-table { width: 100%; border-collapse: collapse; }
 .btn.primary:hover{ background:#1558c0; }
 
 /* ===================== */
-/* Estilos tabla histórica */
+/* Estilos tabla histórica agrupada */
 /* ===================== */
-#contenedor-historico table {
+.historico-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 10px;
+  border-collapse: collapse;
+  margin-top: 12px;
   font-size: 14px;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 3px 6px rgba(0,0,0,.08);
 }
 
-#contenedor-historico thead th {
-  background: linear-gradient(90deg, #a4b357, #d9b310); /* oliva -> dorado */
-  color: #fff;
-  padding: 10px;
-  text-align: left;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-
-#contenedor-historico tbody tr:nth-child(even) {
-  background: #faf6ef; /* beige claro */
-}
-
-#contenedor-historico tbody td {
+.historico-table td {
   padding: 8px 10px;
   border-bottom: 1px solid #eee;
 }
 
-#contenedor-historico tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* Celda de fecha */
-#contenedor-historico tbody td:first-child {
-  background: rgba(164, 179, 87, 0.15); /* verde oliva translúcido */
-  font-weight: 600;
+/* fila fecha (rectángulo azul) */
+.historico-table .fila-fecha td {
+  background: #2a4d8f;
+  color: #fff;
+  font-weight: 700;
   text-align: center;
-  vertical-align: middle;
-  color: #444;
-  border-right: 1px solid #ddd;
+  font-size: 15px;
 }
 
-/* Tipo de aceite */
-#contenedor-historico tbody td:nth-child(2) {
-  font-style: italic;
-  color: #555;
-}
-
-/* Precio */
-#contenedor-historico tbody td:last-child {
-  text-align: right;
+/* filas de variedades (rectángulo rojo) */
+.historico-table .fila-variedad td:nth-child(2) {
+  background: #c21d6f;
+  color: #fff;
   font-weight: 600;
+}
+
+.historico-table .fila-variedad td:last-child {
+  text-align: right;
+  font-weight: 700;
   color: #222;
-  font-variant-numeric: tabular-nums;
+  background: #fdfdfd;
 }
 
 /* Responsive */
@@ -168,11 +149,10 @@ table.price-table { width: 100%; border-collapse: collapse; }
   .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
   .price-table .precio { text-align: left; }
 
-  /* Histórico: scroll horizontal */
   #contenedor-historico {
     overflow-x: auto;
   }
-  #contenedor-historico table {
+  .historico-table {
     min-width: 480px;
     font-size: 13px;
   }
