@@ -1,4 +1,4 @@
-// app.js (con histórico agrupado en bloques)
+// app.js
 
 const TIPO_LABEL = {
   virgen_extra: 'Aceite de oliva virgen extra',
@@ -126,7 +126,7 @@ function setupFuenteModal() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
-// 🔹 NUEVO: renderizado del histórico agrupado por fecha en bloques
+// === NUEVO: Render histórico en bloques ===
 function renderHistoricoTabla(historico) {
   const tbody = document.querySelector("#tabla-historico tbody");
   tbody.innerHTML = "";
@@ -136,19 +136,18 @@ function renderHistoricoTabla(historico) {
     return;
   }
 
-  // Agrupar por fecha
+  // Agrupar precios por fecha
   const agrupado = {};
   for (const [tipo, registros] of Object.entries(historico)) {
     registros.forEach(r => {
-      if (!agrupado[r.fecha]) agrupado[r.fecha] = [];
-      agrupado[r.fecha].push({ tipo, precio: r.precio_eur_kg });
+      if (!agrupado[r.fecha]) agrupado[r.fecha] = {};
+      agrupado[r.fecha][tipo] = r.precio_eur_kg;
     });
   }
 
   const fechasOrdenadas = Object.keys(agrupado).sort((a, b) => new Date(b) - new Date(a));
 
   fechasOrdenadas.forEach(fecha => {
-    // Fila bloque de fecha (ocupa las 3 columnas)
     const filaFecha = `
       <tr>
         <td colspan="3" class="fecha-barra">${fecha}</td>
@@ -156,16 +155,18 @@ function renderHistoricoTabla(historico) {
     `;
     tbody.insertAdjacentHTML("beforeend", filaFecha);
 
-    // Filas de tipos y precios
-    agrupado[fecha].forEach(item => {
-      const fila = `
-        <tr class="sub-row">
-          <td></td>
-          <td class="tipo">${item.tipo}</td>
-          <td class="precio">${item.precio.toFixed(3)} €</td>
-        </tr>
-      `;
-      tbody.insertAdjacentHTML("beforeend", fila);
+    ["Aceite de oliva virgen extra", "Aceite de oliva virgen", "Aceite de oliva lampante"].forEach(tipo => {
+      const precio = agrupado[fecha][tipo];
+      if (precio) {
+        const fila = `
+          <tr class="sub-row">
+            <td></td>
+            <td class="tipo">${tipo}</td>
+            <td class="precio">${precio.toFixed(3)} €</td>
+          </tr>
+        `;
+        tbody.insertAdjacentHTML("beforeend", fila);
+      }
     });
   });
 }
@@ -205,15 +206,31 @@ async function cargarDatos() {
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
 
-    // 🔹 Cargar histórico si existe
-    try {
-      const histRes = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: 'no-store' });
-      if (histRes.ok) {
-        const histData = await histRes.json();
-        renderHistoricoTabla(histData);
-      }
-    } catch (e) {
-      console.warn("No se pudo cargar el histórico:", e);
+    // === Cargar histórico al abrir el modal ===
+    const btnHistorico = document.getElementById("btn-historico");
+    const modalHistorico = document.getElementById("historico-modal");
+    const closeHistorico = document.getElementById("historico-close");
+
+    if (btnHistorico && modalHistorico && closeHistorico) {
+      btnHistorico.addEventListener("click", async () => {
+        try {
+          const resH = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: "no-store" });
+          if (!resH.ok) throw new Error(`HTTP ${resH.status}`);
+          const dataH = await resH.json();
+          renderHistoricoTabla(dataH);
+          modalHistorico.classList.add("open");
+        } catch (err) {
+          console.error("Error cargando histórico:", err);
+        }
+      });
+
+      closeHistorico.addEventListener("click", () => {
+        modalHistorico.classList.remove("open");
+      });
+
+      modalHistorico.addEventListener("click", e => {
+        if (e.target === modalHistorico) modalHistorico.classList.remove("open");
+      });
     }
 
   } catch (err) {
