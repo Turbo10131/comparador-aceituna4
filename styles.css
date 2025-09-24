@@ -1,51 +1,129 @@
-/* ===================== */
-/* Estilos tabla histórico (fecha azul + tipo rojo) */
-/* ===================== */
-.historico-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 12px;
-  font-size: 14px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 3px 6px rgba(0,0,0,.08);
+:root {
+  --card-bg: #fff;
+  --card-bd: #e6e6e6;
+  --muted: #666;
+  --pill-bg: #f5f7fb;
+  --accent: #1f6feb;
+  --olive: #8a9b0f;
+  --olive-dark: #6f7d0c;
 }
 
-.historico-table thead th {
-  background: linear-gradient(90deg, #8a9b0f, #d9b310);
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  margin: 0;
+  background: #f6f8fa;
+  color: #222;
+}
+.wrap { max-width: 1000px; margin: 40px auto; padding: 0 16px; }
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-bd);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.04);
+}
+h1 { margin: 0 0 6px; font-size: clamp(22px, 2.9vw, 32px); display: flex; align-items: center; gap: .6rem; }
+h1 .dot { font-size: 28px; }
+.muted { color: var(--muted); margin: 0 0 24px; }
+
+.campo { margin-bottom: 16px; }
+label { font-weight: 600; display: block; margin-bottom: 6px; }
+input[type="number"], select {
+  width: 100%; padding: 10px 12px; font-size: 16px;
+  border-radius: 8px; border: 1px solid var(--card-bd);
+  background: #fff; outline: none; transition: border .15s, box-shadow .15s;
+}
+input[type="number"]:focus, select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+}
+:focus:not(:focus-visible){ outline: none; box-shadow:none; }
+small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
+#precio {
+  margin-top: 14px; font-weight: 700; padding: 10px 12px;
+  background: var(--pill-bg); border-radius: 10px; min-height: 42px;
+  display: flex; align-items: center;
+}
+
+.calc {
+  margin-top: 20px; padding: 16px; border: 1px dashed var(--card-bd);
+  border-radius: 10px; background: #fcfefd;
+}
+.calc h2 { margin: 0 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.calc h2 .emoji { font-size: 20px; }
+.resultado {
+  margin-top: 10px; padding: 12px 14px; border-radius: 10px; font-weight: 700;
+  min-height: 44px; display: flex; align-items: center; justify-content: center;
+}
+.resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
+
+.tabla-info{
+  margin-top:22px; margin-bottom:8px; padding:10px 12px;
+  background:#f5f7fb; border:1px solid var(--card-bd);
+  border-radius:10px; color:#334; font-weight:600;
+}
+
+.tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
+table.price-table { width: 100%; border-collapse: collapse; }
+.price-table thead th {
+  background: linear-gradient(0deg, var(--olive), var(--olive-dark));
+  color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; letter-spacing: .2px;
+}
+.price-table tbody td { padding: 14px 16px; border-top: 1px solid #f0f0f0; }
+.price-table tbody tr:nth-child(even) { background: #fbfcf7; }
+.price-table .tipo { font-weight: 600; }
+.price-table .precio { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+.tabla-footer { margin-top: 8px; display:flex; align-items:center; justify-content:flex-start; }
+.fuente { font-size:12px; color:#666; }
+.fuente a { font-size:12px; color:#1f6feb; text-decoration: underline; cursor:pointer; }
+
+/* Modal */
+.modal-overlay{
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; z-index: 9999;
+}
+.modal-overlay.open{ display:flex; }
+.modal-content{
+  background:#fff; max-width: 720px; width: 95%; border-radius: 12px;
+  padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25);
+}
+.modal-content h3{ margin: 0 0 12px; }
+.modal-content p { margin: 0 0 14px; color:#444; }
+.modal-actions{ display:flex; gap:10px; justify-content:center; margin-top: 6px; }
+.btn{ padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de; background:#fff; cursor:pointer; }
+.btn.primary{ background:#1f6feb; color:#fff; border-color:#1f6feb; }
+
+@media (max-width: 640px) {
+  .price-table thead { display: none; }
+  .price-table, .price-table tbody, .price-table tr, .price-table td { display: block; width: 100%; }
+  .price-table tr { border-bottom: 1px solid #f0f0f0; }
+  .price-table td { display: flex; justify-content: space-between; gap: 12px; }
+  .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
+  .price-table .precio { text-align: left; }
+}
+
+.noscript {
+  margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid #ffe0a6; background: #fff8e6; color: #8a5a00;
+}
+
+/* -------- Estilos NUEVOS para histórico -------- */
+.price-table.historico .fecha-row td {
+  background: #1f6feb;
   color: #fff;
+  font-weight: 700;
   padding: 10px;
-  text-align: left;
-  font-weight: 700;
 }
 
-.historico-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #eee;
+.price-table.historico .sub-row td {
+  background: #fef4f7;
+  color: #a00;
+  padding: 8px 12px;
 }
 
-/* Fecha */
-.historico-table td.fecha {
-  background: #1f6feb;      /* azul */
-  color: #fff;
-  font-weight: 700;
-  text-align: center;
-  width: 110px;
-}
-
-/* Tipo */
-.historico-table td.tipo {
-  background: #b3204d;      /* rojo vino */
-  color: #fff;
-  font-weight: 600;
-  text-align: left;
-  padding-left: 12px;
-}
-
-/* Precio */
-.historico-table td.precio {
+.price-table.historico .sub-row td:last-child {
   text-align: right;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: #111;
+  color: #000;
 }
