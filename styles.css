@@ -15,6 +15,7 @@ body {
   background: #f6f8fa;
   color: #222;
 }
+
 .wrap { max-width: 1000px; margin: 40px auto; padding: 0 16px; }
 .card {
   background: var(--card-bg);
@@ -23,6 +24,7 @@ body {
   padding: 24px;
   box-shadow: 0 10px 20px rgba(0,0,0,.04);
 }
+
 h1 { margin: 0 0 6px; font-size: clamp(22px, 2.9vw, 32px); display: flex; align-items: center; gap: .6rem; }
 h1 .dot { font-size: 28px; }
 .muted { color: var(--muted); margin: 0 0 24px; }
@@ -39,6 +41,7 @@ input[type="number"]:focus, select:focus {
 }
 :focus:not(:focus-visible){ outline: none; box-shadow:none; }
 small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
+
 #precio {
   margin-top: 14px; font-weight: 700; padding: 10px 12px;
   background: var(--pill-bg); border-radius: 10px; min-height: 42px;
@@ -102,6 +105,7 @@ table.price-table { width: 100%; border-collapse: collapse; }
   .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
   .price-table .precio { text-align: left; }
 }
+
 .noscript {
   margin-top: 12px; padding: 12px 14px; border-radius: 10px;
   border: 1px solid #ffe0a6; background: #fff8e6; color: #8a5a00;
@@ -133,14 +137,15 @@ table.price-table { width: 100%; border-collapse: collapse; }
   border-bottom: 1px solid #eee;
 }
 
-/* Barra de fecha */
+/* Barra de fecha ocupa toda la fila */
 .historico-table .fecha-barra {
   background: #1f6feb;
   color: #fff;
   font-weight: 700;
   text-align: center;
-  padding: 6px 0;
+  padding: 8px 0;
   font-size: 15px;
+  border-bottom: 2px solid #ddd;
 }
 
 /* Tipos de aceite */
