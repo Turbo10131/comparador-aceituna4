@@ -8,6 +8,7 @@ const TIPO_LABEL = {
 
 let PRECIOS_MAP = {};
 
+// --- Utilidades ---
 function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
@@ -22,6 +23,7 @@ function normalizaPrecios(preciosRaw) {
   return map;
 }
 
+// --- Render tabla principal ---
 function renderTabla(preciosRaw) {
   const cont = document.getElementById('tabla-precios');
   if (!cont) return;
@@ -54,6 +56,7 @@ function renderTabla(preciosRaw) {
   `;
 }
 
+// --- Calculadora ---
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
@@ -111,6 +114,7 @@ function calcular() {
   `;
 }
 
+// --- Modal fuente ---
 function setupFuenteModal() {
   const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
@@ -126,51 +130,61 @@ function setupFuenteModal() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
-// === NUEVO: Render histórico en bloques ===
-function renderHistoricoTabla(historico) {
-  const tbody = document.querySelector("#tabla-historico tbody");
-  tbody.innerHTML = "";
+// --- Modal histórico ---
+function setupHistoricoModal() {
+  const btn = document.getElementById('abrir-historico');
+  const modal = document.getElementById('historico-modal');
+  const closeBtn = document.getElementById('cerrar-historico');
+  const tbody = document.querySelector('#tabla-historico tbody');
 
-  if (!historico || Object.keys(historico).length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3">No hay datos disponibles.</td></tr>`;
-    return;
-  }
+  if (!btn || !modal || !closeBtn || !tbody) return;
 
-  // Agrupar precios por fecha
-  const agrupado = {};
-  for (const [tipo, registros] of Object.entries(historico)) {
-    registros.forEach(r => {
-      if (!agrupado[r.fecha]) agrupado[r.fecha] = {};
-      agrupado[r.fecha][tipo] = r.precio_eur_kg;
-    });
-  }
+  btn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('precio-aceite-historico.json?v=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-  const fechasOrdenadas = Object.keys(agrupado).sort((a, b) => new Date(b) - new Date(a));
+      // Convertir a estructura agrupada por fecha
+      const fechas = {};
+      Object.entries(data).forEach(([tipo, valores]) => {
+        valores.forEach(v => {
+          if (!fechas[v.fecha]) fechas[v.fecha] = {};
+          fechas[v.fecha][tipo] = v.precio_eur_kg;
+        });
+      });
 
-  fechasOrdenadas.forEach(fecha => {
-    const filaFecha = `
-      <tr>
-        <td colspan="3" class="fecha-barra">${fecha}</td>
-      </tr>
-    `;
-    tbody.insertAdjacentHTML("beforeend", filaFecha);
+      const fechasOrdenadas = Object.keys(fechas).sort((a, b) => new Date(b) - new Date(a));
 
-    ["Aceite de oliva virgen extra", "Aceite de oliva virgen", "Aceite de oliva lampante"].forEach(tipo => {
-      const precio = agrupado[fecha][tipo];
-      if (precio) {
-        const fila = `
-          <tr class="sub-row">
-            <td></td>
-            <td class="tipo">${tipo}</td>
-            <td class="precio">${precio.toFixed(3)} €</td>
-          </tr>
+      let html = '';
+      fechasOrdenadas.forEach(fecha => {
+        html += `
+          <tr><td colspan="3" class="fecha-barra">${fecha}</td></tr>
+          <tr class="sub-row"><td></td><td class="tipo">Aceite de oliva virgen extra</td><td class="precio">${fechas[fecha]['Aceite de oliva virgen extra']?.toFixed(3) ?? '—'}</td></tr>
+          <tr class="sub-row"><td></td><td class="tipo">Aceite de oliva virgen</td><td class="precio">${fechas[fecha]['Aceite de oliva virgen']?.toFixed(3) ?? '—'}</td></tr>
+          <tr class="sub-row"><td></td><td class="tipo">Aceite de oliva lampante</td><td class="precio">${fechas[fecha]['Aceite de oliva lampante']?.toFixed(3) ?? '—'}</td></tr>
         `;
-        tbody.insertAdjacentHTML("beforeend", fila);
-      }
-    });
+      });
+
+      tbody.innerHTML = html;
+      modal.classList.add('open');
+    } catch (err) {
+      console.error('[Historico] Error:', err);
+      tbody.innerHTML = '<tr><td colspan="3">No hay datos disponibles.</td></tr>';
+      modal.classList.add('open');
+    }
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modal.classList.remove('open');
+  });
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.classList.remove('open');
   });
 }
 
+// --- Cargar datos actuales ---
 async function cargarDatos() {
   const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
@@ -206,33 +220,6 @@ async function cargarDatos() {
     sel?.addEventListener('change', () => { actualizarPrecioSeleccion(); calcular(); });
     document.getElementById('rendimiento')?.addEventListener('input', calcular);
 
-    // === Cargar histórico al abrir el modal ===
-    const btnHistorico = document.getElementById("btn-historico");
-    const modalHistorico = document.getElementById("historico-modal");
-    const closeHistorico = document.getElementById("historico-close");
-
-    if (btnHistorico && modalHistorico && closeHistorico) {
-      btnHistorico.addEventListener("click", async () => {
-        try {
-          const resH = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: "no-store" });
-          if (!resH.ok) throw new Error(`HTTP ${resH.status}`);
-          const dataH = await resH.json();
-          renderHistoricoTabla(dataH);
-          modalHistorico.classList.add("open");
-        } catch (err) {
-          console.error("Error cargando histórico:", err);
-        }
-      });
-
-      closeHistorico.addEventListener("click", () => {
-        modalHistorico.classList.remove("open");
-      });
-
-      modalHistorico.addEventListener("click", e => {
-        if (e.target === modalHistorico) modalHistorico.classList.remove("open");
-      });
-    }
-
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
     setTexto(fechaEl, 'Error cargando datos');
@@ -247,7 +234,9 @@ async function cargarDatos() {
   }
 }
 
+// --- Inicialización ---
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
   setupFuenteModal();
+  setupHistoricoModal();
 });
