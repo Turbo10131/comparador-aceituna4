@@ -29,6 +29,7 @@ h1 { margin: 0 0 6px; font-size: clamp(22px, 2.9vw, 32px); display: flex; align-
 h1 .dot { font-size: 28px; }
 .muted { color: var(--muted); margin: 0 0 24px; }
 
+/* Campos */
 .campo { margin-bottom: 16px; }
 label { font-weight: 600; display: block; margin-bottom: 6px; }
 input[type="number"], select {
@@ -47,6 +48,7 @@ small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
   display: flex; align-items: center;
 }
 
+/* Calculadora */
 .calc {
   margin-top: 20px; padding: 16px; border: 1px dashed var(--card-bd);
   border-radius: 10px; background: #fcfefd;
@@ -59,12 +61,12 @@ small.ayuda { color: var(--muted); display: block; margin-top: 6px; }
 }
 .resultado.error { background: #fff6f6; border: 1px solid #ffd1d1; color: #a40000; }
 
+/* Tabla precios actual */
 .tabla-info{
   margin-top:22px; margin-bottom:8px; padding:10px 12px;
   background:#f5f7fb; border:1px solid var(--card-bd);
   border-radius:10px; color:#334; font-weight:600;
 }
-
 .tabla-wrap { border: 1px solid var(--card-bd); border-radius: 12px; overflow: hidden; background: #fff; }
 table.price-table { width: 100%; border-collapse: collapse; }
 .price-table thead th {
@@ -100,7 +102,7 @@ table.price-table { width: 100%; border-collapse: collapse; }
 .btn.primary:hover{ background:#1558c0; }
 
 /* ===================== */
-/* Estilos tabla histórica agrupada */
+/* Estilos tabla histórico (jerárquico con rowspan) */
 /* ===================== */
 .historico-table {
   width: 100%;
@@ -112,32 +114,40 @@ table.price-table { width: 100%; border-collapse: collapse; }
   box-shadow: 0 3px 6px rgba(0,0,0,.08);
 }
 
+.historico-table thead th {
+  background: linear-gradient(90deg, #8a9b0f, #d9b310);
+  color: #fff;
+  padding: 10px;
+  text-align: left;
+  font-weight: 700;
+}
+
 .historico-table td {
   padding: 8px 10px;
   border-bottom: 1px solid #eee;
 }
 
-/* fila fecha (rectángulo azul) */
-.historico-table .fila-fecha td {
-  background: #2a4d8f;
-  color: #fff;
+/* Fecha */
+.historico-table td.fecha {
+  background: #f0f4e3;
   font-weight: 700;
   text-align: center;
-  font-size: 15px;
+  color: #333;
+  vertical-align: middle;
 }
 
-/* filas de variedades (rectángulo rojo) */
-.historico-table .fila-variedad td:nth-child(2) {
-  background: #c21d6f;
-  color: #fff;
-  font-weight: 600;
+/* Tipo */
+.historico-table td.tipo {
+  font-style: italic;
+  color: #444;
 }
 
-.historico-table .fila-variedad td:last-child {
+/* Precio */
+.historico-table td.precio {
   text-align: right;
-  font-weight: 700;
-  color: #222;
-  background: #fdfdfd;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #111;
 }
 
 /* Responsive */
@@ -148,14 +158,6 @@ table.price-table { width: 100%; border-collapse: collapse; }
   .price-table td { display: flex; justify-content: space-between; gap: 12px; }
   .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
   .price-table .precio { text-align: left; }
-
-  #contenedor-historico {
-    overflow-x: auto;
-  }
-  .historico-table {
-    min-width: 480px;
-    font-size: 13px;
-  }
 }
 
 .noscript {
