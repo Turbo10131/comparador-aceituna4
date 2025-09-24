@@ -1,4 +1,4 @@
-// app.js (con histórico agrupado por fecha)
+// app.js (histórico con fechas en la primera columna usando rowspan)
 
 const TIPO_LABEL = {
   "Aceite de oliva virgen extra": "Aceite de oliva virgen extra",
@@ -140,10 +140,16 @@ function renderHistorico(datos) {
 
   let html = `
     <table class="historico-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo de aceite</th>
+          <th>Precio €/kg</th>
+        </tr>
+      </thead>
       <tbody>
   `;
 
-  // recolectar fechas únicas
   const fechas = new Set();
   for (let tipo in datos) {
     datos[tipo].forEach(entry => fechas.add(entry.fecha));
@@ -151,22 +157,29 @@ function renderHistorico(datos) {
   const fechasOrdenadas = Array.from(fechas).sort().reverse();
 
   fechasOrdenadas.forEach(fecha => {
-    // fila de la fecha
-    html += `
-      <tr class="fila-fecha">
-        <td colspan="3">${fecha}</td>
-      </tr>
-    `;
-
-    // filas de variedades
+    const filas = [];
     for (let tipo in datos) {
       const entry = datos[tipo].find(e => e.fecha === fecha);
       if (entry) {
+        filas.push([tipo, entry.precio_eur_kg]);
+      }
+    }
+
+    if (filas.length > 0) {
+      // primera fila con la fecha
+      html += `
+        <tr>
+          <td rowspan="${filas.length}" class="fecha">${fecha}</td>
+          <td class="tipo">${filas[0][0]}</td>
+          <td class="precio">${filas[0][1].toFixed(3)} €/kg</td>
+        </tr>
+      `;
+      // resto de filas
+      for (let i = 1; i < filas.length; i++) {
         html += `
-          <tr class="fila-variedad">
-            <td></td>
-            <td>${tipo}</td>
-            <td>${entry.precio_eur_kg.toFixed(3)} €/kg</td>
+          <tr>
+            <td class="tipo">${filas[i][0]}</td>
+            <td class="precio">${filas[i][1].toFixed(3)} €/kg</td>
           </tr>
         `;
       }
