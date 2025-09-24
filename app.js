@@ -1,4 +1,4 @@
-// app.js (histórico con fechas en la primera columna usando rowspan)
+// app.js (histórico con fechas repetidas, cada fila tiene fecha+tipo+precio)
 
 const TIPO_LABEL = {
   "Aceite de oliva virgen extra": "Aceite de oliva virgen extra",
@@ -157,29 +157,14 @@ function renderHistorico(datos) {
   const fechasOrdenadas = Array.from(fechas).sort().reverse();
 
   fechasOrdenadas.forEach(fecha => {
-    const filas = [];
     for (let tipo in datos) {
       const entry = datos[tipo].find(e => e.fecha === fecha);
       if (entry) {
-        filas.push([tipo, entry.precio_eur_kg]);
-      }
-    }
-
-    if (filas.length > 0) {
-      // primera fila con la fecha
-      html += `
-        <tr>
-          <td rowspan="${filas.length}" class="fecha">${fecha}</td>
-          <td class="tipo">${filas[0][0]}</td>
-          <td class="precio">${filas[0][1].toFixed(3)} €/kg</td>
-        </tr>
-      `;
-      // resto de filas
-      for (let i = 1; i < filas.length; i++) {
         html += `
           <tr>
-            <td class="tipo">${filas[i][0]}</td>
-            <td class="precio">${filas[i][1].toFixed(3)} €/kg</td>
+            <td class="fecha">${fecha}</td>
+            <td class="tipo">${tipo}</td>
+            <td class="precio">${entry.precio_eur_kg.toFixed(3)} €/kg</td>
           </tr>
         `;
       }
