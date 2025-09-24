@@ -85,10 +85,10 @@ table.price-table { width: 100%; border-collapse: collapse; }
 }
 .modal-overlay.open{ display:flex; }
 .modal-content{
-  background:#fff; max-width: 720px; width: 95%; border-radius: 12px;
-  padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25);
+  background:#fff; max-width: 480px; width: 90%; border-radius: 12px;
+  padding: 20px 18px; box-shadow: 0 15px 35px rgba(0,0,0,.25); text-align: center;
 }
-.modal-content h3{ margin: 0 0 12px; }
+.modal-content h3{ margin: 0 0 6px; }
 .modal-content p { margin: 0 0 14px; color:#444; }
 .modal-actions{ display:flex; gap:10px; justify-content:center; margin-top: 6px; }
 .btn{ padding: 8px 12px; border-radius: 8px; border: 1px solid #d0d7de; background:#fff; cursor:pointer; }
@@ -102,28 +102,59 @@ table.price-table { width: 100%; border-collapse: collapse; }
   .price-table td::before { content: attr(data-label); color: var(--muted); font-weight: 600; }
   .price-table .precio { text-align: left; }
 }
-
 .noscript {
   margin-top: 12px; padding: 12px 14px; border-radius: 10px;
   border: 1px solid #ffe0a6; background: #fff8e6; color: #8a5a00;
 }
 
-/* -------- Estilos NUEVOS para histórico -------- */
-.price-table.historico .fecha-row td {
+/* ========================= */
+/* Tabla Histórico agrupada  */
+/* ========================= */
+.historico-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 6px rgba(0,0,0,.08);
+}
+
+.historico-table thead th {
+  background: linear-gradient(90deg, var(--olive), var(--olive-dark));
+  color: #fff;
+  padding: 10px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.historico-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Fecha (con rowspan) */
+.historico-table td.fecha {
   background: #1f6feb;
   color: #fff;
   font-weight: 700;
-  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+  width: 110px;
+  border-right: 2px solid #fff;
 }
 
-.price-table.historico .sub-row td {
+/* Tipos de aceite */
+.historico-table td.tipo {
   background: #fef4f7;
   color: #a00;
-  padding: 8px 12px;
+  font-weight: 600;
 }
 
-.price-table.historico .sub-row td:last-child {
+/* Precio */
+.historico-table td.precio {
   text-align: right;
   font-weight: 600;
   color: #000;
+  font-variant-numeric: tabular-nums;
 }
