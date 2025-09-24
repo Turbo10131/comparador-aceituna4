@@ -126,7 +126,9 @@ function setupFuenteModal() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
-/* Renderizado de la tabla histórica en bloques */
+/* ============================= */
+/* Renderizar tabla de histórico */
+/* ============================= */
 function renderHistoricoTabla(datos) {
   const modalCont = document.getElementById('historico-body');
   if (!modalCont) return;
@@ -145,7 +147,7 @@ function renderHistoricoTabla(datos) {
 
     bloques.push(`
       <tbody class="bloque-fecha">
-        <tr>
+        <tr class="fila-fecha">
           <td colspan="2" class="fecha-barra">${fecha}</td>
         </tr>
         ${filasTipos}
