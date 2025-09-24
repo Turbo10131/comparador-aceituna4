@@ -108,7 +108,7 @@ table.price-table { width: 100%; border-collapse: collapse; }
 }
 
 /* ========================= */
-/* Tabla Histórico agrupada  */
+/* Tabla Histórico BLOQUES   */
 /* ========================= */
 .historico-table {
   width: 100%;
@@ -133,15 +133,14 @@ table.price-table { width: 100%; border-collapse: collapse; }
   border-bottom: 1px solid #eee;
 }
 
-/* Fecha (con rowspan) */
-.historico-table td.fecha {
+/* Barra de fecha */
+.historico-table .fecha-barra {
   background: #1f6feb;
   color: #fff;
   font-weight: 700;
   text-align: center;
-  vertical-align: middle;
-  width: 110px;
-  border-right: 2px solid #fff;
+  padding: 6px 0;
+  font-size: 15px;
 }
 
 /* Tipos de aceite */
@@ -151,7 +150,7 @@ table.price-table { width: 100%; border-collapse: collapse; }
   font-weight: 600;
 }
 
-/* Precio */
+/* Precios */
 .historico-table td.precio {
   text-align: right;
   font-weight: 600;
