@@ -1,21 +1,26 @@
-// app.js (sin gráfica)
+// app.js (con histórico agrupado por fecha)
 
 const TIPO_LABEL = {
-  virgen_extra: 'Aceite de oliva virgen extra',
-  virgen:       'Aceite de oliva virgen',
-  lampante:     'Aceite de oliva lampante',
+  "Aceite de oliva virgen extra": "Aceite de oliva virgen extra",
+  "Aceite de oliva virgen": "Aceite de oliva virgen",
+  "Aceite de oliva lampante": "Aceite de oliva lampante",
+  virgen_extra: "Aceite de oliva virgen extra",
+  virgen: "Aceite de oliva virgen",
+  lampante: "Aceite de oliva lampante",
 };
 
 let PRECIOS_MAP = {};
 
+// ================== UTILIDADES ==================
 function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
+// ================== TABLA PRINCIPAL ==================
 function normalizaPrecios(preciosRaw) {
   const map = {};
-  const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
-  const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
-  const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
+  const ve = preciosRaw["Aceite de oliva virgen extra"]?.precio_eur_kg ?? null;
+  const v  = preciosRaw["Aceite de oliva virgen"]?.precio_eur_kg ?? null;
+  const l  = preciosRaw["Aceite de oliva lampante"]?.precio_eur_kg ?? null;
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
@@ -27,19 +32,19 @@ function renderTabla(preciosRaw) {
   if (!cont) return;
 
   const rows = [
-    ['Aceite de oliva virgen extra', preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg],
-    ['Aceite de oliva virgen',       preciosRaw['Aceite de oliva virgen']?.precio_eur_kg],
-    ['Aceite de oliva lampante',     preciosRaw['Aceite de oliva lampante']?.precio_eur_kg],
+    ["Aceite de oliva virgen extra", preciosRaw["Aceite de oliva virgen extra"]?.precio_eur_kg],
+    ["Aceite de oliva virgen",       preciosRaw["Aceite de oliva virgen"]?.precio_eur_kg],
+    ["Aceite de oliva lampante",     preciosRaw["Aceite de oliva lampante"]?.precio_eur_kg],
   ];
 
   const cuerpo = rows.map(([label, val]) => {
-    const precioTxt = (val && val > 0 && val < 20) ? euros(val) : '—';
+    const precioTxt = (val && val > 0 && val < 20) ? euros(val) : "—";
     return `
       <tr>
         <td class="tipo" data-label="Tipo de aceite de oliva">${label}</td>
         <td class="precio" data-label="Precio €/kg">${precioTxt}</td>
       </tr>`;
-  }).join('');
+  }).join("");
 
   cont.innerHTML = `
     <table class="price-table">
@@ -54,6 +59,7 @@ function renderTabla(preciosRaw) {
   `;
 }
 
+// ================== CALCULADORA ==================
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
@@ -111,6 +117,7 @@ function calcular() {
   `;
 }
 
+// ================== MODALES ==================
 function setupFuenteModal() {
   const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
@@ -126,6 +133,51 @@ function setupFuenteModal() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
+// ================== TABLA HISTÓRICO ==================
+function renderHistorico(datos) {
+  const cont = document.getElementById("contenedor-historico");
+  if (!cont) return;
+
+  let html = `
+    <table class="historico-table">
+      <tbody>
+  `;
+
+  // recolectar fechas únicas
+  const fechas = new Set();
+  for (let tipo in datos) {
+    datos[tipo].forEach(entry => fechas.add(entry.fecha));
+  }
+  const fechasOrdenadas = Array.from(fechas).sort().reverse();
+
+  fechasOrdenadas.forEach(fecha => {
+    // fila de la fecha
+    html += `
+      <tr class="fila-fecha">
+        <td colspan="3">${fecha}</td>
+      </tr>
+    `;
+
+    // filas de variedades
+    for (let tipo in datos) {
+      const entry = datos[tipo].find(e => e.fecha === fecha);
+      if (entry) {
+        html += `
+          <tr class="fila-variedad">
+            <td></td>
+            <td>${tipo}</td>
+            <td>${entry.precio_eur_kg.toFixed(3)} €/kg</td>
+          </tr>
+        `;
+      }
+    }
+  });
+
+  html += `</tbody></table>`;
+  cont.innerHTML = html;
+}
+
+// ================== CARGA DE DATOS ==================
 async function cargarDatos() {
   const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
@@ -175,7 +227,19 @@ async function cargarDatos() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// ================== MAIN ==================
+document.addEventListener('DOMContentLoaded', async () => {
   cargarDatos();
   setupFuenteModal();
+
+  // histórico
+  try {
+    const resHist = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (resHist.ok) {
+      const datosHist = await resHist.json();
+      renderHistorico(datosHist);
+    }
+  } catch (err) {
+    console.error('[cargarDatosHistorico] Error:', err);
+  }
 });
