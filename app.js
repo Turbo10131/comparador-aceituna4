@@ -1,5 +1,3 @@
-// app.js
-
 const TIPO_LABEL = {
   virgen_extra: 'Aceite de oliva virgen extra',
   virgen:       'Aceite de oliva virgen',
@@ -8,10 +6,10 @@ const TIPO_LABEL = {
 
 let PRECIOS_MAP = {};
 
-// --- Utilidades ---
 function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
+// ---------------- TABLA PRINCIPAL ----------------
 function normalizaPrecios(preciosRaw) {
   const map = {};
   const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
@@ -23,7 +21,6 @@ function normalizaPrecios(preciosRaw) {
   return map;
 }
 
-// --- Render tabla principal ---
 function renderTabla(preciosRaw) {
   const cont = document.getElementById('tabla-precios');
   if (!cont) return;
@@ -56,7 +53,7 @@ function renderTabla(preciosRaw) {
   `;
 }
 
-// --- Calculadora ---
+// ---------------- CALCULADORA ----------------
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
@@ -114,65 +111,15 @@ function calcular() {
   `;
 }
 
-// --- Modal fuente ---
+// ---------------- MODAL FUENTE ----------------
 function setupFuenteModal() {
-  const link = document.getElementById('fuente-link');
+  const btn = document.getElementById('abrir-fuente');
   const modal = document.getElementById('fuente-modal');
-  const closeBtn = document.getElementById('modal-close');
-  if (!link || !modal || !closeBtn) return;
+  const closeBtn = document.getElementById('cerrar-fuente');
+  if (!btn || !modal || !closeBtn) return;
 
-  const open = () => { modal.classList.add('open'); link.blur(); };
-  const close = () => { modal.classList.remove('open'); link.focus(); };
-
-  link.addEventListener('click', e => { e.preventDefault(); open(); });
-  closeBtn.addEventListener('click', close);
-  modal.addEventListener('click', e => { if (e.target === modal) close(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
-}
-
-// --- Modal histórico ---
-function setupHistoricoModal() {
-  const btn = document.getElementById('abrir-historico');
-  const modal = document.getElementById('historico-modal');
-  const closeBtn = document.getElementById('cerrar-historico');
-  const tbody = document.querySelector('#tabla-historico tbody');
-
-  if (!btn || !modal || !closeBtn || !tbody) return;
-
-  btn.addEventListener('click', async () => {
-    try {
-      const res = await fetch('precio-aceite-historico.json?v=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      // Convertir a estructura agrupada por fecha
-      const fechas = {};
-      Object.entries(data).forEach(([tipo, valores]) => {
-        valores.forEach(v => {
-          if (!fechas[v.fecha]) fechas[v.fecha] = {};
-          fechas[v.fecha][tipo] = v.precio_eur_kg;
-        });
-      });
-
-      const fechasOrdenadas = Object.keys(fechas).sort((a, b) => new Date(b) - new Date(a));
-
-      let html = '';
-      fechasOrdenadas.forEach(fecha => {
-        html += `
-          <tr><td colspan="3" class="fecha-barra">${fecha}</td></tr>
-          <tr class="sub-row"><td></td><td class="tipo">Aceite de oliva virgen extra</td><td class="precio">${fechas[fecha]['Aceite de oliva virgen extra']?.toFixed(3) ?? '—'}</td></tr>
-          <tr class="sub-row"><td></td><td class="tipo">Aceite de oliva virgen</td><td class="precio">${fechas[fecha]['Aceite de oliva virgen']?.toFixed(3) ?? '—'}</td></tr>
-          <tr class="sub-row"><td></td><td class="tipo">Aceite de oliva lampante</td><td class="precio">${fechas[fecha]['Aceite de oliva lampante']?.toFixed(3) ?? '—'}</td></tr>
-        `;
-      });
-
-      tbody.innerHTML = html;
-      modal.classList.add('open');
-    } catch (err) {
-      console.error('[Historico] Error:', err);
-      tbody.innerHTML = '<tr><td colspan="3">No hay datos disponibles.</td></tr>';
-      modal.classList.add('open');
-    }
+  btn.addEventListener('click', () => {
+    modal.classList.add('open');
   });
 
   closeBtn.addEventListener('click', () => {
@@ -184,7 +131,7 @@ function setupHistoricoModal() {
   });
 }
 
-// --- Cargar datos actuales ---
+// ---------------- DATOS ----------------
 async function cargarDatos() {
   const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
@@ -234,9 +181,7 @@ async function cargarDatos() {
   }
 }
 
-// --- Inicialización ---
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
   setupFuenteModal();
-  setupHistoricoModal();
 });
