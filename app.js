@@ -1,21 +1,26 @@
-// app.js
+// app.js (con histórico agrupado por fecha con rowspan)
 
 const TIPO_LABEL = {
-  virgen_extra: 'Aceite de oliva virgen extra',
-  virgen:       'Aceite de oliva virgen',
-  lampante:     'Aceite de oliva lampante',
+  "Aceite de oliva virgen extra": "Aceite de oliva virgen extra",
+  "Aceite de oliva virgen": "Aceite de oliva virgen",
+  "Aceite de oliva lampante": "Aceite de oliva lampante",
+  virgen_extra: "Aceite de oliva virgen extra",
+  virgen: "Aceite de oliva virgen",
+  lampante: "Aceite de oliva lampante",
 };
 
 let PRECIOS_MAP = {};
 
+// ================== UTILIDADES ==================
 function setTexto(el, txt) { if (el) el.textContent = txt; }
 function euros(n) { return `${Number(n).toFixed(3)} €/kg`; }
 
+// ================== TABLA PRINCIPAL ==================
 function normalizaPrecios(preciosRaw) {
   const map = {};
-  const ve = preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg ?? null;
-  const v  = preciosRaw['Aceite de oliva virgen']?.precio_eur_kg ?? null;
-  const l  = preciosRaw['Aceite de oliva lampante']?.precio_eur_kg ?? null;
+  const ve = preciosRaw["Aceite de oliva virgen extra"]?.precio_eur_kg ?? null;
+  const v  = preciosRaw["Aceite de oliva virgen"]?.precio_eur_kg ?? null;
+  const l  = preciosRaw["Aceite de oliva lampante"]?.precio_eur_kg ?? null;
   if (ve && ve > 0 && ve < 20) map.virgen_extra = Number(ve);
   if (v  && v  > 0 && v  < 20) map.virgen       = Number(v);
   if (l  && l  > 0 && l  < 20) map.lampante     = Number(l);
@@ -27,19 +32,19 @@ function renderTabla(preciosRaw) {
   if (!cont) return;
 
   const rows = [
-    ['Aceite de oliva virgen extra', preciosRaw['Aceite de oliva virgen extra']?.precio_eur_kg],
-    ['Aceite de oliva virgen',       preciosRaw['Aceite de oliva virgen']?.precio_eur_kg],
-    ['Aceite de oliva lampante',     preciosRaw['Aceite de oliva lampante']?.precio_eur_kg],
+    ["Aceite de oliva virgen extra", preciosRaw["Aceite de oliva virgen extra"]?.precio_eur_kg],
+    ["Aceite de oliva virgen",       preciosRaw["Aceite de oliva virgen"]?.precio_eur_kg],
+    ["Aceite de oliva lampante",     preciosRaw["Aceite de oliva lampante"]?.precio_eur_kg],
   ];
 
   const cuerpo = rows.map(([label, val]) => {
-    const precioTxt = (val && val > 0 && val < 20) ? euros(val) : '—';
+    const precioTxt = (val && val > 0 && val < 20) ? euros(val) : "—";
     return `
       <tr>
         <td class="tipo" data-label="Tipo de aceite de oliva">${label}</td>
         <td class="precio" data-label="Precio €/kg">${precioTxt}</td>
       </tr>`;
-  }).join('');
+  }).join("");
 
   cont.innerHTML = `
     <table class="price-table">
@@ -54,6 +59,7 @@ function renderTabla(preciosRaw) {
   `;
 }
 
+// ================== CALCULADORA ==================
 function actualizarPrecioSeleccion() {
   const sel = document.getElementById('tipo');
   const precioEl = document.getElementById('precio');
@@ -111,6 +117,7 @@ function calcular() {
   `;
 }
 
+// ================== MODALES ==================
 function setupFuenteModal() {
   const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
@@ -126,72 +133,64 @@ function setupFuenteModal() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
-/* ---------- NUEVO: Modal histórico ---------- */
-async function cargarDatosHistorico() {
-  const modal = document.getElementById('historico-modal');
-  const cont  = document.getElementById('historico-contenido');
-  if (!modal || !cont) return;
+// ================== TABLA HISTÓRICO ==================
+function renderHistorico(datos) {
+  const cont = document.getElementById("contenedor-historico");
+  if (!cont) return;
 
-  try {
-    const res = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const datos = await res.json();
+  let html = `
+    <table class="historico-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo de aceite</th>
+          <th>Precio €/kg</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
 
-    // Construimos tabla agrupada por fecha
-    const fechas = new Set();
-    Object.values(datos).forEach(arr => arr.forEach(r => fechas.add(r.fecha)));
-    const fechasOrdenadas = [...fechas].sort((a, b) => new Date(b) - new Date(a));
-
-    let rows = '';
-    fechasOrdenadas.forEach(fecha => {
-      const ve = datos['Aceite de oliva virgen extra']?.find(r => r.fecha === fecha)?.precio_eur_kg;
-      const v  = datos['Aceite de oliva virgen']?.find(r => r.fecha === fecha)?.precio_eur_kg;
-      const l  = datos['Aceite de oliva lampante']?.find(r => r.fecha === fecha)?.precio_eur_kg;
-
-      rows += `
-        <tr class="fecha-row"><td>${fecha}</td><td colspan="2"></td></tr>
-        ${ve ? `<tr class="sub-row"><td></td><td>Aceite de oliva virgen extra</td><td>${ve.toFixed(3)} €/kg</td></tr>` : ''}
-        ${v  ? `<tr class="sub-row"><td></td><td>Aceite de oliva virgen</td><td>${v.toFixed(3)} €/kg</td></tr>` : ''}
-        ${l  ? `<tr class="sub-row"><td></td><td>Aceite de oliva lampante</td><td>${l.toFixed(3)} €/kg</td></tr>` : ''}
-      `;
-    });
-
-    cont.innerHTML = `
-      <table class="price-table historico">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo de aceite</th>
-            <th>Precio €/kg</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-  } catch (err) {
-    console.error('[cargarDatosHistorico] Error:', err);
-    cont.innerHTML = '<p class="error">No se pudieron cargar los datos históricos.</p>';
+  const fechas = new Set();
+  for (let tipo in datos) {
+    datos[tipo].forEach(entry => fechas.add(entry.fecha));
   }
-}
+  const fechasOrdenadas = Array.from(fechas).sort().reverse();
 
-function setupHistoricoModal() {
-  const btn = document.getElementById('btn-historico');
-  const modal = document.getElementById('historico-modal');
-  const closeBtn = document.getElementById('historico-close');
-  if (!btn || !modal || !closeBtn) return;
+  fechasOrdenadas.forEach(fecha => {
+    const filas = [];
+    for (let tipo in datos) {
+      const entry = datos[tipo].find(e => e.fecha === fecha);
+      if (entry) {
+        filas.push([tipo, entry.precio_eur_kg]);
+      }
+    }
 
-  btn.addEventListener('click', e => {
-    e.preventDefault();
-    modal.classList.add('open');
-    cargarDatosHistorico();
+    if (filas.length > 0) {
+      // Primera fila con fecha (celda azul con rowspan)
+      html += `
+        <tr>
+          <td class="fecha" rowspan="${filas.length}">${fecha}</td>
+          <td class="tipo">${filas[0][0]}</td>
+          <td class="precio">${filas[0][1].toFixed(3)} €/kg</td>
+        </tr>
+      `;
+      // Filas siguientes sin fecha
+      for (let i = 1; i < filas.length; i++) {
+        html += `
+          <tr>
+            <td class="tipo">${filas[i][0]}</td>
+            <td class="precio">${filas[i][1].toFixed(3)} €/kg</td>
+          </tr>
+        `;
+      }
+    }
   });
 
-  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
+  html += `</tbody></table>`;
+  cont.innerHTML = html;
 }
-/* ------------------------------------------- */
 
+// ================== CARGA DE DATOS ==================
 async function cargarDatos() {
   const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
@@ -241,8 +240,19 @@ async function cargarDatos() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// ================== MAIN ==================
+document.addEventListener('DOMContentLoaded', async () => {
   cargarDatos();
   setupFuenteModal();
-  setupHistoricoModal(); // << NUEVO
+
+  // histórico
+  try {
+    const resHist = await fetch(`precio-aceite-historico.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (resHist.ok) {
+      const datosHist = await resHist.json();
+      renderHistorico(datosHist);
+    }
+  } catch (err) {
+    console.error('[cargarDatosHistorico] Error:', err);
+  }
 });
