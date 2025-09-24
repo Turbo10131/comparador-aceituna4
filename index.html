@@ -1,95 +1,68 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precios del Aceite de Oliva</title>
-  <meta name="color-scheme" content="light" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
+  <main class="container">
+    <h1>🍈 Precios del Aceite de Oliva</h1>
 
-      <!-- Botón para abrir histórico -->
-      <button id="btnConsultarHistorial" class="btn primary" style="margin-bottom:20px;">
-        Consultar precios
-      </button>
+    <!-- Botón abrir modal -->
+    <button id="abrir-historico" class="btn">Consultar precios</button>
 
-      <noscript>
-        <div class="noscript">
-          ⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.
-        </div>
-      </noscript>
+    <div class="calc-section">
+      <label for="rendimiento">Rendimiento (%)</label>
+      <input type="number" id="rendimiento" placeholder="Introduce un número entre 0 y 100.">
+      
+      <label for="tipo">Calidad del Aceite</label>
+      <select id="tipo">
+        <option value="">Selecciona…</option>
+        <option value="virgen_extra">Virgen Extra</option>
+        <option value="virgen">Virgen</option>
+        <option value="lampante">Lampante</option>
+      </select>
 
-      <div class="campo">
-        <label for="rendimiento">Rendimiento (%)</label>
-        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1"
-               placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
-        <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
-      </div>
-
-      <div class="campo">
-        <label for="tipo">Calidad del Aceite</label>
-        <select id="tipo" autocomplete="off">
-          <option value="">-- Elegir calidad --</option>
-          <option value="virgen_extra">Virgen Extra</option>
-          <option value="virgen">Virgen</option>
-          <option value="lampante">Lampante</option>
-        </select>
-      </div>
-
-      <div id="precio" role="status" aria-live="polite"></div>
-
-      <div class="calc">
-        <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
-        <p class="muted" style="margin: 4px 0 8px;">
-          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
-        </p>
-        <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
-      </div>
-
-      <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
-      <div id="tabla-precios" class="tabla-wrap"></div>
-
-      <div class="tabla-footer">
-        <span class="fuente">
-          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
-            De dónde obtenemos los precios
-          </a>
-        </span>
-      </div>
+      <div id="precio"></div>
     </div>
-  </div>
 
-  <!-- Modal Fuente -->
-  <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-content">
-      <h3 id="modal-title">Fuente de los precios</h3>
+    <section>
+      <h2>📊 Calculadora — precio por kg de aceituna</h2>
+      <div id="resultado"></div>
+    </section>
+
+    <section>
+      <div id="tabla-info"></div>
+      <div id="tabla-precios"></div>
+    </section>
+
+    <footer>
+      <p>Fuente de los precios</p>
       <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
-      <div class="modal-actions">
-        <a class="btn primary" href="https://www.infaoliva.com/" target="_blank" rel="noopener">Ir a Infaoliva</a>
-        <button id="modal-close" class="btn" type="button">Cerrar</button>
-      </div>
+      <a href="https://www.infaoliva.com" target="_blank" rel="noopener">Ir a Infaoliva</a>
+    </footer>
+  </main>
+
+  <!-- === MODAL HISTÓRICO === -->
+  <div id="historico-modal" class="modal">
+    <div class="modal-content">
+      <h2>Histórico de precios del aceite de oliva</h2>
+      <table id="tabla-historico">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo de aceite</th>
+            <th>Precio €/kg</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button id="cerrar-historico" class="btn">Cerrar</button>
     </div>
   </div>
 
-  <!-- Modal Histórico -->
-  <div id="modal-historico" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-content" style="max-width: 680px;">
-      <h3 id="modal-historico-title">Histórico de precios del aceite de oliva</h3>
-      <div id="contenedor-historico" style="max-height: 400px; overflow-y: auto; margin-top: 14px;">
-        <p>Cargando datos...</p>
-      </div>
-      <div class="modal-actions" style="margin-top: 16px; justify-content: flex-end;">
-        <button id="modal-historico-close" class="btn" type="button">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="app.js" defer></script>
-  <script src="modal-historico.js" defer></script>
+  <script src="app.js"></script>
 </body>
 </html>
