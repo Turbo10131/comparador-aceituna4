@@ -5,64 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precios del Aceite de Oliva</title>
   <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
 </head>
 <body>
-  <main class="container">
-    <h1>🍈 Precios del Aceite de Oliva</h1>
+  <div class="container">
+    <h1>🥑 Precios del Aceite de Oliva</h1>
 
-    <!-- Botón abrir modal -->
-    <button id="abrir-historico" class="btn">Consultar precios</button>
+    <button id="consultar" class="btn">Consultar precios</button>
 
-    <div class="calc-section">
-      <label for="rendimiento">Rendimiento (%)</label>
-      <input type="number" id="rendimiento" placeholder="Introduce un número entre 0 y 100.">
-      
-      <label for="tipo">Calidad del Aceite</label>
-      <select id="tipo">
-        <option value="">Selecciona…</option>
-        <option value="virgen_extra">Virgen Extra</option>
-        <option value="virgen">Virgen</option>
-        <option value="lampante">Lampante</option>
-      </select>
+    <label for="rendimiento">Rendimiento (%)</label>
+    <input type="number" id="rendimiento" value="20" min="0" max="100">
+    <small>Introduce un número entre 0 y 100.</small>
 
-      <div id="precio"></div>
-    </div>
+    <label for="tipo">Calidad del Aceite</label>
+    <select id="tipo">
+      <option value="">-- Selecciona --</option>
+      <option value="virgen_extra">Virgen Extra</option>
+      <option value="virgen">Virgen</option>
+      <option value="lampante">Lampante</option>
+    </select>
 
-    <section>
-      <h2>📊 Calculadora — precio por kg de aceituna</h2>
-      <div id="resultado"></div>
-    </section>
+    <p id="precio"></p>
 
-    <section>
-      <div id="tabla-info"></div>
-      <div id="tabla-precios"></div>
-    </section>
+    <h2>📊 Calculadora — precio por kg de aceituna</h2>
+    <div id="resultado"></div>
 
-    <footer>
-      <p>Fuente de los precios</p>
-      <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
-      <a href="https://www.infaoliva.com" target="_blank" rel="noopener">Ir a Infaoliva</a>
-    </footer>
-  </main>
+    <div id="tabla-info"></div>
+    <div id="tabla-precios"></div>
 
-  <!-- === MODAL HISTÓRICO === -->
-  <div id="historico-modal" class="modal">
-    <div class="modal-content">
-      <h2>Histórico de precios del aceite de oliva</h2>
-      <table id="tabla-historico">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo de aceite</th>
-            <th>Precio €/kg</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button id="cerrar-historico" class="btn">Cerrar</button>
+    <!-- Botón debajo de la tabla -->
+    <div class="fuente-btn">
+      <button id="abrir-fuente" class="btn-link">De dónde obtenemos los precios</button>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Modal de Fuente -->
+  <div id="fuente-modal" class="modal">
+    <div class="modal-content">
+      <h2>Fuente de los precios</h2>
+      <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
+      <p><a href="https://www.infaoliva.com/" target="_blank">Ir a Infaoliva</a></p>
+      <button id="cerrar-fuente" class="btn">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- Modal Histórico -->
+  <div id="historico-modal" class="modal">
+    <div class="modal-content modal-large">
+      <h2>Histórico de precios del aceite de oliva</h2>
+      <div id="historico-tabla"></div>
+      <button id="cerrar-historico" class="btn">Cerrar</button>
+    </div>
+  </div>
 </body>
 </html>
