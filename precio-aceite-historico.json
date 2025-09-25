@@ -191,6 +191,10 @@
     {
       "fecha": "2025-09-24",
       "precio_eur_kg": 4.031
+    },
+    {
+      "fecha": "2025-09-25",
+      "precio_eur_kg": 4.08
     }
   ],
   "Aceite de oliva virgen": [
@@ -385,6 +389,10 @@
     {
       "fecha": "2025-09-24",
       "precio_eur_kg": 3.635
+    },
+    {
+      "fecha": "2025-09-25",
+      "precio_eur_kg": 3.669
     }
   ],
   "Aceite de oliva lampante": [
@@ -579,6 +587,10 @@
     {
       "fecha": "2025-09-24",
       "precio_eur_kg": 3.5
+    },
+    {
+      "fecha": "2025-09-25",
+      "precio_eur_kg": 3.515
     }
   ]
 }
