@@ -111,27 +111,79 @@ function calcular() {
   `;
 }
 
+// ---------------- MODAL HISTÓRICO ----------------
+function setupHistoricoModal() {
+  const btn = document.getElementById('consultar-btn');
+  const modal = document.getElementById('historico-modal');
+  const closeBtn = document.getElementById('historico-close');
+  const tbody = document.getElementById('historico-body');
+
+  if (!btn || !modal || !closeBtn || !tbody) return;
+
+  btn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('precio-aceite-historico.json?v=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Agrupar por fecha
+      const agrupado = {};
+      for (const [tipo, registros] of Object.entries(data)) {
+        registros.forEach(r => {
+          if (!agrupado[r.fecha]) agrupado[r.fecha] = {};
+          agrupado[r.fecha][tipo] = r.precio_eur_kg;
+        });
+      }
+
+      const fechasOrdenadas = Object.keys(agrupado).sort((a, b) => new Date(b) - new Date(a));
+
+      let html = '';
+      fechasOrdenadas.forEach(fecha => {
+        html += `<tr><td colspan="3" class="fecha-barra">${fecha}</td></tr>`;
+        ["Aceite de oliva virgen extra", "Aceite de oliva virgen", "Aceite de oliva lampante"].forEach(tipo => {
+          const precio = agrupado[fecha][tipo];
+          if (precio) {
+            html += `
+              <tr class="sub-row">
+                <td></td>
+                <td class="tipo">${tipo}</td>
+                <td class="precio">${precio.toFixed(3)} €</td>
+              </tr>`;
+          }
+        });
+      });
+
+      tbody.innerHTML = html;
+      modal.classList.add('open');
+    } catch (err) {
+      console.error('[Historico] Error:', err);
+      tbody.innerHTML = '<tr><td colspan="3">No hay datos disponibles.</td></tr>';
+      modal.classList.add('open');
+    }
+  });
+
+  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+}
+
 // ---------------- MODAL FUENTE ----------------
 function setupFuenteModal() {
-  const btn = document.getElementById('abrir-fuente');
+  const link = document.getElementById('fuente-link');
   const modal = document.getElementById('fuente-modal');
-  const closeBtn = document.getElementById('cerrar-fuente');
-  if (!btn || !modal || !closeBtn) return;
+  const closeBtn = document.getElementById('fuente-close');
 
-  btn.addEventListener('click', () => {
+  if (!link || !modal || !closeBtn) return;
+
+  link.addEventListener('click', e => {
+    e.preventDefault();
     modal.classList.add('open');
   });
 
-  closeBtn.addEventListener('click', () => {
-    modal.classList.remove('open');
-  });
-
-  modal.addEventListener('click', e => {
-    if (e.target === modal) modal.classList.remove('open');
-  });
+  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
 }
 
-// ---------------- DATOS ----------------
+// ---------------- CARGAR DATOS ----------------
 async function cargarDatos() {
   const fechaEl     = document.getElementById('fecha');
   const precioEl    = document.getElementById('precio');
@@ -148,8 +200,8 @@ async function cargarDatos() {
       if (!isNaN(f)) fechaTxt = f.toLocaleString('es-ES');
     } catch {}
 
-    setTexto(fechaEl, fechaTxt);
-    setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
+    if (fechaEl) setTexto(fechaEl, fechaTxt);
+    if (tablaInfoEl) setTexto(tablaInfoEl, `Precios actualizados — ${fechaTxt}`);
 
     renderTabla(datos.precios || {});
 
@@ -169,9 +221,9 @@ async function cargarDatos() {
 
   } catch (err) {
     console.error('[cargarDatos] Error:', err);
-    setTexto(fechaEl, 'Error cargando datos');
-    setTexto(precioEl, 'No se pudieron cargar los precios.');
-    setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
+    if (fechaEl) setTexto(fechaEl, 'Error cargando datos');
+    if (precioEl) setTexto(precioEl, 'No se pudieron cargar los precios.');
+    if (tablaInfoEl) setTexto(tablaInfoEl, 'Precios actualizados — (error al cargar)');
 
     const tabla = document.getElementById('tabla-precios');
     if (tabla) tabla.innerHTML = '';
@@ -181,7 +233,9 @@ async function cargarDatos() {
   }
 }
 
+// ---------------- INIT ----------------
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
+  setupHistoricoModal();
   setupFuenteModal();
 });
