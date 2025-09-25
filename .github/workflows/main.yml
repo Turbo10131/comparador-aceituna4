@@ -36,11 +36,14 @@ jobs:
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
+      - name: Convertir histórico TXT a JSON
+        run: python convertir_historico.py
+
       - name: Ver JSON generados
         run: |
           for f in ${DATA_FILES}; do
             echo "Contenido de $f:"
-            test -f "$f" && cat "$f" || echo "⚠️ $f no existe."
+            test -f "$f" && head -n 50 "$f" || echo "⚠️ $f no existe."
             echo ""
           done
 
@@ -61,7 +64,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ${DATA_FILES}
-          git commit -m "Actualizar JSONs automáticamente (scraper): ${DATA_FILES}"
+          git commit -m "Actualizar JSONs automáticamente (scraper + histórico): ${DATA_FILES}"
 
       - name: Hacer push con token personal (SCRAPERGITHUB)
         if: steps.cambios.outputs.changed == 'true'
