@@ -5,73 +5,48 @@ from datetime import datetime, timedelta
 INPUT_FILE = "precios 2015.txt"
 OUTPUT_FILE = "precio-aceite-historico.json"
 
-# Diccionario para guardar los precios
+# Diccionario de salida
 precios = {
     "Aceite de oliva virgen extra": {},
     "Aceite de oliva virgen": {},
     "Aceite de oliva lampante": {}
 }
 
-# Función auxiliar para limpiar y convertir el precio
-def limpiar_precio(texto):
-    return float(
-        texto.replace("€", "")
-             .replace(" ", "")
-             .replace(",", ".")
-    )
+fecha_actual = None
 
-# Leer el archivo TXT
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    fecha_actual = None
-    for linea in f:
-        linea = linea.strip()
-        if not linea:
+    for line in f:
+        line = line.strip()
+        if not line:
             continue
 
-        # Detectar fecha (formato DD-MM-YYYY o similar)
+        # Detectar si la línea es una fecha (formato dd-mm-yyyy)
         try:
-            fecha_actual = datetime.strptime(linea, "%d-%m-%Y").date()
+            fecha_actual = datetime.strptime(line, "%d-%m-%Y").date()
             continue
         except ValueError:
-            pass  # no es fecha, seguimos procesando
+            pass
 
-        # Detectar tipo de aceite
-        linea_lower = linea.lower()
-        if "virgen extra" in linea_lower:
-            tipo = "Aceite de oliva virgen extra"
-        elif "lampante" in linea_lower:
-            tipo = "Aceite de oliva lampante"
-        elif "virgen" in linea_lower:
-            tipo = "Aceite de oliva virgen"
-        else:
-            continue
-
-        # Extraer precio (última columna)
+        # Procesar línea de precios
         try:
-            precio_str = linea.split()[-1]
-            precio = limpiar_precio(precio_str)
-            if fecha_actual:
-                precios[tipo][str(fecha_actual)] = precio
+            partes = line.split()
+            tipo = " ".join(partes[0:4])  # "Aceite de oliva virgen extra"
+            precio_str = partes[-2]       # "4.080"
+            precio = float(precio_str.replace(".", "").replace(",", "."))
+            
+            if tipo in precios:
+                precios[tipo][str(fecha_actual)] = round(precio, 3)
+            else:
+                print(f"⚠️ Tipo de aceite desconocido: {tipo}")
+
         except Exception as e:
-            print(f"⚠️ No se pudo procesar la línea: {linea} ({e})")
+            print(f"⚠️ No se pudo procesar la línea: {line} ({e})")
 
-# Verificar que tenemos datos
-if not any(precios.values()):
-    raise ValueError("❌ No se encontraron datos válidos en el archivo TXT.")
-
-# Calcular fechas mínimas y máximas
-fechas_validas = [
-    min(map(datetime.fromisoformat, d.keys()))
-    for d in precios.values() if d
-]
-fecha_inicio = min(fechas_validas).date()
+# Rellenar días faltantes copiando el último precio conocido
+fecha_inicio = min(min(map(datetime.fromisoformat, d.keys())) for d in precios.values() if d)
 fecha_fin = datetime.today().date()
 
-# Rellenar días faltantes con el precio del día anterior
 for tipo, datos in precios.items():
-    if not datos:
-        continue
-
     fecha = fecha_inicio
     ultimo_precio = None
     while fecha <= fecha_fin:
@@ -82,14 +57,16 @@ for tipo, datos in precios.items():
             datos[fecha_str] = ultimo_precio
         fecha += timedelta(days=1)
 
-# Guardar en JSON final
-json_final = {
-    tipo: [{"fecha": f, "precio_eur_kg": p}
-           for f, p in sorted(datos.items())]
-    for tipo, datos in precios.items()
-}
+# Convertir a lista ordenada
+output = {}
+for tipo, datos in precios.items():
+    output[tipo] = [
+        {"fecha": fecha, "precio_eur_kg": precio}
+        for fecha, precio in sorted(datos.items())
+    ]
 
+# Guardar JSON
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-    json.dump(json_final, f, ensure_ascii=False, indent=2)
+    json.dump(output, f, indent=2, ensure_ascii=False)
 
 print(f"✅ Histórico convertido y guardado en {OUTPUT_FILE}")
