@@ -1,11 +1,9 @@
 import json
 from datetime import datetime, timedelta
 
-# Archivo de entrada y salida
 INPUT_FILE = "precios 2015.txt"
 OUTPUT_FILE = "precio-aceite-historico.json"
 
-# Diccionario de salida
 precios = {
     "Aceite de oliva virgen extra": {},
     "Aceite de oliva virgen": {},
@@ -20,7 +18,7 @@ with open(INPUT_FILE, "r", encoding="utf-8") as f:
         if not line:
             continue
 
-        # Detectar si la línea es una fecha (formato dd-mm-yyyy)
+        # Detectar si la línea es una fecha (dd-mm-yyyy)
         try:
             fecha_actual = datetime.strptime(line, "%d-%m-%Y").date()
             continue
@@ -30,8 +28,14 @@ with open(INPUT_FILE, "r", encoding="utf-8") as f:
         # Procesar línea de precios
         try:
             partes = line.split()
-            tipo = " ".join(partes[0:4])  # "Aceite de oliva virgen extra"
-            precio_str = partes[-2]       # "4.080"
+            tipo = " ".join(partes[0:4])  # ejemplo: "Aceite de oliva virgen extra"
+            precio_str = partes[-2]       # ejemplo: "4.080" ó "Sin"
+            
+            # Saltar si no hay precio
+            if not precio_str.replace(".", "").isdigit():
+                print(f"⚠️ Línea ignorada (sin precio): {line}")
+                continue
+
             precio = float(precio_str.replace(".", "").replace(",", "."))
             
             if tipo in precios:
@@ -57,7 +61,7 @@ for tipo, datos in precios.items():
             datos[fecha_str] = ultimo_precio
         fecha += timedelta(days=1)
 
-# Convertir a lista ordenada
+# Convertir a listas ordenadas
 output = {}
 for tipo, datos in precios.items():
     output[tipo] = [
@@ -65,8 +69,9 @@ for tipo, datos in precios.items():
         for fecha, precio in sorted(datos.items())
     ]
 
-# Guardar JSON
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
     json.dump(output, f, indent=2, ensure_ascii=False)
 
 print(f"✅ Histórico convertido y guardado en {OUTPUT_FILE}")
+for tipo, datos in output.items():
+    print(f"📊 {tipo}: {len(datos)} registros")
