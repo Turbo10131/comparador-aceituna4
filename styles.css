@@ -19,6 +19,10 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.campo {
+  margin-bottom: 1rem;
+}
+
 .btn {
   background: #1e73be;
   color: #fff;
@@ -26,6 +30,10 @@ h1 {
   padding: 8px 14px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.btn:hover {
+  background: #155a91;
 }
 
 .btn-link {
@@ -55,33 +63,76 @@ h1 {
   padding: 8px;
 }
 
-/* Modal */
+/* ---------------- MODAL ---------------- */
 .modal {
   display: none;
   position: fixed;
-  z-index: 999;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0,0,0,0.6);
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
-
-.modal.open {
-  display: flex;
-}
+.modal.open { display: flex; }
 
 .modal-content {
   background: #fff;
-  padding: 20px;
+  padding: 1.5rem;
   border-radius: 8px;
+  max-width: 800px;
   width: 90%;
-  max-width: 600px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  max-height: 80%;
+  overflow-y: auto;
 }
 
 .modal-large {
   max-width: 800px;
   max-height: 80vh;
   overflow-y: auto;
+}
+
+/* ---------------- HISTÓRICO ---------------- */
+.historico-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.historico-table th {
+  background: #7a8b00;
+  color: #fff;
+  padding: 0.5rem;
+}
+
+.historico-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.historico-table td.fecha-barra {
+  background: #dce4b0;
+  font-weight: bold;
+  color: #333;
+}
+
+.historico-table tr.sub-row td {
+  background: #fff;
+  padding-left: 20px;
+}
+
+.historico-table tr.sub-row:nth-child(even) td {
+  background: #f9f9f9;
+}
+
+.historico-table td.tipo {
+  font-style: italic;
+  color: #444;
+}
+
+.historico-table td.precio {
+  text-align: right;
+  font-weight: bold;
 }
