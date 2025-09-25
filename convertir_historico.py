@@ -1,74 +1,77 @@
 import json
-import datetime
+from datetime import datetime, timedelta
 
 # Archivo de entrada y salida
-INPUT_FILE = "precios 2015.txt"
-OUTPUT_FILE = "precio-aceite-historico.json"
+archivo_txt = "precios 2015.txt"
+archivo_json = "precio-aceite-historico.json"
 
-# Inicializamos estructura
-data = {
-    "Aceite de oliva virgen extra": [],
-    "Aceite de oliva virgen": [],
-    "Aceite de oliva lampante": []
+# Diccionario para guardar precios
+precios = {
+    "Aceite de oliva virgen extra": {},
+    "Aceite de oliva virgen": {},
+    "Aceite de oliva lampante": {}
 }
 
-# Leer archivo txt
-with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    lines = f.readlines()
+# Leer el TXT y parsear
+with open(archivo_txt, "r", encoding="utf-8") as f:
+    lineas = f.readlines()
 
-current_date = None
-for line in lines:
-    line = line.strip()
-    if not line:
+fecha_actual = None
+for linea in lineas:
+    linea = linea.strip()
+    if not linea:
         continue
 
-    # Detectar fecha (formato dd-mm-aaaa o similar)
-    if "-" in line and "€" not in line:
-        try:
-            current_date = datetime.datetime.strptime(line, "%d-%m-%Y").date()
-        except ValueError:
-            try:
-                current_date = datetime.datetime.strptime(line, "%Y-%m-%d").date()
-            except:
-                continue
+    # Detectar fechas (ejemplo: 25-09-2025)
+    try:
+        fecha_actual = datetime.strptime(linea, "%d-%m-%Y").date()
         continue
+    except ValueError:
+        pass  # no es fecha, seguimos
 
-    # Procesar precios
-    if "virgen extra" in line.lower():
-        precio = float(line.split()[-2].replace(",", "."))
-        data["Aceite de oliva virgen extra"].append({"fecha": str(current_date), "precio_eur_kg": precio})
-    elif "virgen " in line.lower() and "extra" not in line.lower():
-        precio = float(line.split()[-2].replace(",", "."))
-        data["Aceite de oliva virgen"].append({"fecha": str(current_date), "precio_eur_kg": precio})
-    elif "lampante" in line.lower():
-        precio = float(line.split()[-2].replace(",", "."))
-        data["Aceite de oliva lampante"].append({"fecha": str(current_date), "precio_eur_kg": precio})
+    # Detectar precios de cada tipo de aceite
+    if "virgen extra" in linea.lower():
+        tipo = "Aceite de oliva virgen extra"
+    elif "virgen" in linea.lower() and "extra" not in linea.lower():
+        tipo = "Aceite de oliva virgen"
+    elif "lampante" in linea.lower():
+        tipo = "Aceite de oliva lampante"
+    else:
+        continue  # ignorar cabeceras como "Tipo de aceite de oliva..."
 
-# Función para rellenar días faltantes
-def rellenar_faltantes(lista):
-    lista_ordenada = sorted(lista, key=lambda x: x["fecha"])
-    completas = []
-    fecha_inicio = datetime.datetime.strptime(lista_ordenada[0]["fecha"], "%Y-%m-%d").date()
-    fecha_fin = datetime.date.today()
-    precios = {item["fecha"]: item["precio_eur_kg"] for item in lista_ordenada}
-    
-    fecha = fecha_inicio
-    ultimo_precio = None
+    try:
+        # Última columna con el precio
+        precio_str = linea.split()[-1].replace("€", "").replace(",", ".")
+        precio = float(precio_str)
+    except ValueError:
+        continue  # si no se puede convertir, saltamos
+
+    precios[tipo][fecha_actual.isoformat()] = precio
+
+# Rellenar días faltantes con último valor
+fecha_inicio = min(min(map(datetime.fromisoformat, d.keys())) for d in precios.values())
+fecha_fin = datetime.today().date()
+
+for tipo, datos in precios.items():
+    fechas = sorted(datetime.fromisoformat(f) for f in datos.keys())
+    precios_completos = {}
+    precio_ultimo = None
+    fecha = fecha_inicio.date()
     while fecha <= fecha_fin:
-        fecha_str = str(fecha)
-        if fecha_str in precios:
-            ultimo_precio = precios[fecha_str]
-        if ultimo_precio is not None:
-            completas.append({"fecha": fecha_str, "precio_eur_kg": ultimo_precio})
-        fecha += datetime.timedelta(days=1)
-    return completas
+        fecha_str = fecha.isoformat()
+        if fecha_str in datos:
+            precio_ultimo = datos[fecha_str]
+        if precio_ultimo is not None:
+            precios_completos[fecha_str] = precio_ultimo
+        fecha += timedelta(days=1)
+    precios[tipo] = precios_completos
 
-# Aplicar relleno a cada categoría
-for key in data:
-    data[key] = rellenar_faltantes(data[key])
+# Convertir a formato JSON final
+salida = {}
+for tipo, datos in precios.items():
+    salida[tipo] = [{"fecha": f, "precio_eur_kg": p} for f, p in sorted(datos.items())]
 
-# Guardar JSON
-with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
+with open(archivo_json, "w", encoding="utf-8") as f:
+    json.dump(salida, f, ensure_ascii=False, indent=2)
 
-print(f"✅ JSON generado con histórico desde 2015 hasta hoy: {OUTPUT_FILE}")
+print(f"✅ Archivo JSON generado: {archivo_json}")
