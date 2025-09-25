@@ -43,7 +43,7 @@ jobs:
         run: |
           for f in ${DATA_FILES}; do
             echo "Contenido de $f:"
-            test -f "$f" && head -n 50 "$f" || echo "⚠️ $f no existe."
+            test -f "$f" && head -n 40 "$f" || echo "⚠️ $f no existe."
             echo ""
           done
 
