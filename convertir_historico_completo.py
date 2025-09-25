@@ -1,59 +1,87 @@
-# actualizar_historico_completo.py
-# Combina los datos históricos desde 2015 con los precios diarios actuales.
-# Rellena días faltantes y mantiene actualizado "precio-aceite-historico.json".
+# convertir_historico_completo.py
+# Convierte "precios 2015.txt" en "precio-aceite-historico.json"
+# Incluye TODOS los días desde la primera fecha hasta hoy.
+# Si falta algún día, se rellena con el precio del día anterior.
 
 import json
+import re
 from datetime import datetime, timedelta
-import os
 
-FILE_BASE = "precio-aceite-historico.json"   # histórico completo inicial (ya generado desde 2015)
-FILE_ACTUAL = "precio-aceite.json"           # tabla principal diaria
+INPUT_FILE = "precios 2015.txt"
+OUTPUT_FILE = "precio-aceite-historico.json"
 
-# Si no existe el histórico base, lo inicializamos vacío
-if not os.path.exists(FILE_BASE):
-    historico = {
-        "Aceite de oliva virgen extra": [],
-        "Aceite de oliva virgen": [],
-        "Aceite de oliva lampante": []
-    }
-else:
-    with open(FILE_BASE, "r", encoding="utf-8") as f:
-        historico = json.load(f)
+# Estructura base
+data = {
+    "Aceite de oliva virgen extra": [],
+    "Aceite de oliva virgen": [],
+    "Aceite de oliva lampante": []
+}
 
-# Cargar precios actuales
-with open(FILE_ACTUAL, "r", encoding="utf-8") as f:
-    actual = json.load(f)
+regex_fecha = re.compile(r"(\d{2}-\d{2}-\d{4})")  # dd-mm-aaaa
+regex_precio = re.compile(r"([0-9]+,[0-9]+)")     # 3,25
 
-fecha_hoy = datetime.today().strftime("%Y-%m-%d")
+def normaliza_precio(txt):
+    return float(txt.replace(",", "."))
 
-for categoria in historico.keys():
-    precio = actual["precios"].get(categoria, {}).get("precio_eur_kg", None)
+def categoria_de_linea(line):
+    l = line.lower()
+    if "virgen extra" in l:
+        return "Aceite de oliva virgen extra"
+    if re.search(r"\bvirgen\b(?!\s*extra)", l):  # virgen pero NO "virgen extra"
+        return "Aceite de oliva virgen"
+    if "lampante" in l:
+        return "Aceite de oliva lampante"
+    return None
 
-    if precio is None:
+# Leer archivo
+with open(INPUT_FILE, "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+fecha_actual_iso = None
+
+for raw in lines:
+    line = raw.strip()
+
+    m_fecha = regex_fecha.search(line)
+    if m_fecha:
+        dd, mm, yyyy = m_fecha.group(1).split("-")
+        try:
+            fecha_actual_iso = datetime(int(yyyy), int(mm), int(dd)).strftime("%Y-%m-%d")
+        except ValueError:
+            fecha_actual_iso = None
         continue
 
-    # Rellenar días faltantes desde la última fecha registrada
-    if historico[categoria]:
-        ultima_fecha = datetime.strptime(historico[categoria][-1]["fecha"], "%Y-%m-%d")
-        current_date = ultima_fecha + timedelta(days=1)
-        last_precio = historico[categoria][-1]["precio_eur_kg"]
+    if fecha_actual_iso:
+        cat = categoria_de_linea(line)
+        m_precio = regex_precio.search(line)
+        if cat and m_precio:
+            precio = normaliza_precio(m_precio.group(1))
+            data[cat].append({"fecha": fecha_actual_iso, "precio_eur_kg": precio})
 
-        while current_date.strftime("%Y-%m-%d") < fecha_hoy:
-            historico[categoria].append({
-                "fecha": current_date.strftime("%Y-%m-%d"),
-                "precio_eur_kg": last_precio
-            })
+# Ordenar y completar fechas faltantes
+for cat in data:
+    data[cat].sort(key=lambda d: d["fecha"])
+    completos = []
+    if data[cat]:
+        start_date = datetime.strptime(data[cat][0]["fecha"], "%Y-%m-%d")
+        end_date = datetime.today()
+        i = 0
+        last_precio = data[cat][0]["precio_eur_kg"]
+
+        current_date = start_date
+        while current_date <= end_date:
+            fecha_iso = current_date.strftime("%Y-%m-%d")
+            if i < len(data[cat]) and data[cat][i]["fecha"] == fecha_iso:
+                last_precio = data[cat][i]["precio_eur_kg"]
+                completos.append(data[cat][i])
+                i += 1
+            else:
+                completos.append({"fecha": fecha_iso, "precio_eur_kg": last_precio})
             current_date += timedelta(days=1)
+        data[cat] = completos
 
-    # Añadir el precio de hoy
-    if not historico[categoria] or historico[categoria][-1]["fecha"] != fecha_hoy:
-        historico[categoria].append({
-            "fecha": fecha_hoy,
-            "precio_eur_kg": precio
-        })
+# Guardar JSON
+with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
+    json.dump(data, out, ensure_ascii=False, indent=2)
 
-# Guardar histórico actualizado
-with open(FILE_BASE, "w", encoding="utf-8") as f:
-    json.dump(historico, f, ensure_ascii=False, indent=2)
-
-print("✅ Histórico actualizado en", FILE_BASE)
+print(f"✅ Generado {OUTPUT_FILE} con datos diarios completos hasta hoy.")
