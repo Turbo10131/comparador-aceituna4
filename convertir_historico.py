@@ -1,11 +1,11 @@
 import json
 from datetime import datetime, timedelta
 
-# Archivo de entrada y salida
+# Archivos
 archivo_txt = "precios 2015.txt"
 archivo_json = "precio-aceite-historico.json"
 
-# Diccionario de salida
+# Diccionario base
 precios = {
     "Aceite de oliva virgen extra": {},
     "Aceite de oliva virgen": {},
@@ -17,9 +17,7 @@ fecha_actual = None
 with open(archivo_txt, "r", encoding="utf-8") as f:
     for line in f:
         line = line.strip()
-
-        # Saltar encabezados o líneas vacías
-        if not line or line.startswith("Tipo de aceite"):
+        if not line:
             continue
 
         # Detectar fecha (formato dd-mm-YYYY)
@@ -29,51 +27,53 @@ with open(archivo_txt, "r", encoding="utf-8") as f:
         except ValueError:
             pass
 
-        # Procesar líneas con datos de precios
-        partes = line.split()
-        if len(partes) < 2:
-            continue
+        # Procesar líneas con precios
+        try:
+            if "€" in line:
+                partes = line.split()
+                tipo = " ".join(partes[:-2])  # texto sin el precio
+                precio_str = partes[-2].replace(".", "").replace(",", ".")
+                precio = float(precio_str)
 
-        tipo = " ".join(partes[0:4])  # Ejemplo: "Aceite de oliva virgen extra"
-        precio_str = partes[-2].replace(",", ".").replace("€", "").strip()
+                tipo_lower = tipo.lower()
 
-        # Ignorar líneas con "Sin cierre de operaciones" u otros textos
-        if not precio_str.replace(".", "", 1).isdigit():
-            print(f"⚠️ Línea ignorada (sin precio): {line}")
-            continue
+                # Clasificación robusta
+                if "virgen extra" in tipo_lower:
+                    precios["Aceite de oliva virgen extra"][str(fecha_actual)] = precio
+                elif "virgen" in tipo_lower and "extra" not in tipo_lower:
+                    precios["Aceite de oliva virgen"][str(fecha_actual)] = precio
+                elif "lampante" in tipo_lower:
+                    precios["Aceite de oliva lampante"][str(fecha_actual)] = precio
+                else:
+                    print(f"⚠️ Tipo no reconocido en línea: {line}")
 
-        precio = float(precio_str)
+        except Exception as e:
+            print(f"⚠️ No se pudo procesar la línea: {line} ({e})")
 
-        # Guardar en el diccionario
-        if "virgen extra" in tipo:
-            precios["Aceite de oliva virgen extra"][str(fecha_actual)] = precio
-        elif tipo.startswith("Aceite de oliva virgen "):  # virgen normal
-            precios["Aceite de oliva virgen"][str(fecha_actual)] = precio
-        elif "lampante" in tipo:
-            precios["Aceite de oliva lampante"][str(fecha_actual)] = precio
-
-# Rellenar días faltantes con el último valor conocido
-for categoria, datos in precios.items():
+# Rellenar días faltantes con el precio del día anterior
+for tipo, datos in precios.items():
     if not datos:
         continue
 
-    fechas = sorted(datetime.strptime(d, "%Y-%m-%d").date() for d in datos.keys())
-    fecha_inicio, fecha_fin = fechas[0], fechas[-1]
+    fechas_ordenadas = sorted(datetime.strptime(f, "%Y-%m-%d").date() for f in datos.keys())
+    fecha_inicio = min(fechas_ordenadas)
+    fecha_fin = max(fechas_ordenadas)
 
-    ultima_fecha = fecha_inicio
-    ultimo_precio = datos[str(ultima_fecha)]
+    fecha_iter = fecha_inicio
+    ultimo_precio = None
 
-    while ultima_fecha <= fecha_fin:
-        fecha_str = str(ultima_fecha)
-        if fecha_str not in datos:
-            datos[fecha_str] = ultimo_precio
-        else:
+    while fecha_iter <= fecha_fin:
+        fecha_str = str(fecha_iter)
+        if fecha_str in datos:
             ultimo_precio = datos[fecha_str]
-        ultima_fecha += timedelta(days=1)
+        elif ultimo_precio is not None:
+            datos[fecha_str] = ultimo_precio
+        fecha_iter += timedelta(days=1)
+
+    precios[tipo] = dict(sorted(datos.items()))
 
 # Guardar en JSON
 with open(archivo_json, "w", encoding="utf-8") as f:
-    json.dump({k: [{"fecha": d, "precio_eur_kg": v} for d, v in sorted(datos.items())] for k, datos in precios.items()},
-              f, ensure_ascii=False, indent=2)
+    json.dump(precios, f, indent=2, ensure_ascii=False)
 
-print(f"✅ Archivo JSON generado: {archivo_json}")
+print(f"✅ Histórico convertido y guardado en {archivo_json}")
