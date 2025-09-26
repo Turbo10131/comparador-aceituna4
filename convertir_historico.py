@@ -1,77 +1,73 @@
 import json
 from datetime import datetime, timedelta
 
-INPUT_FILE = "precios 2015.txt"
-OUTPUT_FILE = "precio-aceite-historico.json"
+# Archivo TXT original
+input_file = "precios 2015.txt"
+# Archivo JSON destino
+output_file = "precio-aceite-historico.json"
 
+# Diccionario para guardar datos
 precios = {
     "Aceite de oliva virgen extra": {},
     "Aceite de oliva virgen": {},
     "Aceite de oliva lampante": {}
 }
 
+# --- PARTE 1: Leer y limpiar TXT ---
+with open(input_file, "r", encoding="utf-8") as f:
+    lineas = f.readlines()
+
 fecha_actual = None
+for linea in lineas:
+    linea = linea.strip()
 
-with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
+    # Saltar encabezados o líneas vacías
+    if not linea or "Tipo de aceite" in linea or "Precio" in linea:
+        continue
 
-        # Detectar si la línea es una fecha (dd-mm-yyyy)
+    # Si la línea tiene formato de fecha (dd-mm-yyyy)
+    try:
+        fecha_actual = datetime.strptime(linea, "%d-%m-%Y").date()
+        continue
+    except ValueError:
+        pass
+
+    # Procesar precios
+    if "€" in linea and fecha_actual:
+        partes = linea.split()
+        tipo = " ".join(partes[0:4])  # "Aceite de oliva virgen extra", etc.
         try:
-            fecha_actual = datetime.strptime(line, "%d-%m-%Y").date()
-            continue
+            precio = float(partes[-2].replace(".", "").replace(",", "."))
         except ValueError:
-            pass
+            # Línea no válida, ignoramos
+            continue
 
-        # Procesar línea de precios
-        try:
-            partes = line.split()
-            tipo = " ".join(partes[0:4])  # ejemplo: "Aceite de oliva virgen extra"
-            precio_str = partes[-2]       # ejemplo: "4.080" ó "Sin"
-            
-            # Saltar si no hay precio
-            if not precio_str.replace(".", "").isdigit():
-                print(f"⚠️ Línea ignorada (sin precio): {line}")
-                continue
+        if tipo in precios:
+            precios[tipo][fecha_actual] = precio
 
-            precio = float(precio_str.replace(".", "").replace(",", "."))
-            
-            if tipo in precios:
-                precios[tipo][str(fecha_actual)] = round(precio, 3)
-            else:
-                print(f"⚠️ Tipo de aceite desconocido: {tipo}")
-
-        except Exception as e:
-            print(f"⚠️ No se pudo procesar la línea: {line} ({e})")
-
-# Rellenar días faltantes copiando el último precio conocido
-fecha_inicio = min(min(map(datetime.fromisoformat, d.keys())) for d in precios.values() if d)
-fecha_fin = datetime.today().date()
+# --- PARTE 2: Rellenar días faltantes ---
+fecha_inicio = min(min(d.keys()) for d in precios.values() if d)
+fecha_fin = datetime.now().date()
 
 for tipo, datos in precios.items():
     fecha = fecha_inicio
     ultimo_precio = None
     while fecha <= fecha_fin:
-        fecha_str = str(fecha)
-        if fecha_str in datos:
-            ultimo_precio = datos[fecha_str]
+        if fecha in datos:
+            ultimo_precio = datos[fecha]
         elif ultimo_precio is not None:
-            datos[fecha_str] = ultimo_precio
+            datos[fecha] = ultimo_precio
         fecha += timedelta(days=1)
 
-# Convertir a listas ordenadas
-output = {}
+# --- PARTE 3: Exportar a JSON ---
+resultado = {}
 for tipo, datos in precios.items():
-    output[tipo] = [
-        {"fecha": fecha, "precio_eur_kg": precio}
+    resultado[tipo] = [
+        {"fecha": fecha.strftime("%Y-%m-%d"), "precio_eur_kg": precio}
         for fecha, precio in sorted(datos.items())
     ]
 
-with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-    json.dump(output, f, indent=2, ensure_ascii=False)
+with open(output_file, "w", encoding="utf-8") as f:
+    json.dump(resultado, f, indent=2, ensure_ascii=False)
 
-print(f"✅ Histórico convertido y guardado en {OUTPUT_FILE}")
-for tipo, datos in output.items():
-    print(f"📊 {tipo}: {len(datos)} registros")
+print(f"✅ Histórico convertido y guardado en {output_file}")
