@@ -36,8 +36,11 @@ jobs:
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      - name: Convertir histórico TXT a JSON
-        run: python convertir_historico.py   # ✅ añadido, lo único nuevo
+      - name: Validar precios históricos
+        run: python validar_precios.py
+
+      - name: Ejecutar conversión a JSON histórico
+        run: python convertir_historico.py
 
       - name: Ver JSON generados
         run: |
@@ -64,7 +67,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ${DATA_FILES}
-          git commit -m "Actualizar JSONs automáticamente (scraper + histórico): ${DATA_FILES}"
+          git commit -m "Actualizar JSONs automáticamente (scraper + validación): ${DATA_FILES}"
 
       - name: Hacer push con token personal (SCRAPERGITHUB)
         if: steps.cambios.outputs.changed == 'true'
@@ -104,3 +107,4 @@ jobs:
     steps:
       - name: Mensaje de error
         run: echo "⚠️ El job 'actualizar' ha fallado."
+
