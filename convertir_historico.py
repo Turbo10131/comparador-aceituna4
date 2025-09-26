@@ -1,11 +1,11 @@
 import json
 from datetime import datetime, timedelta
 
-# Archivos
+# Archivo de entrada y salida
 archivo_txt = "precios 2015.txt"
 archivo_json = "precio-aceite-historico.json"
 
-# Diccionario base
+# Diccionario para almacenar datos
 precios = {
     "Aceite de oliva virgen extra": {},
     "Aceite de oliva virgen": {},
@@ -20,60 +20,54 @@ with open(archivo_txt, "r", encoding="utf-8") as f:
         if not line:
             continue
 
-        # Detectar fecha (formato dd-mm-YYYY)
+        # Detectar fechas (ej: 25-09-2025)
         try:
             fecha_actual = datetime.strptime(line, "%d-%m-%Y").date()
             continue
         except ValueError:
             pass
 
-        # Procesar líneas con precios
-        try:
-            if "€" in line:
-                partes = line.split()
-                tipo = " ".join(partes[:-2])  # texto sin el precio
-                precio_str = partes[-2].replace(".", "").replace(",", ".")
-                precio = float(precio_str)
+        # Ignorar cabecera
+        if "Tipo de aceite" in line or "€/kg" in line:
+            continue
 
-                tipo_lower = tipo.lower()
+        # Procesar líneas de precios
+        for tipo in precios.keys():
+            if tipo in line:
+                try:
+                    # Extraer precio (último elemento de la línea)
+                    partes = line.split()
+                    valor_str = partes[-1]
+                    valor_str = valor_str.replace("€", "").replace("/kg", "").replace(",", ".").strip()
+                    precio = float(valor_str)
 
-                # Clasificación robusta
-                if "virgen extra" in tipo_lower:
-                    precios["Aceite de oliva virgen extra"][str(fecha_actual)] = precio
-                elif "virgen" in tipo_lower and "extra" not in tipo_lower:
-                    precios["Aceite de oliva virgen"][str(fecha_actual)] = precio
-                elif "lampante" in tipo_lower:
-                    precios["Aceite de oliva lampante"][str(fecha_actual)] = precio
-                else:
-                    print(f"⚠️ Tipo no reconocido en línea: {line}")
+                    precios[tipo][str(fecha_actual)] = precio
+                except Exception as e:
+                    print(f"⚠️ No se pudo procesar la línea: {line} ({e})")
+                break
 
-        except Exception as e:
-            print(f"⚠️ No se pudo procesar la línea: {line} ({e})")
+# Rellenar días faltantes con el último precio conocido
+fecha_inicio = min(datetime.strptime(d, "%Y-%m-%d") for d in precios["Aceite de oliva virgen extra"].keys())
+fecha_fin = datetime.today().date()
 
-# Rellenar días faltantes con el precio del día anterior
 for tipo, datos in precios.items():
-    if not datos:
-        continue
-
-    fechas_ordenadas = sorted(datetime.strptime(f, "%Y-%m-%d").date() for f in datos.keys())
-    fecha_inicio = min(fechas_ordenadas)
-    fecha_fin = max(fechas_ordenadas)
-
-    fecha_iter = fecha_inicio
+    fecha = fecha_inicio
     ultimo_precio = None
-
-    while fecha_iter <= fecha_fin:
-        fecha_str = str(fecha_iter)
-        if fecha_str in datos:
-            ultimo_precio = datos[fecha_str]
+    while fecha <= fecha_fin:
+        clave = str(fecha)
+        if clave in datos:
+            ultimo_precio = datos[clave]
         elif ultimo_precio is not None:
-            datos[fecha_str] = ultimo_precio
-        fecha_iter += timedelta(days=1)
+            datos[clave] = ultimo_precio
+        fecha += timedelta(days=1)
 
-    precios[tipo] = dict(sorted(datos.items()))
+# Convertir a lista para JSON
+precios_json = {tipo: [{"fecha": fecha, "precio_eur_kg": precio}
+                       for fecha, precio in sorted(datos.items())]
+                for tipo, datos in precios.items()}
 
-# Guardar en JSON
+# Guardar archivo JSON
 with open(archivo_json, "w", encoding="utf-8") as f:
-    json.dump(precios, f, indent=2, ensure_ascii=False)
+    json.dump(precios_json, f, ensure_ascii=False, indent=2)
 
 print(f"✅ Histórico convertido y guardado en {archivo_json}")
