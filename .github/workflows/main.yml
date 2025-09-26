@@ -36,10 +36,11 @@ jobs:
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      - name: Validar precios (TXT → limpio)
+      # 🔥 Nuevo: Validar y generar histórico
+      - name: Validar precios
         run: python validar_precios.py
 
-      - name: Convertir histórico (TXT → JSON)
+      - name: Convertir histórico
         run: python convertir_historico.py
 
       - name: Ver JSON generados
