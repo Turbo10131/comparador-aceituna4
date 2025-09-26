@@ -37,7 +37,7 @@ jobs:
         run: python scraper.py
 
       - name: Convertir histórico TXT a JSON
-        run: python convertir_historico.py
+        run: python convertir_historico.py   # ✅ añadido, lo único nuevo
 
       - name: Ver JSON generados
         run: |
