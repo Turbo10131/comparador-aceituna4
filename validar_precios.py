@@ -1,36 +1,48 @@
 import datetime
 
-# Archivo único de trabajo (validado y sobreescrito en cada ejecución)
 INPUT_FILE = "precios 2015.txt"
-OUTPUT_FILE = "precios 2015.txt"
+OUTPUT_FILE = "precios_limpios_validado.txt"
 
 def leer_precios(file_path):
     precios = {}
     with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if not line or "Aceite de oliva" not in line:
-                continue
+            if not line or line.startswith("Tipo de aceite"):
+                continue  
 
+            partes = line.split()
+            if len(partes) < 3:
+                continue  
+
+            # Detectar si la primera parte es fecha
             try:
-                partes = line.split()
+                datetime.datetime.strptime(partes[0], "%d-%m-%Y")
                 fecha = partes[0]
-                tipo = " ".join(partes[1:-1])
-                valor = partes[-1].replace(",", ".")
-                
-                # Detectar "Sin cierre de operaciones"
-                if not valor.replace(".", "").isdigit():
-                    precio = None  # Marcar como pendiente de rellenar
-                else:
-                    precio = float(valor)
-
-                precios.setdefault(fecha, {})[tipo] = precio
-            except Exception:
-                continue
+                tipo = " ".join(partes[1:-1]).lower()
+                precio_str = partes[-1].replace("€", "").replace(",", ".")
+                try:
+                    precio = float(precio_str)
+                except ValueError:
+                    precio = None
+                if fecha not in precios:
+                    precios[fecha] = {}
+                precios[fecha][tipo] = precio
+            except ValueError:
+                continue  
     return precios
 
 def rellenar_faltantes(precios):
-    fechas = sorted(precios.keys(), key=lambda x: datetime.datetime.strptime(x, "%d-%m-%Y"))
+    def es_fecha_valida(fecha):
+        try:
+            datetime.datetime.strptime(fecha, "%d-%m-%Y")
+            return True
+        except ValueError:
+            return False
+
+    fechas_validas = [f for f in precios.keys() if es_fecha_valida(f)]
+    fechas = sorted(fechas_validas, key=lambda x: datetime.datetime.strptime(x, "%d-%m-%Y"))
+
     fecha_inicio = datetime.datetime.strptime("01-01-2015", "%d-%m-%Y")
     fecha_fin = datetime.datetime.today()
 
@@ -43,14 +55,12 @@ def rellenar_faltantes(precios):
             precios_completos[fecha_str] = {}
             for tipo, precio in precios[fecha_str].items():
                 if precio is None:  
-                    # Si no hay precio, usar último conocido para ese tipo
                     if tipo in ultimo:
                         precios_completos[fecha_str][tipo] = ultimo[tipo]
                 else:
                     precios_completos[fecha_str][tipo] = precio
                     ultimo[tipo] = precio
         else:
-            # Día faltante: copiar último conocido
             precios_completos[fecha_str] = ultimo.copy()
         fecha_inicio += datetime.timedelta(days=1)
 
@@ -58,12 +68,15 @@ def rellenar_faltantes(precios):
 
 def guardar_precios(precios, file_path):
     with open(file_path, "w", encoding="utf-8") as f:
-        for fecha, tipos in precios.items():
-            for tipo, precio in tipos.items():
-                f.write(f"{fecha} {tipo} {precio:.3f}\n")
+        f.write("Fecha\tTipo de aceite\tPrecio €/kg\n")
+        for fecha in sorted(precios.keys(), key=lambda x: datetime.datetime.strptime(x, "%d-%m-%Y")):
+            for tipo, precio in precios[fecha].items():
+                if precio is not None:
+                    f.write(f"{fecha}\t{tipo}\t{precio:.3f}\n")
 
 if __name__ == "__main__":
     precios = leer_precios(INPUT_FILE)
     precios_completos = rellenar_faltantes(precios)
     guardar_precios(precios_completos, OUTPUT_FILE)
-    print(f"Archivo validado y sobrescrito: {OUTPUT_FILE}")
+    print(f"✅ Archivo validado y guardado en {OUTPUT_FILE}")
+
