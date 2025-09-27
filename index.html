@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precios del Aceite de Oliva</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Script principal: cálculo y modales -->
   <script src="app.js" defer></script>
+  <!-- Script exclusivo del histórico -->
+  <script src="modal-historico.js" defer></script>
 </head>
 <body>
   <div class="container">
@@ -49,7 +52,7 @@
   <div id="historico-modal" class="modal">
     <div class="modal-content modal-large">
       <h2>Histórico de precios del aceite de oliva</h2>
-      <table class="historico-table">
+      <table class="historico-table" id="tabla-historico">
         <thead>
           <tr>
             <th>Fecha</th>
