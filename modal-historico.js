@@ -2,7 +2,7 @@ async function cargarHistorico() {
   const response = await fetch("precio-aceite-historico.json");
   const data = await response.json();
 
-  const tabla = document.querySelector("#tabla-historico tbody");
+  const tabla = document.querySelector("#historico-body"); // ✅ corregido
   tabla.innerHTML = "";
 
   // Obtener todas las fechas de todas las variedades
@@ -39,4 +39,3 @@ async function cargarHistorico() {
 }
 
 document.addEventListener("DOMContentLoaded", cargarHistorico);
-
