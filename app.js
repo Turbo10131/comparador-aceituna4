@@ -1,85 +1,75 @@
-// ==========================
-// Función para calcular precio de aceituna
-// ==========================
-function calcularPrecio() {
-  const rendimiento = parseFloat(document.getElementById("rendimiento").value);
-  const tipo = document.getElementById("tipo").value;
+// ===============================
+// 📌 Cargar precios actuales
+// ===============================
+async function cargarPrecios() {
+  try {
+    const response = await fetch("precio-aceite.json");
+    const data = await response.json();
 
-  if (isNaN(rendimiento) || rendimiento <= 0 || rendimiento > 100 || !tipo) {
-    document.getElementById("resultado").innerHTML =
-      "<p style='color:red'>⚠️ Introduce un rendimiento válido y selecciona un tipo de aceite.</p>";
+    const tabla = document.querySelector("#tabla-precios");
+    tabla.innerHTML = "";
+
+    Object.entries(data).forEach(([tipo, precio]) => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${tipo}</td>
+        <td>${precio.toFixed(3)} €/kg</td>
+      `;
+      tabla.appendChild(fila);
+    });
+  } catch (error) {
+    console.error("Error cargando precios:", error);
+  }
+}
+
+// ===============================
+// 📌 Calculadora precio aceituna
+// ===============================
+function calcularPrecio() {
+  const rendimiento = parseFloat(document.querySelector("#rendimiento").value) / 100;
+  const tipo = document.querySelector("#tipo").value;
+
+  if (!rendimiento || !tipo) {
+    document.querySelector("#resultado").innerText = "";
     return;
   }
 
-  let precioLitro;
-  switch (tipo) {
-    case "virgen_extra":
-      precioLitro = 4.080;
-      break;
-    case "virgen":
-      precioLitro = 3.633;
-      break;
-    case "lampante":
-      precioLitro = 3.500;
-      break;
-    default:
-      precioLitro = 0;
-  }
+  fetch("precio-aceite.json")
+    .then(res => res.json())
+    .then(data => {
+      let precioAceite = 0;
 
-  if (precioLitro > 0) {
-    const precioAceituna = (rendimiento / 100) * precioLitro;
-    document.getElementById("resultado").innerHTML =
-      `<p>💶 Precio estimado de la aceituna: <strong>${precioAceituna.toFixed(3)} €/kg</strong></p>`;
-  }
+      if (tipo === "virgen_extra") precioAceite = data["Aceite de oliva virgen extra"];
+      else if (tipo === "virgen") precioAceite = data["Aceite de oliva virgen"];
+      else if (tipo === "lampante") precioAceite = data["Aceite de oliva lampante"];
+
+      const precioAceituna = (precioAceite * rendimiento).toFixed(3);
+      document.querySelector("#resultado").innerText =
+        `Precio estimado de la aceituna: ${precioAceituna} €/kg`;
+    });
 }
 
-// ==========================
-// Abrir / cerrar modales
-// ==========================
-
-// Modal histórico
-const modalHistorico = document.getElementById("historico-modal");
-const btnConsultar = document.getElementById("consultar-btn");
-const btnCerrarHistorico = document.getElementById("historico-close");
-
-if (btnConsultar) {
-  btnConsultar.addEventListener("click", () => {
-    modalHistorico.style.display = "block";
-  });
-}
-
-if (btnCerrarHistorico) {
-  btnCerrarHistorico.addEventListener("click", () => {
-    modalHistorico.style.display = "none";
-  });
-}
-
-// Modal fuente
-const modalFuente = document.getElementById("fuente-modal");
-const btnFuente = document.getElementById("fuente-link");
-const btnCerrarFuente = document.getElementById("fuente-close");
-
-if (btnFuente) {
-  btnFuente.addEventListener("click", () => {
-    modalFuente.style.display = "block";
-  });
-}
-
-if (btnCerrarFuente) {
-  btnCerrarFuente.addEventListener("click", () => {
-    modalFuente.style.display = "none";
-  });
-}
-
-// ==========================
-// Inicialización
-// ==========================
+// ===============================
+// 📌 Eventos
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
-  const tipoSelect = document.getElementById("tipo");
-  const rendimientoInput = document.getElementById("rendimiento");
+  cargarPrecios(); // carga inicial al abrir la web
+  document.querySelector("#rendimiento").addEventListener("input", calcularPrecio);
+  document.querySelector("#tipo").addEventListener("change", calcularPrecio);
 
-  if (tipoSelect && rendimientoInput) {
-    tipoSelect.addEventListener("change", calcularPrecio);
-    rendimientoInput.addEventListener("input", calcularPrecio);
-  }
+  // Botón histórico
+  document.querySelector("#consultar-btn").addEventListener("click", () => {
+    document.querySelector("#historico-modal").style.display = "block";
+  });
+  document.querySelector("#historico-close").addEventListener("click", () => {
+    document.querySelector("#historico-modal").style.display = "none";
+  });
+
+  // Botón fuente
+  document.querySelector("#fuente-link").addEventListener("click", () => {
+    document.querySelector("#fuente-modal").style.display = "block";
+  });
+  document.querySelector("#fuente-close").addEventListener("click", () => {
+    document.querySelector("#fuente-modal").style.display = "none";
+  });
 });
