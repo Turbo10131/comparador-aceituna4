@@ -1,5 +1,3 @@
-name: actualizar
-
 on:
   workflow_dispatch:
   schedule:
@@ -36,13 +34,6 @@ jobs:
       - name: Ejecutar scraper (Playwright)
         run: python scraper.py
 
-      # 🔥 Nuevo: Validar y generar histórico
-      - name: Validar precios
-        run: python validar_precios.py
-
-      - name: Convertir histórico
-        run: python convertir_historico.py
-
       - name: Ver JSON generados
         run: |
           for f in ${DATA_FILES}; do
@@ -68,7 +59,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ${DATA_FILES}
-          git commit -m "Actualizar JSONs automáticamente (scraper + histórico): ${DATA_FILES}"
+          git commit -m "Actualizar JSONs automáticamente (scraper): ${DATA_FILES}"
 
       - name: Hacer push con token personal (SCRAPERGITHUB)
         if: steps.cambios.outputs.changed == 'true'
@@ -108,3 +99,4 @@ jobs:
     steps:
       - name: Mensaje de error
         run: echo "⚠️ El job 'actualizar' ha fallado."
+
