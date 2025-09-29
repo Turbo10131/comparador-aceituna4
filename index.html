@@ -1,120 +1,77 @@
-index.html:
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Precios del Aceite de Oliva</title>
+  <meta name="color-scheme" content="light" />
+
+  <!-- Importa el CSS desde styles.css -->
   <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
 </head>
 <body>
-  <div class="container">
-    <h1>🫒 Precios del Aceite de Oliva</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1><span class="dot">🫒</span>Precios del Aceite de Oliva</h1>
 
-    <!-- Botón de histórico -->
-    <button id="consultar-btn" class="btn">Consultar precios</button>
+      <noscript>
+        <div class="noscript">⚠️ Para ver los datos y la calculadora necesitas activar JavaScript.</div>
+      </noscript>
 
-    <div class="campo">
-      <label for="rendimiento">Rendimiento (%)</label>
-      <input type="number" id="rendimiento" value="20" min="0" max="100">
-      <small>Introduce un número entre 0 y 100.</small>
-    </div>
+      <div class="campo">
+        <label for="rendimiento">Rendimiento (%)</label>
+        <input id="rendimiento" type="number" inputmode="decimal" min="0" max="100" step="0.1"
+               placeholder="Ej: 20" aria-describedby="rend-help" value="20" autocomplete="off" />
+        <small id="rend-help" class="ayuda">Introduce un número entre 0 y 100.</small>
+      </div>
 
-    <div class="campo">
-      <label for="tipo">Calidad del Aceite</label>
-      <select id="tipo">
-        <option value="">-- Selecciona --</option>
-        <option value="virgen_extra">Virgen Extra</option>
-        <option value="virgen">Virgen</option>
-        <option value="lampante">Lampante</option>
-      </select>
-    </div>
+      <div class="campo">
+        <label for="tipo">Calidad del Aceite</label>
+        <select id="tipo" autocomplete="off">
+          <option value="">-- Elegir calidad --</option>
+          <option value="virgen_extra">Virgen Extra</option>
+          <option value="virgen">Virgen</option>
+          <option value="lampante">Lampante</option>
+        </select>
+      </div>
 
-    <div id="precio"></div>
+      <div id="precio" role="status" aria-live="polite"></div>
 
-    <h2>📊 Calculadora — precio por kg de aceituna</h2>
-    <p>Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.</p>
-    <div id="resultado"></div>
+      <div class="calc">
+        <h2><span class="emoji">🧮</span>Calculadora — precio por kg de aceituna</h2>
+        <p class="muted" style="margin: 4px 0 8px;">
+          Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.
+        </p>
+        <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
+      </div>
 
-    <div id="tabla-info"></div>
-    <div id="tabla-precios"></div>
+      <div id="tabla-info" class="tabla-info">Precios actualizados — …</div>
 
-    <!-- Botón para abrir fuente -->
-    <div class="fuente-btn">
-      <button id="fuente-link" class="btn-link">De dónde obtenemos los precios</button>
-    </div>
-  </div>
+      <div id="tabla-precios" class="tabla-wrap"></div>
 
-  <!-- Modal histórico -->
-  <div id="historico-modal" class="modal">
-    <div class="modal-content modal-large">
-      <h2>Histórico de precios del aceite de oliva</h2>
-      <table class="historico-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo de aceite</th>
-            <th>Precio €/kg</th>
-          </tr>
-        </thead>
-        <tbody id="historico-body"></tbody>
-      </table>
-      <button id="historico-close" class="btn">Cerrar</button>
+      <div class="tabla-footer">
+        <span class="fuente">
+          <a id="fuente-link" href="#" aria-controls="fuente-modal" aria-haspopup="dialog">
+            De dónde obtenemos los precios
+          </a>
+        </span>
+      </div>
     </div>
   </div>
 
   <!-- Modal fuente -->
-  <div id="fuente-modal" class="modal">
+  <div id="fuente-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-content">
-      <h2>Fuente de los precios</h2>
+      <h3 id="modal-title">Fuente de los precios</h3>
       <p>Obtenemos los datos del Observatorio de <strong>Infaoliva</strong>.</p>
-      <p><a href="https://www.infaoliva.com" target="_blank">Ir a Infaoliva</a></p>
-      <button id="fuente-close" class="btn">Cerrar</button>
+      <div class="modal-actions">
+        <a class="btn primary" href="https://www.infaoliva.com/" target="_blank" rel="noopener">Ir a Infaoliva</a>
+        <button id="modal-close" class="btn" type="button">Cerrar</button>
+      </div>
     </div>
   </div>
+
+  <!-- Lógica de la app -->
+  <script src="app.js" defer></script>
 </body>
 </html>
-
-modal-historico.js:
-async function cargarHistorico() {
-  const response = await fetch("precio-aceite-historico.json");
-  const data = await response.json();
-
-  const tabla = document.querySelector("#tabla-historico tbody");
-  tabla.innerHTML = "";
-
-  // Obtener todas las fechas de todas las variedades
-  let fechas = new Set();
-  Object.values(data).forEach(lista => {
-    lista.forEach(entry => fechas.add(entry.fecha));
-  });
-
-  // Ordenar fechas descendente (más reciente primero)
-  fechas = Array.from(fechas).sort((a, b) => new Date(b) - new Date(a));
-
-  // Iterar fechas y mostrar filas
-  fechas.forEach(fecha => {
-    const fila_fecha = document.createElement("tr");
-    fila_fecha.innerHTML = `
-      <td colspan="3" style="background:#d7e4b4;font-weight:bold;">${fecha}</td>
-    `;
-    tabla.appendChild(fila_fecha);
-
-    // Mostrar los tres tipos en orden fijo
-    ["Aceite de oliva virgen extra", "Aceite de oliva virgen", "Aceite de oliva lampante"].forEach(tipo => {
-      const registro = data[tipo].find(e => e.fecha === fecha);
-      if (registro) {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-          <td></td>
-          <td>${tipo}</td>
-          <td>${registro.precio_eur_kg.toFixed(3)} €</td>
-        `;
-        tabla.appendChild(fila);
-      }
-    });
-  });
-}
-
-document.addEventListener("DOMContentLoaded", cargarHistorico);
