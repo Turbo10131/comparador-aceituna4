@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Precios del Aceite de Oliva</title>
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
@@ -11,14 +11,12 @@
   <div class="container">
     <h1>🫒 Precios del Aceite de Oliva</h1>
 
-    <!-- Campo rendimiento -->
     <div class="campo">
       <label for="rendimiento">Rendimiento (%)</label>
       <input id="rendimiento" type="number" min="0" max="100" step="0.1" value="20">
       <small>Introduce un número entre 0 y 100.</small>
     </div>
 
-    <!-- Campo tipo de aceite -->
     <div class="campo">
       <label for="tipo">Calidad del Aceite</label>
       <select id="tipo">
@@ -29,42 +27,18 @@
       </select>
     </div>
 
-    <!-- Precio actual -->
     <div id="precio"></div>
 
-    <!-- Calculadora -->
     <h2>📊 Calculadora — precio por kg de aceituna</h2>
     <p>Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.</p>
     <div id="resultado"></div>
 
-    <!-- Tabla de precios -->
-    <div id="tabla-info">Precios actualizados — …</div>
+    <!-- 📌 Aquí aparece la tabla principal -->
+    <div id="tabla-info"></div>
     <div id="tabla-precios"></div>
 
-    <!-- Botón histórico -->
-    <button id="consultar-btn" class="btn">Consultar precios</button>
-
-    <!-- Fuente -->
     <div class="fuente-btn">
       <button id="fuente-link" class="btn-link">De dónde obtenemos los precios</button>
-    </div>
-  </div>
-
-  <!-- Modal histórico -->
-  <div id="historico-modal" class="modal">
-    <div class="modal-content modal-large">
-      <h2>Histórico de precios del aceite de oliva</h2>
-      <table class="historico-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo de aceite</th>
-            <th>Precio €/kg</th>
-          </tr>
-        </thead>
-        <tbody id="historico-body"></tbody>
-      </table>
-      <button id="historico-close" class="btn">Cerrar</button>
     </div>
   </div>
 
