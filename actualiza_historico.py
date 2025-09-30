@@ -1,45 +1,69 @@
 import json
 from datetime import datetime
 
-# Rutas de archivos
-ARCHIVO_ACTUAL = "precio-aceite.json"
-ARCHIVO_HISTORICO = "precios 2015.txt"
+# Archivos
+JSON_FILE = "precio-aceite.json"
+HISTORICO_FILE = "precios 2015.txt"
 
 def main():
+    # 1. Leer JSON con los precios del día
+    with open(JSON_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    fecha_raw = data.get("fecha")
+    precios = data.get("precios", {})
+
+    # Convertir fecha a formato DD-MM-YYYY
     try:
-        # Leer precios actuales
-        with open(ARCHIVO_ACTUAL, "r", encoding="utf-8") as f:
-            datos = json.load(f)
+        fecha = datetime.strptime(fecha_raw, "%Y-%m-%d %H:%M:%S").strftime("%d-%m-%Y")
+    except Exception:
+        fecha = datetime.now().strftime("%d-%m-%Y")
 
-        fecha_raw = datos.get("fecha", "")
-        fecha = fecha_raw.split(" ")[0] if fecha_raw else datetime.now().strftime("%Y-%m-%d")
-        precios = datos.get("precios", {})
+    # Extraer precios
+    ve = precios.get("Aceite de oliva virgen extra", {}).get("precio_eur_kg", "")
+    v  = precios.get("Aceite de oliva virgen", {}).get("precio_eur_kg", "")
+    l  = precios.get("Aceite de oliva lampante", {}).get("precio_eur_kg", "")
 
-        # Generar líneas con los precios
-        lineas = [
-            fecha,
-            f"Aceite de oliva virgen extra {precios.get('Aceite de oliva virgen extra', {}).get('precio_eur_kg', '—')}",
-            f"Aceite de oliva virgen {precios.get('Aceite de oliva virgen', {}).get('precio_eur_kg', '—')}",
-            f"Aceite de oliva lampante {precios.get('Aceite de oliva lampante', {}).get('precio_eur_kg', '—')}",
-            ""
-        ]
+    # Línea con formato correcto
+    bloque = [
+        fecha,
+        f"Aceite de oliva virgen extra {ve:.3f}" if ve else "",
+        f"Aceite de oliva virgen {v:.3f}" if v else "",
+        f"Aceite de oliva lampante {l:.3f}" if l else "",
+        ""
+    ]
 
-        # Comprobar si ya existe esta fecha en el histórico
-        with open(ARCHIVO_HISTORICO, "r", encoding="utf-8") as f:
-            contenido = f.read()
+    # 2. Leer histórico actual
+    try:
+        with open(HISTORICO_FILE, "r", encoding="utf-8") as f:
+            lineas = f.read().splitlines()
+    except FileNotFoundError:
+        lineas = []
 
-        if fecha in contenido:
-            print(f"[INFO] La fecha {fecha} ya existe en el histórico. No se añade.")
-            return
+    # 3. Buscar si la fecha ya existe en el archivo
+    nueva_lineas = []
+    i = 0
+    actualizado = False
+    while i < len(lineas):
+        if lineas[i].strip() == fecha:
+            # Sustituimos bloque antiguo por el nuevo
+            nueva_lineas.extend(bloque)
+            i += 4  # saltar el bloque viejo (fecha + 3 precios)
+            actualizado = True
+        else:
+            nueva_lineas.append(lineas[i])
+            i += 1
 
-        # Añadir al archivo histórico
-        with open(ARCHIVO_HISTORICO, "a", encoding="utf-8") as f:
-            f.write("\n".join(lineas) + "\n")
+    # Si no estaba la fecha → añadir al final
+    if not actualizado:
+        nueva_lineas.extend(bloque)
 
-        print(f"[OK] Histórico actualizado con precios del {fecha}")
+    # 4. Guardar de nuevo el archivo
+    with open(HISTORICO_FILE, "w", encoding="utf-8") as f:
+        f.write("\n".join(nueva_lineas))
 
-    except Exception as e:
-        print(f"[ERROR] No se pudo actualizar el histórico: {e}")
+    print(f"✅ Histórico actualizado para {fecha}")
 
 if __name__ == "__main__":
     main()
+
