@@ -1,70 +1,59 @@
 async function cargarHistorico() {
   try {
-    const response = await fetch("precio-aceite-historico.json");
-    if (!response.ok) throw new Error("Error al cargar el histórico");
+    const response = await fetch("precios 2015.txt");
+    if (!response.ok) throw new Error("No se pudo cargar precios 2015.txt");
 
-    const data = await response.json();
-    const tbody = document.querySelector("#historico-body");
-    tbody.innerHTML = "";
+    const texto = await response.text();
+    const lineas = texto.split("\n").map(l => l.trim()).filter(l => l);
 
-    // Ordenar por fecha descendente (última primero)
-    data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    const body = document.getElementById("historico-body");
+    body.innerHTML = "";
 
-    data.forEach(entry => {
-      // Fila de la fecha
-      const filaFecha = document.createElement("tr");
-      filaFecha.innerHTML = `
-        <td colspan="3" class="fecha-barra">${entry.fecha}</td>
-      `;
-      tbody.appendChild(filaFecha);
+    let fechaActual = null;
 
-      // Fila para cada tipo de aceite
-      [
-        "Aceite de oliva virgen extra",
-        "Aceite de oliva virgen",
-        "Aceite de oliva lampante"
-      ].forEach(tipo => {
-        if (entry[tipo] !== undefined) {
-          const fila = document.createElement("tr");
-          fila.classList.add("sub-row");
-          fila.innerHTML = `
-            <td></td>
-            <td class="tipo"><em>${tipo}</em></td>
-            <td class="precio">${entry[tipo].toFixed(3)} €/kg</td>
-          `;
-          tbody.appendChild(fila);
-        }
-      });
+    lineas.forEach(linea => {
+      // Detecta si es una fecha (dd-mm-aaaa)
+      if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
+        fechaActual = linea;
+        const filaFecha = document.createElement("tr");
+        filaFecha.innerHTML = `<td colspan="3" style="background:#dce4b0; font-weight:bold;">${fechaActual}</td>`;
+        body.appendChild(filaFecha);
+      } else if (fechaActual) {
+        // Separar texto y precio
+        const partes = linea.split(" ");
+        const precio = partes.pop();
+        const tipo = partes.join(" ");
+
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td></td>
+          <td>${tipo}</td>
+          <td>${parseFloat(precio).toFixed(3)} €/kg</td>
+        `;
+        body.appendChild(fila);
+      }
     });
-
   } catch (err) {
-    console.error("[Histórico] Error:", err);
-    const tbody = document.querySelector("#historico-body");
-    tbody.innerHTML = `<tr><td colspan="3">❌ Error al cargar el histórico</td></tr>`;
+    console.error("[Historico] Error cargando histórico:", err);
+    document.getElementById("historico-body").innerHTML =
+      `<tr><td colspan="3">No hay datos disponibles.</td></tr>`;
   }
 }
 
-// Asociamos el evento al botón
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("btn-historico");
   const modal = document.getElementById("historico-modal");
-  const closeBtn = document.getElementById("historico-close");
+  const close = document.getElementById("historico-close");
 
-  if (btn && modal) {
+  if (btn && modal && close) {
     btn.addEventListener("click", () => {
-      cargarHistorico();
       modal.classList.add("open");
+      cargarHistorico();
+    });
+
+    close.addEventListener("click", () => modal.classList.remove("open"));
+    modal.addEventListener("click", e => {
+      if (e.target === modal) modal.classList.remove("open");
     });
   }
-
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      modal.classList.remove("open");
-    });
-  }
-
-  modal?.addEventListener("click", e => {
-    if (e.target === modal) modal.classList.remove("open");
-  });
 });
-
