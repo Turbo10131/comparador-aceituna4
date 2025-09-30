@@ -10,28 +10,43 @@ async function cargarHistorico() {
     body.innerHTML = "";
 
     let fechaActual = null;
+    let registros = [];
 
     lineas.forEach(linea => {
-      // Detecta si es una fecha (dd-mm-aaaa)
+      // Detectar fecha (dd-mm-aaaa)
       if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
         fechaActual = linea;
-        const filaFecha = document.createElement("tr");
-        filaFecha.innerHTML = `<td colspan="3" style="background:#dce4b0; font-weight:bold;">${fechaActual}</td>`;
-        body.appendChild(filaFecha);
+        registros.push({ fecha: fechaActual, precios: [] });
       } else if (fechaActual) {
-        // Separar texto y precio
         const partes = linea.split(" ");
         const precio = partes.pop();
         const tipo = partes.join(" ");
+        registros[registros.length - 1].precios.push({ tipo, precio: parseFloat(precio) });
+      }
+    });
 
+    // 📌 Ordenar por fecha (más reciente primero)
+    registros.sort((a, b) => {
+      const fa = new Date(a.fecha.split("-").reverse().join("-"));
+      const fb = new Date(b.fecha.split("-").reverse().join("-"));
+      return fb - fa;
+    });
+
+    // Renderizar
+    registros.forEach(reg => {
+      const filaFecha = document.createElement("tr");
+      filaFecha.innerHTML = `<td colspan="3" style="background:#dce4b0; font-weight:bold;">${reg.fecha}</td>`;
+      body.appendChild(filaFecha);
+
+      reg.precios.forEach(p => {
         const fila = document.createElement("tr");
         fila.innerHTML = `
           <td></td>
-          <td>${tipo}</td>
-          <td>${parseFloat(precio).toFixed(3)} €/kg</td>
+          <td>${p.tipo}</td>
+          <td>${isNaN(p.precio) ? "—" : p.precio.toFixed(3) + " €/kg"}</td>
         `;
         body.appendChild(fila);
-      }
+      });
     });
   } catch (err) {
     console.error("[Historico] Error cargando histórico:", err);
