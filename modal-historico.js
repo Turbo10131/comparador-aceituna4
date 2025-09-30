@@ -62,7 +62,20 @@ async function cargarHistorico(filtro = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  cargarHistorico();
+  const modal = document.getElementById("historico-modal");
+  const btnAbrir = document.getElementById("historico-btn");
+  const btnCerrar = document.getElementById("historico-close");
+
+  // 📌 Abrir modal histórico
+  btnAbrir.addEventListener("click", () => {
+    modal.classList.add("open");
+    cargarHistorico(); // mostrar todo por defecto
+  });
+
+  // 📌 Cerrar modal histórico
+  btnCerrar.addEventListener("click", () => {
+    modal.classList.remove("open");
+  });
 
   // 📌 Filtro últimos 3 meses
   document.getElementById("filtro-3m").addEventListener("click", () => {
