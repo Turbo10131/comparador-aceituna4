@@ -44,7 +44,7 @@
 
     <!-- 📌 Nuevo botón para abrir histórico -->
     <div style="text-align:right; margin-top:10px;">
-      <button id="btn-historico" class="btn">Consultar precios</button>
+      <button id="historico-btn" class="btn">Consultar precios</button>
     </div>
   </div>
 
@@ -52,6 +52,22 @@
   <div id="historico-modal" class="modal">
     <div class="modal-content modal-large">
       <h2>Histórico de precios del aceite de oliva</h2>
+
+      <!-- 🔹 Bloque de filtros añadido -->
+      <div class="historico-filtros" style="margin:10px 0; display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="filtro-3m" class="btn">Últimos 3 meses</button>
+        <button id="filtro-1m" class="btn">Último mes</button>
+        <div>
+          <label for="fecha-desde">Desde:</label>
+          <input type="date" id="fecha-desde">
+        </div>
+        <div>
+          <label for="fecha-hasta">Hasta:</label>
+          <input type="date" id="fecha-hasta">
+        </div>
+        <button id="filtro-rango" class="btn">Filtrar</button>
+      </div>
+
       <table class="historico-table">
         <thead>
           <tr>
