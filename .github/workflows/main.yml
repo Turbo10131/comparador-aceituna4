@@ -61,6 +61,19 @@ jobs:
           git add ${DATA_FILES}
           git commit -m "Actualizar JSONs automáticamente (scraper): ${DATA_FILES}"
 
+      # 👉 NUEVO PASO: actualizar histórico con los datos del día
+      - name: Actualizar histórico precios
+        if: steps.cambios.outputs.changed == 'true'
+        run: python actualiza_historico.py
+
+      - name: Commit histórico
+        if: steps.cambios.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "precios 2015.txt"
+          git commit -m "Actualizar histórico automáticamente con precios del día" || echo "No hay cambios"
+
       - name: Hacer push con token personal (SCRAPERGITHUB)
         if: steps.cambios.outputs.changed == 'true'
         env:
@@ -99,4 +112,3 @@ jobs:
     steps:
       - name: Mensaje de error
         run: echo "⚠️ El job 'actualizar' ha fallado."
-
