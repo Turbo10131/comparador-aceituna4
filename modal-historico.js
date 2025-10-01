@@ -2,12 +2,6 @@
 
 let historicoDatos = [];
 
-// Función para convertir YYYY-MM-DD -> DD-MM-YYYY
-function formatearFecha(fechaStr) {
-  const [y, m, d] = fechaStr.split("-");
-  return `${d}-${m}-${y}`;
-}
-
 // Cargar precios del archivo TXT
 async function cargarHistorico() {
   try {
@@ -22,7 +16,7 @@ async function cargarHistorico() {
 
     lineas.forEach(linea => {
       if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
-        fechaActual = linea;
+        fechaActual = linea; // ya está en DD-MM-YYYY
       } else if (fechaActual) {
         const partes = linea.split(" ");
         const precio = partes.pop();
@@ -84,7 +78,6 @@ function filtrarPorRango(desde, hasta) {
 
 // ---------------- EVENTOS ----------------
 document.addEventListener("DOMContentLoaded", () => {
-  // Modal
   const modal = document.getElementById("historico-modal");
   const btnOpen = document.getElementById("historico-btn");
   const btnClose = document.getElementById("historico-close");
@@ -106,10 +99,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn3m = document.getElementById("filtro-3m");
   if (btn3m) {
     btn3m.addEventListener("click", () => {
-      const hoy = new Date();
-      const desde = new Date();
-      desde.setMonth(hoy.getMonth() - 3);
-      renderHistorico(filtrarPorRango(desde, hoy));
+      if (!historicoDatos.length) return;
+
+      // Usamos la última fecha disponible en el TXT
+      const [d, m, y] = historicoDatos[0].fecha.split("-");
+      const fechaMax = new Date(`${y}-${m}-${d}`);
+      const fechaMin = new Date(fechaMax);
+      fechaMin.setMonth(fechaMax.getMonth() - 3);
+
+      renderHistorico(filtrarPorRango(fechaMin, fechaMax));
     });
   }
 
@@ -117,10 +115,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn1m = document.getElementById("filtro-1m");
   if (btn1m) {
     btn1m.addEventListener("click", () => {
-      const hoy = new Date();
-      const desde = new Date();
-      desde.setMonth(hoy.getMonth() - 1);
-      renderHistorico(filtrarPorRango(desde, hoy));
+      if (!historicoDatos.length) return;
+
+      const [d, m, y] = historicoDatos[0].fecha.split("-");
+      const fechaMax = new Date(`${y}-${m}-${d}`);
+      const fechaMin = new Date(fechaMax);
+      fechaMin.setMonth(fechaMax.getMonth() - 1);
+
+      renderHistorico(filtrarPorRango(fechaMin, fechaMax));
     });
   }
 
@@ -142,4 +144,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
