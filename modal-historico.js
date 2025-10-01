@@ -1,103 +1,121 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const modal = document.getElementById("historico-modal");
-  const btnOpen = document.getElementById("historico-btn");
-  const btnClose = document.getElementById("historico-close");
-  const body = document.getElementById("historico-body");
+// =======================
+// modal-historico.js
+// =======================
 
-  const btn3m = document.getElementById("btn-3m");
-  const btn1m = document.getElementById("btn-1m");
-  const btnFiltrar = document.getElementById("btn-filtrar");
-  const inputDesde = document.getElementById("fecha-desde");
-  const inputHasta = document.getElementById("fecha-hasta");
+const historicoModal = document.getElementById("historico-modal");
+const historicoBtn = document.getElementById("historico-btn");
+const historicoClose = document.getElementById("historico-close");
+const historicoBody = document.getElementById("historico-body");
 
-  let registros = [];
+let historicoDatos = [];
 
-  // ✅ Corrección: nombre correcto del archivo
-  async function cargarDatos() {
+// Abrir modal
+historicoBtn.addEventListener("click", async () => {
+  historicoModal.classList.add("open");
+
+  if (historicoDatos.length === 0) {
     try {
-      const res = await fetch("precios2015.txt"); 
-      const text = await res.text();
-
-      const lineas = text.split("\n").map(l => l.trim()).filter(Boolean);
-      const datos = [];
-      let fecha = null;
-
-      for (let linea of lineas) {
-        if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
-          fecha = linea;
-        } else if (fecha) {
-          const partes = linea.split(" ");
-          const precio = partes.pop();
-          const tipo = partes.join(" ");
-          datos.push({ fecha, tipo, precio });
-        }
-      }
-
-      registros = datos;
-      renderTabla(registros);
+      const resp = await fetch("precios2015.txt");
+      const text = await resp.text();
+      historicoDatos = parseHistorico(text);
+      renderHistorico(historicoDatos);
     } catch (err) {
       console.error("Error cargando histórico:", err);
     }
+  } else {
+    renderHistorico(historicoDatos);
   }
+});
 
-  function renderTabla(filtrados) {
-    body.innerHTML = "";
-    let lastFecha = null;
+// Cerrar modal
+historicoClose.addEventListener("click", () => {
+  historicoModal.classList.remove("open");
+});
 
-    filtrados.forEach(r => {
-      if (r.fecha !== lastFecha) {
-        const trFecha = document.createElement("tr");
-        trFecha.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${r.fecha}</strong></td>`;
-        body.appendChild(trFecha);
-        lastFecha = r.fecha;
-      }
-      const tr = document.createElement("tr");
-      tr.classList.add("sub-row");
-      tr.innerHTML = `
-        <td></td>
-        <td class="tipo">${r.tipo}</td>
-        <td class="precio">${parseFloat(r.precio).toFixed(3)} €/kg</td>
-      `;
-      body.appendChild(tr);
-    });
-  }
+// Parsear datos del TXT
+function parseHistorico(text) {
+  const lineas = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+  const datos = [];
+  let fechaActual = null;
 
-  function filtrarPorRango(desde, hasta) {
-    if (!desde || !hasta) return registros;
-    const d1 = new Date(desde.split("-").reverse().join("-"));
-    const d2 = new Date(hasta.split("-").reverse().join("-"));
-    return registros.filter(r => {
-      const d = new Date(r.fecha.split("-").reverse().join("-"));
-      return d >= d1 && d <= d2;
-    });
-  }
-
-  // Eventos de botones
-  btnOpen.addEventListener("click", () => modal.classList.add("open"));
-  btnClose.addEventListener("click", () => modal.classList.remove("open"));
-
-  btn3m.addEventListener("click", () => {
-    const d = new Date();
-    const desde = new Date();
-    desde.setMonth(d.getMonth() - 3);
-    renderTabla(filtrarPorRango(desde.toISOString().split("T")[0], d.toISOString().split("T")[0]));
-  });
-
-  btn1m.addEventListener("click", () => {
-    const d = new Date();
-    const desde = new Date();
-    desde.setMonth(d.getMonth() - 1);
-    renderTabla(filtrarPorRango(desde.toISOString().split("T")[0], d.toISOString().split("T")[0]));
-  });
-
-  // ✅ Corrección: botón de filtrar con id "btn-filtrar"
-  btnFiltrar.addEventListener("click", () => {
-    const desde = inputDesde.value;
-    const hasta = inputHasta.value;
-    if (desde && hasta) {
-      renderTabla(filtrarPorRango(desde, hasta));
+  lineas.forEach(linea => {
+    if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
+      fechaActual = linea;
+    } else if (fechaActual) {
+      const partes = linea.split(" ");
+      const precio = partes.pop();
+      const tipo = partes.join(" ");
+      datos.push({
+        fecha: fechaActual,
+        tipo,
+        precio
+      });
     }
   });
 
-  await cargarDatos();
+  return datos;
+}
+
+// Renderizar tabla
+function renderHistorico(datos) {
+  historicoBody.innerHTML = "";
+
+  let ultimaFecha = null;
+  datos.forEach(item => {
+    if (item.fecha !== ultimaFecha) {
+      const filaFecha = document.createElement("tr");
+      filaFecha.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${item.fecha}</strong></td>`;
+      historicoBody.appendChild(filaFecha);
+      ultimaFecha = item.fecha;
+    }
+
+    const fila = document.createElement("tr");
+    fila.classList.add("sub-row");
+    fila.innerHTML = `
+      <td></td>
+      <td class="tipo">${item.tipo}</td>
+      <td class="precio">${item.precio}</td>
+    `;
+    historicoBody.appendChild(fila);
+  });
+}
+
+// Filtrar por rango
+function filtrarPorRango(desde, hasta) {
+  return historicoDatos.filter(item => {
+    const fechaParts = item.fecha.split("-"); // DD-MM-YYYY
+    const fecha = new Date(`${fechaParts[2]}-${fechaParts[1]}-${fechaParts[0]}`);
+    return fecha >= desde && fecha <= hasta;
+  });
+}
+
+// Botón últimos 3 meses
+document.getElementById("filtro-3m").addEventListener("click", () => {
+  const hoy = new Date();
+  const desde = new Date();
+  desde.setMonth(hoy.getMonth() - 3);
+  renderHistorico(filtrarPorRango(desde, hoy));
+});
+
+// Botón último mes
+document.getElementById("filtro-1m").addEventListener("click", () => {
+  const hoy = new Date();
+  const desde = new Date();
+  desde.setMonth(hoy.getMonth() - 1);
+  renderHistorico(filtrarPorRango(desde, hoy));
+});
+
+// Botón rango personalizado
+document.getElementById("filtro-rango").addEventListener("click", () => {
+  const desdeInput = document.getElementById("fecha-desde").value;
+  const hastaInput = document.getElementById("fecha-hasta").value;
+
+  if (desdeInput && hastaInput) {
+    const [d1, m1, y1] = desdeInput.split("-");
+    const [d2, m2, y2] = hastaInput.split("-");
+    const desde = new Date(`${y1}-${m1}-${d1}`);
+    const hasta = new Date(`${y2}-${m2}-${d2}`);
+
+    renderHistorico(filtrarPorRango(desde, hasta));
+  }
 });
