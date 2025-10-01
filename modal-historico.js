@@ -11,6 +11,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return new Date(y, m - 1, d);
   }
 
+  function formatDDMMYYYY(date) {
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const y = date.getFullYear();
+    return `${d}-${m}-${y}`;
+  }
+
   function euros(n) {
     return `${Number(n).toFixed(3)} €/kg`;
   }
@@ -19,8 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
     tbody.innerHTML = "";
 
     filtradas.forEach(entry => {
+      // Aseguramos que la fecha siempre se muestre en DD-MM-YYYY
+      const fechaObj = parseDDMMYYYY(entry.fecha);
+      const fechaTxt = formatDDMMYYYY(fechaObj);
+
       const fechaRow = document.createElement("tr");
-      fechaRow.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${entry.fecha}</strong></td>`;
+      fechaRow.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${fechaTxt}</strong></td>`;
       tbody.appendChild(fechaRow);
 
       entry.precios.forEach(p => {
