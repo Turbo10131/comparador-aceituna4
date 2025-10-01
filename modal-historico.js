@@ -1,5 +1,7 @@
+// modal-historico.js
 async function cargarHistorico(filtro = {}) {
-  const response = await fetch("precios-2015.txt");
+  // ✅ Corregido: escapamos el espacio en el nombre del archivo
+  const response = await fetch("precios%202015.txt");
   const texto = await response.text();
 
   const lineas = texto.split("\n").map(l => l.trim()).filter(Boolean);
@@ -21,85 +23,73 @@ async function cargarHistorico(filtro = {}) {
     }
   });
 
-  let datos = registros;
+  // Ordenar de más reciente a más antiguo
+  registros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-  // 📌 Filtro de fechas
+  // Aplicar filtro de fechas si existe
+  let filtrados = registros;
   if (filtro.desde || filtro.hasta) {
-    datos = datos.filter(r => {
+    const desde = filtro.desde ? new Date(filtro.desde) : null;
+    const hasta = filtro.hasta ? new Date(filtro.hasta) : null;
+    filtrados = registros.filter(r => {
       const f = new Date(r.fecha);
-      return (!filtro.desde || f >= new Date(filtro.desde)) &&
-             (!filtro.hasta || f <= new Date(filtro.hasta));
+      return (!desde || f >= desde) && (!hasta || f <= hasta);
     });
   }
 
-  // Agrupar por fecha
-  const porFecha = {};
-  datos.forEach(r => {
-    if (!porFecha[r.fecha]) porFecha[r.fecha] = [];
-    porFecha[r.fecha].push(r);
-  });
+  const tabla = document.querySelector("#historico-body");
+  tabla.innerHTML = "";
 
-  const fechas = Object.keys(porFecha).sort((a, b) => new Date(b) - new Date(a));
+  let fechaAgrupada = null;
+  filtrados.forEach(r => {
+    if (r.fecha !== fechaAgrupada) {
+      const filaFecha = document.createElement("tr");
+      filaFecha.innerHTML = `<td colspan="3" class="fecha-barra">${r.fecha}</td>`;
+      tabla.appendChild(filaFecha);
+      fechaAgrupada = r.fecha;
+    }
 
-  const tbody = document.getElementById("historico-body");
-  tbody.innerHTML = "";
-
-  fechas.forEach(fecha => {
-    const filaFecha = document.createElement("tr");
-    filaFecha.innerHTML = `<td colspan="3" style="background:#d7e4b4;font-weight:bold;">${fecha}</td>`;
-    tbody.appendChild(filaFecha);
-
-    porFecha[fecha].forEach(registro => {
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td></td>
-        <td>${registro.tipo}</td>
-        <td>${isNaN(registro.precio) ? "—" : registro.precio.toFixed(3) + " €/kg"}</td>
-      `;
-      tbody.appendChild(fila);
-    });
+    const fila = document.createElement("tr");
+    fila.classList.add("sub-row");
+    fila.innerHTML = `
+      <td></td>
+      <td class="tipo">${r.tipo}</td>
+      <td class="precio">${r.precio.toFixed(3)} €/kg</td>
+    `;
+    tabla.appendChild(fila);
   });
 }
 
+// Eventos para abrir/cerrar modal y aplicar filtros
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("historico-modal");
-  const btnAbrir = document.getElementById("historico-btn");
-  const btnCerrar = document.getElementById("historico-close");
+  const abrir = document.getElementById("historico-btn");
+  const cerrar = document.getElementById("historico-close");
 
-  // 📌 Abrir modal histórico
-  btnAbrir.addEventListener("click", () => {
+  abrir.addEventListener("click", () => {
     modal.classList.add("open");
-    cargarHistorico(); // mostrar todo por defecto
+    cargarHistorico();
   });
 
-  // 📌 Cerrar modal histórico
-  btnCerrar.addEventListener("click", () => {
-    modal.classList.remove("open");
-  });
+  cerrar.addEventListener("click", () => modal.classList.remove("open"));
 
-  // 📌 Filtro últimos 3 meses
-  document.getElementById("filtro-3m").addEventListener("click", () => {
-    const hasta = new Date();
+  // Botones de filtros rápidos
+  document.getElementById("filtro-3m")?.addEventListener("click", () => {
     const desde = new Date();
-    desde.setMonth(hasta.getMonth() - 3);
-    cargarHistorico({ desde, hasta });
+    desde.setMonth(desde.getMonth() - 3);
+    cargarHistorico({ desde: desde.toISOString().split("T")[0] });
   });
 
-  // 📌 Filtro último mes
-  document.getElementById("filtro-1m").addEventListener("click", () => {
-    const hasta = new Date();
+  document.getElementById("filtro-1m")?.addEventListener("click", () => {
     const desde = new Date();
-    desde.setMonth(hasta.getMonth() - 1);
-    cargarHistorico({ desde, hasta });
+    desde.setMonth(desde.getMonth() - 1);
+    cargarHistorico({ desde: desde.toISOString().split("T")[0] });
   });
 
-  // 📌 Filtro rango personalizado
-  document.getElementById("filtro-rango").addEventListener("click", () => {
+  // Filtro personalizado
+  document.getElementById("filtro-aplicar")?.addEventListener("click", () => {
     const desde = document.getElementById("fecha-desde").value;
     const hasta = document.getElementById("fecha-hasta").value;
-    cargarHistorico({ 
-      desde: desde ? new Date(desde) : null, 
-      hasta: hasta ? new Date(hasta) : null 
-    });
+    cargarHistorico({ desde, hasta });
   });
 });
