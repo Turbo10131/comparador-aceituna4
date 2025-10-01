@@ -1,95 +1,128 @@
-// modal-historico.js
-async function cargarHistorico(filtro = {}) {
-  // ✅ Corregido: escapamos el espacio en el nombre del archivo
-  const response = await fetch("precios%202015.txt");
-  const texto = await response.text();
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("historico-modal");
+  const openBtn = document.getElementById("historico-btn");
+  const closeBtn = document.getElementById("historico-close");
+  const tbody = document.getElementById("historico-body");
 
-  const lineas = texto.split("\n").map(l => l.trim()).filter(Boolean);
-  const registros = [];
+  let fechas = []; // Guardará todas las entradas históricas
 
-  let fechaActual = null;
-  lineas.forEach(l => {
-    if (/^\d{2}-\d{2}-\d{4}$/.test(l)) {
-      fechaActual = l.split("-").reverse().join("-"); // YYYY-MM-DD
-    } else if (fechaActual) {
-      const partes = l.split(" ");
-      const precio = parseFloat(partes.pop());
-      const tipo = partes.join(" ");
-      registros.push({
-        fecha: fechaActual,
-        tipo: tipo.trim(),
-        precio: precio
+  function parseDDMMYYYY(f) {
+    const [d, m, y] = f.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function euros(n) {
+    return `${Number(n).toFixed(3)} €/kg`;
+  }
+
+  function renderTabla(filtradas) {
+    tbody.innerHTML = "";
+
+    filtradas.forEach(entry => {
+      const fechaRow = document.createElement("tr");
+      fechaRow.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${entry.fecha}</strong></td>`;
+      tbody.appendChild(fechaRow);
+
+      entry.precios.forEach(p => {
+        const row = document.createElement("tr");
+        row.classList.add("sub-row");
+        row.innerHTML = `
+          <td class="tipo">${p.tipo}</td>
+          <td class="precio">${euros(p.precio)}</td>
+        `;
+        tbody.appendChild(row);
       });
-    }
-  });
-
-  // Ordenar de más reciente a más antiguo
-  registros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-  // Aplicar filtro de fechas si existe
-  let filtrados = registros;
-  if (filtro.desde || filtro.hasta) {
-    const desde = filtro.desde ? new Date(filtro.desde) : null;
-    const hasta = filtro.hasta ? new Date(filtro.hasta) : null;
-    filtrados = registros.filter(r => {
-      const f = new Date(r.fecha);
-      return (!desde || f >= desde) && (!hasta || f <= hasta);
     });
   }
 
-  const tabla = document.querySelector("#historico-body");
-  tabla.innerHTML = "";
+  async function cargarHistorico() {
+    try {
+      const res = await fetch("precios-2015.txt?v=" + Date.now());
+      const text = await res.text();
+      const lineas = text.trim().split("\n");
 
-  let fechaAgrupada = null;
-  filtrados.forEach(r => {
-    if (r.fecha !== fechaAgrupada) {
-      const filaFecha = document.createElement("tr");
-      filaFecha.innerHTML = `<td colspan="3" class="fecha-barra">${r.fecha}</td>`;
-      tabla.appendChild(filaFecha);
-      fechaAgrupada = r.fecha;
+      fechas = [];
+      let currentFecha = null;
+      let precios = [];
+
+      lineas.forEach(line => {
+        line = line.trim();
+        if (/^\d{2}-\d{2}-\d{4}$/.test(line)) {
+          if (currentFecha && precios.length > 0) {
+            fechas.push({ fecha: currentFecha, precios });
+          }
+          currentFecha = line;
+          precios = [];
+        } else if (line) {
+          const partes = line.split(" ");
+          const precio = parseFloat(partes.pop());
+          const tipo = partes.join(" ");
+          precios.push({ tipo, precio });
+        }
+      });
+      if (currentFecha && precios.length > 0) {
+        fechas.push({ fecha: currentFecha, precios });
+      }
+
+      // Ordenar descendente por fecha
+      fechas.sort((a, b) => parseDDMMYYYY(b.fecha) - parseDDMMYYYY(a.fecha));
+
+      renderTabla(fechas);
+    } catch (err) {
+      console.error("Error cargando histórico:", err);
     }
+  }
 
-    const fila = document.createElement("tr");
-    fila.classList.add("sub-row");
-    fila.innerHTML = `
-      <td></td>
-      <td class="tipo">${r.tipo}</td>
-      <td class="precio">${r.precio.toFixed(3)} €/kg</td>
-    `;
-    tabla.appendChild(fila);
-  });
-}
-
-// Eventos para abrir/cerrar modal y aplicar filtros
-document.addEventListener("DOMContentLoaded", () => {
-  const modal = document.getElementById("historico-modal");
-  const abrir = document.getElementById("historico-btn");
-  const cerrar = document.getElementById("historico-close");
-
-  abrir.addEventListener("click", () => {
+  // --- Abrir modal ---
+  openBtn.addEventListener("click", () => {
     modal.classList.add("open");
     cargarHistorico();
   });
 
-  cerrar.addEventListener("click", () => modal.classList.remove("open"));
-
-  // Botones de filtros rápidos
-  document.getElementById("filtro-3m")?.addEventListener("click", () => {
-    const desde = new Date();
-    desde.setMonth(desde.getMonth() - 3);
-    cargarHistorico({ desde: desde.toISOString().split("T")[0] });
+  // --- Cerrar modal ---
+  closeBtn.addEventListener("click", () => {
+    modal.classList.remove("open");
   });
 
-  document.getElementById("filtro-1m")?.addEventListener("click", () => {
-    const desde = new Date();
-    desde.setMonth(desde.getMonth() - 1);
-    cargarHistorico({ desde: desde.toISOString().split("T")[0] });
-  });
+  // --- Últimos 3 meses ---
+  document.getElementById("btn-3m").onclick = () => {
+    const limite = new Date();
+    limite.setMonth(limite.getMonth() - 3);
+    const filtradas = fechas.filter(f => parseDDMMYYYY(f.fecha) >= limite);
+    renderTabla(filtradas);
+  };
 
-  // Filtro personalizado
-  document.getElementById("filtro-aplicar")?.addEventListener("click", () => {
-    const desde = document.getElementById("fecha-desde").value;
-    const hasta = document.getElementById("fecha-hasta").value;
-    cargarHistorico({ desde, hasta });
-  });
+  // --- Último mes ---
+  document.getElementById("btn-1m").onclick = () => {
+    const limite = new Date();
+    limite.setMonth(limite.getMonth() - 1);
+    const filtradas = fechas.filter(f => parseDDMMYYYY(f.fecha) >= limite);
+    renderTabla(filtradas);
+  };
+
+  // --- Botón Filtrar rango personalizado ---
+  document.getElementById("btn-filtrar").onclick = () => {
+    const desdeVal = document.getElementById("fecha-desde").value;
+    const hastaVal = document.getElementById("fecha-hasta").value;
+    if (!desdeVal || !hastaVal) return;
+
+    // Convertir YYYY-MM-DD → DD-MM-YYYY
+    function toDDMMYYYY(fechaStr) {
+      const [y, m, d] = fechaStr.split("-");
+      return `${d}-${m}-${y}`;
+    }
+
+    const desdeStr = toDDMMYYYY(desdeVal);
+    const hastaStr = toDDMMYYYY(hastaVal);
+
+    const desde = parseDDMMYYYY(desdeStr);
+    const hasta = parseDDMMYYYY(hastaStr);
+
+    const filtradas = fechas.filter(f => {
+      const date = parseDDMMYYYY(f.fecha);
+      return date >= desde && date <= hasta;
+    });
+
+    renderTabla(filtradas);
+  };
 });
