@@ -1,139 +1,103 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const modal = document.getElementById("historico-modal");
-  const openBtn = document.getElementById("historico-btn");
-  const closeBtn = document.getElementById("historico-close");
-  const tbody = document.getElementById("historico-body");
+  const btnOpen = document.getElementById("historico-btn");
+  const btnClose = document.getElementById("historico-close");
+  const body = document.getElementById("historico-body");
 
-  let fechas = []; // Guardará todas las entradas históricas
+  const btn3m = document.getElementById("btn-3m");
+  const btn1m = document.getElementById("btn-1m");
+  const btnFiltrar = document.getElementById("btn-filtrar");
+  const inputDesde = document.getElementById("fecha-desde");
+  const inputHasta = document.getElementById("fecha-hasta");
 
-  function parseDDMMYYYY(f) {
-    const [d, m, y] = f.split("-").map(Number);
-    return new Date(y, m - 1, d);
-  }
+  let registros = [];
 
-  function formatDDMMYYYY(date) {
-    const d = String(date.getDate()).padStart(2, "0");
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const y = date.getFullYear();
-    return `${d}-${m}-${y}`;
-  }
-
-  function euros(n) {
-    return `${Number(n).toFixed(3)} €/kg`;
-  }
-
-  function renderTabla(filtradas) {
-    tbody.innerHTML = "";
-
-    filtradas.forEach(entry => {
-      // Aseguramos que la fecha siempre se muestre en DD-MM-YYYY
-      const fechaObj = parseDDMMYYYY(entry.fecha);
-      const fechaTxt = formatDDMMYYYY(fechaObj);
-
-      const fechaRow = document.createElement("tr");
-      fechaRow.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${fechaTxt}</strong></td>`;
-      tbody.appendChild(fechaRow);
-
-      entry.precios.forEach(p => {
-        const row = document.createElement("tr");
-        row.classList.add("sub-row");
-        row.innerHTML = `
-          <td class="tipo">${p.tipo}</td>
-          <td class="precio">${euros(p.precio)}</td>
-        `;
-        tbody.appendChild(row);
-      });
-    });
-  }
-
-  async function cargarHistorico() {
+  // ✅ Corrección: nombre correcto del archivo
+  async function cargarDatos() {
     try {
-      const res = await fetch("precios-2015.txt?v=" + Date.now());
+      const res = await fetch("precios2015.txt"); 
       const text = await res.text();
-      const lineas = text.trim().split("\n");
 
-      fechas = [];
-      let currentFecha = null;
-      let precios = [];
+      const lineas = text.split("\n").map(l => l.trim()).filter(Boolean);
+      const datos = [];
+      let fecha = null;
 
-      lineas.forEach(line => {
-        line = line.trim();
-        if (/^\d{2}-\d{2}-\d{4}$/.test(line)) {
-          if (currentFecha && precios.length > 0) {
-            fechas.push({ fecha: currentFecha, precios });
-          }
-          currentFecha = line;
-          precios = [];
-        } else if (line) {
-          const partes = line.split(" ");
-          const precio = parseFloat(partes.pop());
+      for (let linea of lineas) {
+        if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
+          fecha = linea;
+        } else if (fecha) {
+          const partes = linea.split(" ");
+          const precio = partes.pop();
           const tipo = partes.join(" ");
-          precios.push({ tipo, precio });
+          datos.push({ fecha, tipo, precio });
         }
-      });
-      if (currentFecha && precios.length > 0) {
-        fechas.push({ fecha: currentFecha, precios });
       }
 
-      // Ordenar descendente por fecha
-      fechas.sort((a, b) => parseDDMMYYYY(b.fecha) - parseDDMMYYYY(a.fecha));
-
-      renderTabla(fechas);
+      registros = datos;
+      renderTabla(registros);
     } catch (err) {
       console.error("Error cargando histórico:", err);
     }
   }
 
-  // --- Abrir modal ---
-  openBtn.addEventListener("click", () => {
-    modal.classList.add("open");
-    cargarHistorico();
-  });
+  function renderTabla(filtrados) {
+    body.innerHTML = "";
+    let lastFecha = null;
 
-  // --- Cerrar modal ---
-  closeBtn.addEventListener("click", () => {
-    modal.classList.remove("open");
-  });
-
-  // --- Últimos 3 meses ---
-  document.getElementById("btn-3m").onclick = () => {
-    const limite = new Date();
-    limite.setMonth(limite.getMonth() - 3);
-    const filtradas = fechas.filter(f => parseDDMMYYYY(f.fecha) >= limite);
-    renderTabla(filtradas);
-  };
-
-  // --- Último mes ---
-  document.getElementById("btn-1m").onclick = () => {
-    const limite = new Date();
-    limite.setMonth(limite.getMonth() - 1);
-    const filtradas = fechas.filter(f => parseDDMMYYYY(f.fecha) >= limite);
-    renderTabla(filtradas);
-  };
-
-  // --- Botón Filtrar rango personalizado ---
-  document.getElementById("btn-filtrar").onclick = () => {
-    const desdeVal = document.getElementById("fecha-desde").value;
-    const hastaVal = document.getElementById("fecha-hasta").value;
-    if (!desdeVal || !hastaVal) return;
-
-    // Convertir YYYY-MM-DD → DD-MM-YYYY
-    function toDDMMYYYY(fechaStr) {
-      const [y, m, d] = fechaStr.split("-");
-      return `${d}-${m}-${y}`;
-    }
-
-    const desdeStr = toDDMMYYYY(desdeVal);
-    const hastaStr = toDDMMYYYY(hastaVal);
-
-    const desde = parseDDMMYYYY(desdeStr);
-    const hasta = parseDDMMYYYY(hastaStr);
-
-    const filtradas = fechas.filter(f => {
-      const date = parseDDMMYYYY(f.fecha);
-      return date >= desde && date <= hasta;
+    filtrados.forEach(r => {
+      if (r.fecha !== lastFecha) {
+        const trFecha = document.createElement("tr");
+        trFecha.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${r.fecha}</strong></td>`;
+        body.appendChild(trFecha);
+        lastFecha = r.fecha;
+      }
+      const tr = document.createElement("tr");
+      tr.classList.add("sub-row");
+      tr.innerHTML = `
+        <td></td>
+        <td class="tipo">${r.tipo}</td>
+        <td class="precio">${parseFloat(r.precio).toFixed(3)} €/kg</td>
+      `;
+      body.appendChild(tr);
     });
+  }
 
-    renderTabla(filtradas);
-  };
+  function filtrarPorRango(desde, hasta) {
+    if (!desde || !hasta) return registros;
+    const d1 = new Date(desde.split("-").reverse().join("-"));
+    const d2 = new Date(hasta.split("-").reverse().join("-"));
+    return registros.filter(r => {
+      const d = new Date(r.fecha.split("-").reverse().join("-"));
+      return d >= d1 && d <= d2;
+    });
+  }
+
+  // Eventos de botones
+  btnOpen.addEventListener("click", () => modal.classList.add("open"));
+  btnClose.addEventListener("click", () => modal.classList.remove("open"));
+
+  btn3m.addEventListener("click", () => {
+    const d = new Date();
+    const desde = new Date();
+    desde.setMonth(d.getMonth() - 3);
+    renderTabla(filtrarPorRango(desde.toISOString().split("T")[0], d.toISOString().split("T")[0]));
+  });
+
+  btn1m.addEventListener("click", () => {
+    const d = new Date();
+    const desde = new Date();
+    desde.setMonth(d.getMonth() - 1);
+    renderTabla(filtrarPorRango(desde.toISOString().split("T")[0], d.toISOString().split("T")[0]));
+  });
+
+  // ✅ Corrección: botón de filtrar con id "btn-filtrar"
+  btnFiltrar.addEventListener("click", () => {
+    const desde = inputDesde.value;
+    const hasta = inputHasta.value;
+    if (desde && hasta) {
+      renderTabla(filtrarPorRango(desde, hasta));
+    }
+  });
+
+  await cargarDatos();
 });
