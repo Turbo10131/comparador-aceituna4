@@ -20,7 +20,7 @@ let datosHistoricos = [];
 // ===================
 async function cargarHistorico() {
   try {
-    const resp = await fetch("precios2015.txt");
+    const resp = await fetch("precios2015.txt"); // 🔹 nombre correcto
     const texto = await resp.text();
 
     const lineas = texto.split("\n").map(l => l.trim()).filter(l => l);
@@ -81,6 +81,7 @@ function renderHistorico(filtrado) {
       const fila = document.createElement("tr");
       fila.classList.add("sub-row");
       fila.innerHTML = `
+        <td></td>
         <td class="tipo">${p.tipo}</td>
         <td class="precio">${p.precio.toFixed(3)} €/kg</td>
       `;
@@ -119,8 +120,8 @@ filtroRango.addEventListener("click", () => {
   const hastaVal = fechaHastaInput.value;
   if (!desdeVal || !hastaVal) return;
 
-  const [ad, am, ay] = desdeVal.split("-").map(Number);
-  const [bd, bm, by] = hastaVal.split("-").map(Number);
+  const [ay, am, ad] = desdeVal.split("-").map(Number);
+  const [by, bm, bd] = hastaVal.split("-").map(Number);
 
   const desde = new Date(ay, am - 1, ad);
   const hasta = new Date(by, bm - 1, bd);
@@ -135,12 +136,11 @@ historicoBtn.addEventListener("click", async () => {
   historicoModal.classList.add("open");
   if (datosHistoricos.length === 0) {
     datosHistoricos = await cargarHistorico();
-    renderHistorico(datosHistoricos);
-  } else {
-    renderHistorico(datosHistoricos);
   }
+  renderHistorico(datosHistoricos); // 🔹 siempre renderiza todos los datos
 });
 
 historicoClose.addEventListener("click", () => {
   historicoModal.classList.remove("open");
 });
+
