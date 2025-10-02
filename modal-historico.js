@@ -13,9 +13,12 @@ async function cargarHistorico() {
     let registros = [];
 
     lineas.forEach(linea => {
+      // Si la línea es una fecha (formato DD-MM-YYYY)
       if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
-        fechaActual = linea; // formato DD-MM-YYYY
-      } else if (fechaActual) {
+        fechaActual = linea;
+      } 
+      // Si es un precio de aceite
+      else if (fechaActual) {
         const partes = linea.split(" ");
         const precio = partes.pop();
         const tipo = partes.join(" ");
@@ -28,14 +31,16 @@ async function cargarHistorico() {
       }
     });
 
-    // Guardamos TODOS los registros ordenados de más reciente a más antiguo
+    // Guardamos TODOS los registros desde 2015
     historicoDatos = registros.sort((a, b) => {
       const [d1, m1, y1] = a.fecha.split("-");
       const [d2, m2, y2] = b.fecha.split("-");
       return new Date(`${y2}-${m2}-${d2}`) - new Date(`${y1}-${m1}-${d1}`);
     });
 
+    // Renderizamos TODO el histórico al inicio
     renderHistorico(historicoDatos);
+
   } catch (err) {
     console.error("Error cargando histórico:", err);
   }
@@ -73,7 +78,7 @@ function renderHistorico(datos) {
 
 /* ---------------- Filtros ---------------- */
 
-// Botón últimos 3 meses
+// Últimos 3 meses
 document.getElementById("filtro-3m")?.addEventListener("click", () => {
   const hoy = new Date();
   const hace3m = new Date();
@@ -88,7 +93,7 @@ document.getElementById("filtro-3m")?.addEventListener("click", () => {
   renderHistorico(filtrados);
 });
 
-// Botón último mes
+// Último mes
 document.getElementById("filtro-1m")?.addEventListener("click", () => {
   const hoy = new Date();
   const hace1m = new Date();
@@ -103,7 +108,7 @@ document.getElementById("filtro-1m")?.addEventListener("click", () => {
   renderHistorico(filtrados);
 });
 
-// Botón filtrar rango
+// Filtrar rango
 document.getElementById("filtro-rango")?.addEventListener("click", () => {
   const desdeInput = document.getElementById("fecha-desde").value;
   const hastaInput = document.getElementById("fecha-hasta").value;
