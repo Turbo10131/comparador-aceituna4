@@ -71,6 +71,8 @@ function renderHistorico(datos) {
   });
 }
 
+/* ---------------- Filtros ---------------- */
+
 // Botón últimos 3 meses
 document.getElementById("filtro-3m")?.addEventListener("click", () => {
   const hoy = new Date();
@@ -123,7 +125,24 @@ document.getElementById("filtro-rango")?.addEventListener("click", () => {
   renderHistorico(filtrados);
 });
 
-// Inicializar
+/* ---------------- Modal abrir/cerrar ---------------- */
+
 document.addEventListener("DOMContentLoaded", () => {
   cargarHistorico();
+
+  const modal = document.getElementById("historico-modal");
+  const btnOpen = document.getElementById("historico-btn");
+  const btnClose = document.getElementById("historico-close");
+
+  if (btnOpen && modal) {
+    btnOpen.addEventListener("click", () => {
+      modal.classList.add("open");
+    });
+  }
+
+  if (btnClose && modal) {
+    btnClose.addEventListener("click", () => {
+      modal.classList.remove("open");
+    });
+  }
 });
