@@ -6,10 +6,10 @@ const historicoBtn = document.getElementById("historico-btn");
 const historicoClose = document.getElementById("historico-close");
 const historicoBody = document.getElementById("historico-body");
 
-// Filtros
-const filtro3m = document.getElementById("filtro-3m");
-const filtro1m = document.getElementById("filtro-1m");
-const filtroRango = document.getElementById("filtro-rango");
+// Filtros (🔹 IDs corregidos)
+const filtro3m = document.getElementById("btn-3m");
+const filtro1m = document.getElementById("btn-1m");
+const filtroRango = document.getElementById("btn-filtrar");
 const fechaDesdeInput = document.getElementById("fecha-desde");
 const fechaHastaInput = document.getElementById("fecha-hasta");
 
@@ -101,46 +101,55 @@ function filtrarPorRango(desde, hasta) {
   });
 }
 
-filtro3m.addEventListener("click", () => {
-  const hoy = new Date();
-  const hace3m = new Date();
-  hace3m.setMonth(hoy.getMonth() - 3);
-  renderHistorico(filtrarPorRango(hace3m, hoy));
-});
+if (filtro3m) {
+  filtro3m.addEventListener("click", () => {
+    const hoy = new Date();
+    const hace3m = new Date();
+    hace3m.setMonth(hoy.getMonth() - 3);
+    renderHistorico(filtrarPorRango(hace3m, hoy));
+  });
+}
 
-filtro1m.addEventListener("click", () => {
-  const hoy = new Date();
-  const hace1m = new Date();
-  hace1m.setMonth(hoy.getMonth() - 1);
-  renderHistorico(filtrarPorRango(hace1m, hoy));
-});
+if (filtro1m) {
+  filtro1m.addEventListener("click", () => {
+    const hoy = new Date();
+    const hace1m = new Date();
+    hace1m.setMonth(hoy.getMonth() - 1);
+    renderHistorico(filtrarPorRango(hace1m, hoy));
+  });
+}
 
-filtroRango.addEventListener("click", () => {
-  const desdeVal = fechaDesdeInput.value;
-  const hastaVal = fechaHastaInput.value;
-  if (!desdeVal || !hastaVal) return;
+if (filtroRango) {
+  filtroRango.addEventListener("click", () => {
+    const desdeVal = fechaDesdeInput.value;
+    const hastaVal = fechaHastaInput.value;
+    if (!desdeVal || !hastaVal) return;
 
-  const [ay, am, ad] = desdeVal.split("-").map(Number);
-  const [by, bm, bd] = hastaVal.split("-").map(Number);
+    const [ay, am, ad] = desdeVal.split("-").map(Number);
+    const [by, bm, bd] = hastaVal.split("-").map(Number);
 
-  const desde = new Date(ay, am - 1, ad);
-  const hasta = new Date(by, bm - 1, bd);
+    const desde = new Date(ay, am - 1, ad);
+    const hasta = new Date(by, bm - 1, bd);
 
-  renderHistorico(filtrarPorRango(desde, hasta));
-});
+    renderHistorico(filtrarPorRango(desde, hasta));
+  });
+}
 
 // ===================
 // Eventos modal
 // ===================
-historicoBtn.addEventListener("click", async () => {
-  historicoModal.classList.add("open");
-  if (datosHistoricos.length === 0) {
-    datosHistoricos = await cargarHistorico();
-  }
-  renderHistorico(datosHistoricos); // 🔹 siempre renderiza todos los datos
-});
+if (historicoBtn) {
+  historicoBtn.addEventListener("click", async () => {
+    historicoModal.classList.add("open");
+    if (datosHistoricos.length === 0) {
+      datosHistoricos = await cargarHistorico();
+    }
+    renderHistorico(datosHistoricos); // 🔹 siempre renderiza todos los datos
+  });
+}
 
-historicoClose.addEventListener("click", () => {
-  historicoModal.classList.remove("open");
-});
-
+if (historicoClose) {
+  historicoClose.addEventListener("click", () => {
+    historicoModal.classList.remove("open");
+  });
+}
