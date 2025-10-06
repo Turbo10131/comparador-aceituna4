@@ -6,7 +6,7 @@ const historicoBtn = document.getElementById("historico-btn");
 const historicoClose = document.getElementById("historico-close");
 const historicoBody = document.getElementById("historico-body");
 
-// Filtros (🔹 IDs corregidos)
+// Filtros
 const filtro3m = document.getElementById("btn-3m");
 const filtro1m = document.getElementById("btn-1m");
 const filtroRango = document.getElementById("btn-filtrar");
@@ -20,7 +20,7 @@ let datosHistoricos = [];
 // ===================
 async function cargarHistorico() {
   try {
-    const resp = await fetch("precios2015.txt"); // 🔹 nombre correcto
+    const resp = await fetch("precios2015.txt");
     const texto = await resp.text();
 
     const lineas = texto.split("\n").map(l => l.trim()).filter(l => l);
@@ -29,10 +29,8 @@ async function cargarHistorico() {
 
     for (let linea of lineas) {
       if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
-        // Si la línea es una fecha (dd-mm-yyyy)
         fechaActual = linea;
       } else if (fechaActual) {
-        // Si es un precio
         const partes = linea.split(" ");
         const tipo = partes.slice(0, -1).join(" ");
         const precio = parseFloat(partes[partes.length - 1].replace(",", "."));
@@ -52,26 +50,110 @@ async function cargarHistorico() {
 }
 
 // ===================
+// Leer precios actuales de la tabla principal
+// ===================
+function leerPreciosTablaPrincipal() {
+  const filas = document.querySelectorAll("#tabla-precios tr");
+  const hoy = new Date();
+  const fechaHoy = hoy.toLocaleDateString("es-ES").replace(/\//g, "-");
+
+  let nuevosDatos = [];
+
+  filas.forEach((fila, i) => {
+    if (i === 0) return;
+    const celdas = fila.querySelectorAll("td");
+    if (celdas.length === 2) {
+      const tipo = celdas[0].innerText.trim();
+      const precioStr = celdas[1].innerText.replace(/[^\d.,]/g, "").replace(",", ".");
+      const precio = parseFloat(precioStr);
+      if (!isNaN(precio)) {
+        nuevosDatos.push({
+          fecha: fechaHoy,
+          tipo: tipo,
+          precio: precio
+        });
+      }
+    }
+  });
+
+  return nuevosDatos;
+}
+
+// ===================
+// Guardar histórico actualizado en precios2015.txt (🔹 NUEVO)
+// ===================
+async function guardarHistoricoEnArchivo() {
+  try {
+    // Generar el texto en el formato original
+    const agrupado = {};
+    datosHistoricos.forEach(d => {
+      if (!agrupado[d.fecha]) agrupado[d.fecha] = [];
+      agrupado[d.fecha].push(`${d.tipo} ${d.precio.toFixed(3)}`);
+    });
+
+    const contenido = Object.keys(agrupado)
+      .sort((a, b) => {
+        const [da, ma, ya] = a.split("-").map(Number);
+        const [db, mb, yb] = b.split("-").map(Number);
+        return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+      })
+      .map(f => `${f}\n${agrupado[f].join("\n")}`)
+      .join("\n\n");
+
+    // Enviar a un endpoint (por ejemplo en GitHub Actions o backend)
+    await fetch("guardar_historico.php", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: contenido
+    });
+
+    console.log("💾 Histórico actualizado y guardado correctamente.");
+  } catch (e) {
+    console.error("Error al guardar precios2015.txt:", e);
+  }
+}
+
+// ===================
+// Integrar precios del día si no existen
+// ===================
+async function actualizarConDatosDelDia() {
+  const nuevos = leerPreciosTablaPrincipal();
+  if (nuevos.length === 0) return;
+
+  const hoy = nuevos[0].fecha;
+  const yaExiste = datosHistoricos.some(d => d.fecha === hoy);
+
+  if (!yaExiste) {
+    console.log("🟢 Añadiendo datos del día al histórico:", hoy);
+    datosHistoricos = [...datosHistoricos, ...nuevos];
+    datosHistoricos.sort((a, b) => {
+      const [da, ma, ya] = a.fecha.split("-").map(Number);
+      const [db, mb, yb] = b.fecha.split("-").map(Number);
+      return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
+    });
+
+    await guardarHistoricoEnArchivo(); // 🔹 Guardar cambios en precios2015.txt
+  }
+}
+
+// ===================
 // Renderizar tabla
 // ===================
 function renderHistorico(filtrado) {
   historicoBody.innerHTML = "";
 
-  // Agrupar por fecha
   const agrupado = {};
   filtrado.forEach(item => {
     if (!agrupado[item.fecha]) agrupado[item.fecha] = [];
     agrupado[item.fecha].push(item);
   });
 
-  // Ordenar fechas descendente
   const fechas = Object.keys(agrupado).sort((a, b) => {
     const [da, ma, ya] = a.split("-").map(Number);
     const [db, mb, yb] = b.split("-").map(Number);
     return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
   });
 
-  // Pintar filas
   fechas.forEach(fecha => {
     const filaFecha = document.createElement("tr");
     filaFecha.innerHTML = `<td colspan="3" class="fecha-barra"><strong>${fecha}</strong></td>`;
@@ -101,39 +183,33 @@ function filtrarPorRango(desde, hasta) {
   });
 }
 
-if (filtro3m) {
-  filtro3m.addEventListener("click", () => {
-    const hoy = new Date();
-    const hace3m = new Date();
-    hace3m.setMonth(hoy.getMonth() - 3);
-    renderHistorico(filtrarPorRango(hace3m, hoy));
-  });
-}
+filtro3m?.addEventListener("click", () => {
+  const hoy = new Date();
+  const hace3m = new Date();
+  hace3m.setMonth(hoy.getMonth() - 3);
+  renderHistorico(filtrarPorRango(hace3m, hoy));
+});
 
-if (filtro1m) {
-  filtro1m.addEventListener("click", () => {
-    const hoy = new Date();
-    const hace1m = new Date();
-    hace1m.setMonth(hoy.getMonth() - 1);
-    renderHistorico(filtrarPorRango(hace1m, hoy));
-  });
-}
+filtro1m?.addEventListener("click", () => {
+  const hoy = new Date();
+  const hace1m = new Date();
+  hace1m.setMonth(hoy.getMonth() - 1);
+  renderHistorico(filtrarPorRango(hace1m, hoy));
+});
 
-if (filtroRango) {
-  filtroRango.addEventListener("click", () => {
-    const desdeVal = fechaDesdeInput.value;
-    const hastaVal = fechaHastaInput.value;
-    if (!desdeVal || !hastaVal) return;
+filtroRango?.addEventListener("click", () => {
+  const desdeVal = fechaDesdeInput.value;
+  const hastaVal = fechaHastaInput.value;
+  if (!desdeVal || !hastaVal) return;
 
-    const [ay, am, ad] = desdeVal.split("-").map(Number);
-    const [by, bm, bd] = hastaVal.split("-").map(Number);
+  const [ay, am, ad] = desdeVal.split("-").map(Number);
+  const [by, bm, bd] = hastaVal.split("-").map(Number);
 
-    const desde = new Date(ay, am - 1, ad);
-    const hasta = new Date(by, bm - 1, bd);
+  const desde = new Date(ay, am - 1, ad);
+  const hasta = new Date(by, bm - 1, bd);
 
-    renderHistorico(filtrarPorRango(desde, hasta));
-  });
-}
+  renderHistorico(filtrarPorRango(desde, hasta));
+});
 
 // ===================
 // Eventos modal
@@ -144,12 +220,11 @@ if (historicoBtn) {
     if (datosHistoricos.length === 0) {
       datosHistoricos = await cargarHistorico();
     }
-    renderHistorico(datosHistoricos); // 🔹 siempre renderiza todos los datos
+    await actualizarConDatosDelDia(); // 🔹 Añade y guarda los datos del día
+    renderHistorico(datosHistoricos);
   });
 }
 
-if (historicoClose) {
-  historicoClose.addEventListener("click", () => {
-    historicoModal.classList.remove("open");
-  });
-}
+historicoClose?.addEventListener("click", () => {
+  historicoModal.classList.remove("open");
+});
