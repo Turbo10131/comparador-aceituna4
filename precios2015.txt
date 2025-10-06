@@ -19623,13 +19623,32 @@ Aceite de oliva virgen extra 4.080
 Aceite de oliva virgen 3.633
 Aceite de oliva lampante 3.500 
 
-
- 
 30-09-2025
 Aceite de oliva virgen extra 4.067
 Aceite de oliva virgen 3.600
 Aceite de oliva lampante 3.513
+
 01-10-2025
 Aceite de oliva virgen extra 4.017
 Aceite de oliva virgen 3.613
 Aceite de oliva lampante 3.494
+
+2-10-2025
+Aceite de oliva virgen extra 4.033
+Aceite de oliva virgen 3.617
+Aceite de oliva lampante 3.500
+
+03-10-2025
+Aceite de oliva virgen extra 4.042
+Aceite de oliva virgen 3.617
+Aceite de oliva lampante 3.510
+
+04-10-2025
+Aceite de oliva virgen extra 4.042
+Aceite de oliva virgen 3.617
+Aceite de oliva lampante 3.510
+
+05-10-2025
+Aceite de oliva virgen extra 4.042
+Aceite de oliva virgen 3.617
+Aceite de oliva lampante 3.510
