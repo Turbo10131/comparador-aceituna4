@@ -1,21 +1,21 @@
 {
   "fuente": "Infaoliva",
-  "fecha": "2025-10-06 10:35:55",
+  "fecha": "2025-10-06 11:13:45",
   "precios": {
     "Aceite de oliva virgen extra": {
       "variedad": "Picual",
-      "precio_eur_kg": 4.042
+      "precio_eur_kg": 4.05
     },
     "Aceite de oliva virgen": {
       "variedad": "Picual",
-      "precio_eur_kg": 3.617
+      "precio_eur_kg": 3.625
     },
     "Aceite de oliva lampante": {
       "variedad": "Picual",
-      "precio_eur_kg": 3.51
+      "precio_eur_kg": 3.515
     }
   },
-  "ultima_actualizacion": "2025-10-06T10:35:55.256300",
-  "generated_at": "2025-10-06T10:35:55.256300",
+  "ultima_actualizacion": "2025-10-06T11:13:45.855295",
+  "generated_at": "2025-10-06T11:13:45.855295",
   "sin_cierre_operaciones": false
 }
