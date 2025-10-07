@@ -61,18 +61,21 @@ jobs:
           git add ${DATA_FILES}
           git commit -m "Actualizar JSONs automáticamente (scraper): ${DATA_FILES}"
 
-      # 👉 NUEVO PASO: actualizar histórico con los datos del día
-      - name: Actualizar histórico precios
+      # 🔹 NUEVO PASO: actualizar precios2015.txt con los datos del día
+      - name: Actualizar histórico precios (precios2015.txt)
         if: steps.cambios.outputs.changed == 'true'
-        run: python actualiza_historico.py
+        run: |
+          echo "🟢 Actualizando histórico de precios..."
+          python actualiza_historico.py
+          echo "✅ Archivo precios2015.txt actualizado."
 
-      - name: Commit histórico
+      - name: Commit histórico actualizado
         if: steps.cambios.outputs.changed == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add precios2015.txt
-          git commit -m "Actualizar histórico automáticamente con precios del día" || echo "No hay cambios"
+          git add "precios2015.txt"
+          git commit -m "Actualizar histórico automáticamente con precios del día" || echo "No hay cambios en precios2015.txt"
 
       - name: Hacer push con token personal (SCRAPERGITHUB)
         if: steps.cambios.outputs.changed == 'true'
@@ -96,14 +99,14 @@ jobs:
             echo "⚠️ NETLIFY_BUILD_HOOK_URL no está configurado; no se dispara redeploy."
             exit 0
           fi
-          echo "Lanzando redeploy en Netlify…"
+          echo "🚀 Lanzando redeploy en Netlify…"
           curl -fsS -X POST -H "Content-Type: application/json" --data '{}' "$BUILD_HOOK"
           echo "Redeploy solicitado."
 
       - name: Resumen
         run: |
           echo "✅ Workflow finalizado."
-          echo "Cambios: ${{ steps.cambios.outputs.changed }}"
+          echo "Cambios detectados: ${{ steps.cambios.outputs.changed }}"
 
   alertar_fallo:
     needs: actualizar
