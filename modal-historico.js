@@ -80,37 +80,12 @@ function leerPreciosTablaPrincipal() {
 }
 
 // ===================
-// Guardar histórico actualizado en precios2015.txt (🔹 NUEVO)
+// Guardar histórico actualizado (GitHub/Netlify → solo simulación local)
 // ===================
 async function guardarHistoricoEnArchivo() {
-  try {
-    // Generar el texto en el formato original
-    const agrupado = {};
-    datosHistoricos.forEach(d => {
-      if (!agrupado[d.fecha]) agrupado[d.fecha] = [];
-      agrupado[d.fecha].push(`${d.tipo} ${d.precio.toFixed(3)}`);
-    });
-
-    const contenido = Object.keys(agrupado)
-      .sort((a, b) => {
-        const [da, ma, ya] = a.split("-").map(Number);
-        const [db, mb, yb] = b.split("-").map(Number);
-        return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
-      })
-      .map(f => `${f}\n${agrupado[f].join("\n")}`)
-      .join("\n\n");
-
-    // Enviar a un endpoint (por ejemplo en GitHub Actions o backend)
-    await fetch("guardar_historico.php", {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: contenido
-    });
-
-    console.log("💾 Histórico actualizado y guardado correctamente.");
-  } catch (e) {
-    console.error("Error al guardar precios2015.txt:", e);
-  }
+  console.log("💡 Entorno estático (GitHub/Netlify):");
+  console.log("   La tabla se actualiza visualmente,");
+  console.log("   pero el archivo precios2015.txt se sobrescribe mediante GitHub Actions.");
 }
 
 // ===================
@@ -132,7 +107,7 @@ async function actualizarConDatosDelDia() {
       return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
     });
 
-    await guardarHistoricoEnArchivo(); // 🔹 Guardar cambios en precios2015.txt
+    await guardarHistoricoEnArchivo(); // Simula guardado (no rompe nada)
   }
 }
 
@@ -220,7 +195,7 @@ if (historicoBtn) {
     if (datosHistoricos.length === 0) {
       datosHistoricos = await cargarHistorico();
     }
-    await actualizarConDatosDelDia(); // 🔹 Añade y guarda los datos del día
+    await actualizarConDatosDelDia();
     renderHistorico(datosHistoricos);
   });
 }
