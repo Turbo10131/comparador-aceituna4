@@ -16,7 +16,7 @@ const fechaHastaInput = document.getElementById("fecha-hasta");
 let datosHistoricos = [];
 
 // ===================
-// Leer precios2015.txt (normaliza fechas y evita caché)
+// Leer precios2015.txt (normaliza fechas y evita duplicados por formato)
 // ===================
 async function cargarHistorico() {
   try {
@@ -28,11 +28,12 @@ async function cargarHistorico() {
     let fechaActual = null;
 
     for (let linea of lineas) {
+      // Detectar fecha y normalizarla (dd-mm-yyyy)
       if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(linea)) {
         const [d, m, y] = linea.split("-").map(Number);
-        const fechaFormateada = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
-        fechaActual = fechaFormateada;
+        fechaActual = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
       } else if (fechaActual) {
+        // Si es un precio
         const partes = linea.split(" ");
         const tipo = partes.slice(0, -1).join(" ");
         const precio = parseFloat(partes[partes.length - 1].replace(",", "."));
@@ -44,11 +45,28 @@ async function cargarHistorico() {
       }
     }
 
-    const sinDuplicados = historico.filter(
-      (v, i, a) => i === a.findIndex(t => t.fecha === v.fecha && t.tipo === v.tipo)
-    );
+    // 🔹 Eliminar duplicados exactos (fecha + tipo)
+    const mapa = new Map();
+    historico.forEach(item => {
+      const clave = `${item.fecha}-${item.tipo}`;
+      mapa.set(clave, item);
+    });
+    historico = Array.from(mapa.values());
 
-    return sinDuplicados;
+    // 🔹 Fusionar fechas con formato diferente (8-10-2025 vs 08-10-2025)
+    const fusionado = [];
+    const mapaFechas = new Map();
+
+    historico.forEach(item => {
+      const [d, m, y] = item.fecha.split("-").map(Number);
+      const fechaNormalizada = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
+      const clave = `${fechaNormalizada}-${item.tipo}`;
+      if (!mapaFechas.has(clave)) mapaFechas.set(clave, { ...item, fecha: fechaNormalizada });
+    });
+
+    mapaFechas.forEach(v => fusionado.push(v));
+
+    return fusionado;
   } catch (e) {
     console.error("Error cargando histórico:", e);
     return [];
