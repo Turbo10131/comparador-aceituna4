@@ -20,7 +20,6 @@ let datosHistoricos = [];
 // ===================
 async function cargarHistorico() {
   try {
-    // 🔹 Evita que el navegador use versiones antiguas del archivo (cache bust)
     const resp = await fetch(`precios2015.txt?cacheBust=${Date.now()}`);
     const texto = await resp.text();
 
@@ -29,14 +28,11 @@ async function cargarHistorico() {
     let fechaActual = null;
 
     for (let linea of lineas) {
-      // 🔹 Acepta fechas con o sin ceros iniciales (p. ej. 8-10-2025 o 08-10-2025)
       if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(linea)) {
-        // 🔹 Normaliza el formato de fecha a DD-MM-YYYY
         const [d, m, y] = linea.split("-").map(Number);
         const fechaFormateada = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
         fechaActual = fechaFormateada;
       } else if (fechaActual) {
-        // 🔹 Procesa las líneas con precios
         const partes = linea.split(" ");
         const tipo = partes.slice(0, -1).join(" ");
         const precio = parseFloat(partes[partes.length - 1].replace(",", "."));
@@ -48,7 +44,6 @@ async function cargarHistorico() {
       }
     }
 
-    // 🔹 Elimina posibles duplicados exactos (misma fecha y tipo)
     const sinDuplicados = historico.filter(
       (v, i, a) => i === a.findIndex(t => t.fecha === v.fecha && t.tipo === v.tipo)
     );
@@ -100,18 +95,24 @@ async function guardarHistoricoEnArchivo() {
 }
 
 // ===================
-// Integrar precios del día si no existen
+// Integrar precios del día si no existen (corrige duplicados)
 // ===================
 async function actualizarConDatosDelDia() {
   const nuevos = leerPreciosTablaPrincipal();
   if (nuevos.length === 0) return;
 
   const hoy = nuevos[0].fecha;
-  const yaExiste = datosHistoricos.some(d => d.fecha === hoy);
 
-  if (!yaExiste) {
+  // 🔹 Evita duplicar si ya existen registros del mismo día y tipo
+  const nuevosFiltrados = nuevos.filter(nuevo =>
+    !datosHistoricos.some(
+      d => d.fecha === nuevo.fecha && d.tipo === nuevo.tipo
+    )
+  );
+
+  if (nuevosFiltrados.length > 0) {
     console.log("🟢 Añadiendo datos del día al histórico:", hoy);
-    datosHistoricos = [...datosHistoricos, ...nuevos];
+    datosHistoricos = [...datosHistoricos, ...nuevosFiltrados];
     datosHistoricos.sort((a, b) => {
       const [da, ma, ya] = a.fecha.split("-").map(Number);
       const [db, mb, yb] = b.fecha.split("-").map(Number);
