@@ -53,20 +53,7 @@ async function cargarHistorico() {
     });
     historico = Array.from(mapa.values());
 
-    // 🔹 Fusionar fechas con formato diferente (8-10-2025 vs 08-10-2025)
-    const fusionado = [];
-    const mapaFechas = new Map();
-
-    historico.forEach(item => {
-      const [d, m, y] = item.fecha.split("-").map(Number);
-      const fechaNormalizada = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
-      const clave = `${fechaNormalizada}-${item.tipo}`;
-      if (!mapaFechas.has(clave)) mapaFechas.set(clave, { ...item, fecha: fechaNormalizada });
-    });
-
-    mapaFechas.forEach(v => fusionado.push(v));
-
-    return fusionado;
+    return historico;
   } catch (e) {
     console.error("Error cargando histórico:", e);
     return [];
@@ -113,7 +100,7 @@ async function guardarHistoricoEnArchivo() {
 }
 
 // ===================
-// Integrar precios del día si no existen (corrige duplicados)
+// Integrar precios del día si no existen (corrige duplicados definitivamente)
 // ===================
 async function actualizarConDatosDelDia() {
   const nuevos = leerPreciosTablaPrincipal();
@@ -121,24 +108,23 @@ async function actualizarConDatosDelDia() {
 
   const hoy = nuevos[0].fecha;
 
-  // 🔹 Evita duplicar si ya existen registros del mismo día y tipo
-  const nuevosFiltrados = nuevos.filter(nuevo =>
-    !datosHistoricos.some(
-      d => d.fecha === nuevo.fecha && d.tipo === nuevo.tipo
-    )
-  );
-
-  if (nuevosFiltrados.length > 0) {
-    console.log("🟢 Añadiendo datos del día al histórico:", hoy);
-    datosHistoricos = [...datosHistoricos, ...nuevosFiltrados];
-    datosHistoricos.sort((a, b) => {
-      const [da, ma, ya] = a.fecha.split("-").map(Number);
-      const [db, mb, yb] = b.fecha.split("-").map(Number);
-      return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
-    });
-
-    await guardarHistoricoEnArchivo(); // Simula guardado (no rompe nada)
+  // 🔹 Si el día completo ya existe en el histórico, no añadimos nada
+  const yaExisteDia = datosHistoricos.some(d => d.fecha === hoy);
+  if (yaExisteDia) {
+    console.log(`📅 Los datos del día ${hoy} ya están en el histórico. No se añaden de nuevo.`);
+    return;
   }
+
+  console.log("🟢 Añadiendo datos del día al histórico:", hoy);
+  datosHistoricos = [...datosHistoricos, ...nuevos];
+
+  datosHistoricos.sort((a, b) => {
+    const [da, ma, ya] = a.fecha.split("-").map(Number);
+    const [db, mb, yb] = b.fecha.split("-").map(Number);
+    return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
+  });
+
+  await guardarHistoricoEnArchivo(); // Simula guardado (no rompe nada)
 }
 
 // ===================
