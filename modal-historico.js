@@ -61,12 +61,17 @@ async function cargarHistorico() {
 }
 
 // ===================
-// Leer precios actuales de la tabla principal
+// Leer precios actuales de la tabla principal (normaliza formato de fecha)
 // ===================
 function leerPreciosTablaPrincipal() {
   const filas = document.querySelectorAll("#tabla-precios tr");
   const hoy = new Date();
-  const fechaHoy = hoy.toLocaleDateString("es-ES").replace(/\//g, "-");
+
+  // 🔹 Fecha en formato uniforme DD-MM-YYYY
+  const d = String(hoy.getDate()).padStart(2, "0");
+  const m = String(hoy.getMonth() + 1).padStart(2, "0");
+  const y = hoy.getFullYear();
+  const fechaHoy = `${d}-${m}-${y}`;
 
   let nuevosDatos = [];
 
