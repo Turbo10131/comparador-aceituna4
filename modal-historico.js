@@ -16,11 +16,12 @@ const fechaHastaInput = document.getElementById("fecha-hasta");
 let datosHistoricos = [];
 
 // ===================
-// Leer precios2015.txt
+// Leer precios2015.txt (normaliza fechas y evita caché)
 // ===================
 async function cargarHistorico() {
   try {
-    const resp = await fetch("precios2015.txt");
+    // 🔹 Evita que el navegador use versiones antiguas del archivo (cache bust)
+    const resp = await fetch(`precios2015.txt?cacheBust=${Date.now()}`);
     const texto = await resp.text();
 
     const lineas = texto.split("\n").map(l => l.trim()).filter(l => l);
@@ -28,9 +29,14 @@ async function cargarHistorico() {
     let fechaActual = null;
 
     for (let linea of lineas) {
-      if (/^\d{2}-\d{2}-\d{4}$/.test(linea)) {
-        fechaActual = linea;
+      // 🔹 Acepta fechas con o sin ceros iniciales (p. ej. 8-10-2025 o 08-10-2025)
+      if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(linea)) {
+        // 🔹 Normaliza el formato de fecha a DD-MM-YYYY
+        const [d, m, y] = linea.split("-").map(Number);
+        const fechaFormateada = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
+        fechaActual = fechaFormateada;
       } else if (fechaActual) {
+        // 🔹 Procesa las líneas con precios
         const partes = linea.split(" ");
         const tipo = partes.slice(0, -1).join(" ");
         const precio = parseFloat(partes[partes.length - 1].replace(",", "."));
@@ -42,7 +48,12 @@ async function cargarHistorico() {
       }
     }
 
-    return historico;
+    // 🔹 Elimina posibles duplicados exactos (misma fecha y tipo)
+    const sinDuplicados = historico.filter(
+      (v, i, a) => i === a.findIndex(t => t.fecha === v.fecha && t.tipo === v.tipo)
+    );
+
+    return sinDuplicados;
   } catch (e) {
     console.error("Error cargando histórico:", e);
     return [];
