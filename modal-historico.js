@@ -105,7 +105,7 @@ async function guardarHistoricoEnArchivo() {
 }
 
 // ===================
-// Integrar precios del día si no existen (corrige duplicados definitivamente)
+// Integrar precios del día (reemplaza si ya existen)
 // ===================
 async function actualizarConDatosDelDia() {
   const nuevos = leerPreciosTablaPrincipal();
@@ -113,16 +113,18 @@ async function actualizarConDatosDelDia() {
 
   const hoy = nuevos[0].fecha;
 
-  // 🔹 Si el día completo ya existe en el histórico, no añadimos nada
+  // 🔧 CAMBIO: si el día ya existe en el histórico, lo reemplazamos por los precios actuales
   const yaExisteDia = datosHistoricos.some(d => d.fecha === hoy);
   if (yaExisteDia) {
-    console.log(`📅 Los datos del día ${hoy} ya están en el histórico. No se añaden de nuevo.`);
-    return;
+    datosHistoricos = datosHistoricos.filter(d => d.fecha !== hoy);
+    console.log(`♻️ Actualizado el día ${hoy} en histórico con los precios actuales.`);
+  } else {
+    console.log("🟢 Añadiendo datos del día al histórico:", hoy);
   }
 
-  console.log("🟢 Añadiendo datos del día al histórico:", hoy);
   datosHistoricos = [...datosHistoricos, ...nuevos];
 
+  // Ordenar descendente por fecha
   datosHistoricos.sort((a, b) => {
     const [da, ma, ya] = a.fecha.split("-").map(Number);
     const [db, mb, yb] = b.fecha.split("-").map(Number);
