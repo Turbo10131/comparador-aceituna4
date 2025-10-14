@@ -94,6 +94,10 @@ h1 {
   overflow-y: auto;
 }
 
+/* 👉 Posicionar botón Cerrar arriba a la derecha en el modal histórico */
+#historico-modal .modal-content { position: relative; }
+#historico-close { position: absolute; top: 12px; right: 12px; }
+
 /* ---------------- HISTÓRICO ---------------- */
 .historico-table {
   width: 100%;
