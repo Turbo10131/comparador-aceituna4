@@ -140,3 +140,40 @@ h1 {
   text-align: right;
   font-weight: bold;
 }
+
+/* ---------------- CALCULADORA ---------------- */
+
+/* Tabla visual para el bloque de resultados */
+#resultado {
+  border-collapse: collapse;
+  margin-top: 15px;
+  width: 100%;
+  max-width: 700px;
+}
+
+#resultado table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#resultado th,
+#resultado td {
+  border: 1px solid #ccc;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+#resultado th {
+  background: #f2f4e4;
+  font-weight: bold;
+  color: #333;
+}
+
+#resultado td {
+  background: #fff;
+}
+
+/* Añade más espacio entre la calculadora y la línea de actualización */
+#tabla-info {
+  margin-top: 25px;
+}
