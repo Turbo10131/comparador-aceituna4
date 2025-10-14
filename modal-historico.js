@@ -113,7 +113,7 @@ async function actualizarConDatosDelDia() {
 
   const hoy = nuevos[0].fecha;
 
-  // 🔧 CAMBIO: si el día ya existe en el histórico, lo reemplazamos por los precios actuales
+  // Si el día ya existe en el histórico, lo reemplazamos por los precios actuales
   const yaExisteDia = datosHistoricos.some(d => d.fecha === hoy);
   if (yaExisteDia) {
     datosHistoricos = datosHistoricos.filter(d => d.fecha !== hoy);
@@ -219,7 +219,19 @@ if (historicoBtn) {
       datosHistoricos = await cargarHistorico();
     }
     await actualizarConDatosDelDia();
-    renderHistorico(datosHistoricos);
+
+    // ▶️ Al abrir: mostrar SIEMPRE el último mes y rellenar inputs
+    const hoy = new Date();
+    const hace1m = new Date();
+    hace1m.setMonth(hoy.getMonth() - 1);
+
+    const toYMD = (d) =>
+      [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+
+    if (fechaDesdeInput) fechaDesdeInput.value = toYMD(hace1m);
+    if (fechaHastaInput) fechaHastaInput.value = toYMD(hoy);
+
+    renderHistorico(filtrarPorRango(hace1m, hoy));
   });
 }
 
