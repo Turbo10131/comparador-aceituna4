@@ -217,6 +217,19 @@ h1 {
   background: #fff;
 }
 
+/* 💸 Resalte animado con brillo suave para Precio aceituna (€ /kg) */
+#resultado td.destacado {
+  background: linear-gradient(90deg, #e0f6d9, #f5fff0);
+  color: #2c5e0a;
+  font-weight: bold;
+  font-size: 1.2em;
+  transition: box-shadow 0.3s, transform 0.2s;
+}
+#resultado td.destacado:hover {
+  box-shadow: 0 0 8px #b4df90;
+  transform: scale(1.03);
+}
+
 /* Más espacio antes de “Precios actualizados” */
 #tabla-info {
   margin-top: 25px;
@@ -290,4 +303,3 @@ h1 {
 
   #tabla-info { margin-top: 18px; }
 }
-
