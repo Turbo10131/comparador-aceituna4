@@ -30,10 +30,26 @@
 
     <div id="precio"></div>
 
-    <!-- 💶 Aquí cambiamos el icono -->
-    <h2>💶 Calculadora — precio por kg de aceituna</h2>
+    <h2>📊 Calculadora — precio por kg de aceituna</h2>
     <p>Usa el rendimiento (%) y la calidad seleccionada para estimar el precio del kg de aceituna.</p>
-    <div id="resultado"></div>
+
+    <!-- 📊 Calculadora -->
+    <table id="resultado" class="calc-table">
+      <thead>
+        <tr>
+          <th>Rendimiento (%)</th>
+          <th>Calidad del Aceite</th>
+          <th>Precio del Aceite</th>
+          <th>Precio aceituna (€/kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Tu JS rellena esto dinámicamente -->
+      </tbody>
+    </table>
+
+    <!-- ✅ NUEVO: Caja destacada con el resultado final -->
+    <div id="resultado-final" aria-live="polite"></div>
 
     <!-- 📌 Aquí aparece la tabla principal -->
     <div id="tabla-info"></div>
@@ -43,7 +59,7 @@
       <button id="fuente-link" class="btn-link">De dónde obtenemos los precios</button>
     </div>
 
-    <!-- 📌 Botón para abrir histórico -->
+    <!-- 📌 Nuevo botón para abrir histórico -->
     <div style="text-align:right; margin-top:10px;">
       <button id="historico-btn" class="btn">Consultar precios</button>
     </div>
@@ -67,6 +83,8 @@
           <input type="date" id="fecha-hasta">
         </div>
         <button id="btn-filtrar" class="btn">Filtrar</button>
+        <!-- 🔸 Botón cerrar movido arriba -->
+        <button id="historico-close" class="btn" style="margin-left:auto;">Cerrar</button>
       </div>
 
       <table class="historico-table">
@@ -79,9 +97,6 @@
         </thead>
         <tbody id="historico-body"></tbody>
       </table>
-
-      <!-- Botón cerrar -->
-      <button id="historico-close" class="btn">Cerrar</button>
     </div>
   </div>
 
