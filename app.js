@@ -71,6 +71,7 @@ function calcular() {
   const sel = document.getElementById("tipo");
   const res = document.getElementById("resultado");
   const rEl = document.getElementById("rendimiento");
+  const finalBox = document.getElementById("resultado-final"); // ✅ nuevo: caja final
   if (!sel || !res || !rEl) return;
 
   const key = sel.value;
@@ -80,6 +81,7 @@ function calcular() {
   if (!key || !precio || isNaN(rendimiento) || rendimiento < 0 || rendimiento > 100) {
     res.classList.add("error");
     res.textContent = "Falta información: selecciona calidad y rendimiento válido.";
+    if (finalBox) finalBox.textContent = ""; // ✅ limpia la caja final si no hay datos válidos
     return;
   }
 
@@ -106,6 +108,11 @@ function calcular() {
       </tbody>
     </table>
   `;
+
+  // ✅ Actualiza la caja de resultado final (opción 2)
+  if (finalBox) {
+    finalBox.textContent = `💶 Precio final de la aceituna: ${precioAceituna.toFixed(3)} €/kg`;
+  }
 }
 
 function setupFuenteModal() {
