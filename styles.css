@@ -94,7 +94,7 @@ h1 {
   overflow-y: auto;
 }
 
-/* 👉 Posicionar botón Cerrar arriba a la derecha en el modal histórico */
+/* 👉 Botón Cerrar arriba a la derecha en el modal histórico */
 #historico-modal .modal-content { position: relative; }
 #historico-close { position: absolute; top: 12px; right: 12px; }
 
@@ -173,7 +173,89 @@ h1 {
   background: #fff;
 }
 
-/* Añade más espacio entre la calculadora y la línea de actualización */
+/* Más espacio antes de “Precios actualizados” */
 #tabla-info {
   margin-top: 25px;
+}
+
+/* =======================
+   📱 RESPONSIVE (MÓVIL)
+   ======================= */
+@media (max-width: 640px) {
+  .container {
+    margin: 0;
+    border-radius: 0;
+    padding: 14px;
+    box-shadow: none;
+  }
+
+  h1 { font-size: 1.4rem; }
+
+  .campo label {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .campo input,
+  .campo select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Botones más cómodos para tocar */
+  .btn { padding: 12px 14px; }
+
+  /* Modal a pantalla casi completa */
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    height: 95vh;
+    max-height: 95vh;
+    border-radius: 0;
+    padding: 12px;
+  }
+  #historico-close {
+    top: 8px;
+    right: 8px;
+    padding: 8px 10px;
+  }
+
+  /* Filtros del histórico en columna (sobrescribe inline con !important) */
+  .historico-filtros {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .historico-filtros > * {
+    width: 100%;
+  }
+  .historico-filtros label {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .historico-filtros input[type="date"],
+  .historico-filtros .btn {
+    width: 100%;
+  }
+
+  /* Tablas: scroll horizontal suave en pantallas pequeñas */
+  .price-table,
+  .historico-table,
+  #resultado table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  .price-table th,
+  .price-table td,
+  .historico-table th,
+  .historico-table td,
+  #resultado th,
+  #resultado td {
+    padding: 8px;
+    font-size: 0.95rem;
+  }
+
+  /* Reduce un poco los márgenes para compactar */
+  #tabla-info { margin-top: 18px; }
 }
