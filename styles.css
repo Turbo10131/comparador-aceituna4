@@ -45,22 +45,66 @@ h1 {
   font-size: 0.95rem;
 }
 
+/* =========================
+   TABLA PRINCIPAL (look pro)
+   ========================= */
 .price-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  margin-top: 12px;
+}
+
+.price-table th,
+.price-table td {
+  padding: 12px 14px;
 }
 
 .price-table th {
-  background: #7c8800;
-  color: white;
-  padding: 8px;
+  background: linear-gradient(180deg, #8ea31a 0%, #7c8800 100%);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: .2px;
   text-align: left;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.price-table td {
-  border-top: 1px solid #ddd;
-  padding: 8px;
+.price-table tr + tr td {
+  border-top: 1px solid #eef1f5;
+}
+
+.price-table td:first-child {
+  color: #1d2b3a;
+}
+
+.price-table td:last-child,
+.price-table th:last-child {
+  text-align: right;
+  width: 180px;
+}
+
+.price-table tbody tr:hover td {
+  background: #fafbfd;
+}
+
+.price-table thead th:first-child {
+  border-top-left-radius: 10px;
+}
+.price-table thead th:last-child {
+  border-top-right-radius: 10px;
+}
+
+.price-table tbody tr:focus-within td {
+  outline: 2px solid #1e73be33;
+  background: #f5fafe;
 }
 
 /* ---------------- MODAL ---------------- */
@@ -94,7 +138,7 @@ h1 {
   overflow-y: auto;
 }
 
-/* 👉 Botón Cerrar arriba a la derecha en el modal histórico */
+/* 👉 Botón cerrar arriba en el modal histórico */
 #historico-modal .modal-content { position: relative; }
 #historico-close { position: absolute; top: 12px; right: 12px; }
 
@@ -143,7 +187,7 @@ h1 {
 
 /* ---------------- CALCULADORA ---------------- */
 
-/* Tabla visual para el bloque de resultados */
+/* Tabla visual del bloque de resultados */
 #resultado {
   border-collapse: collapse;
   margin-top: 15px;
@@ -201,10 +245,8 @@ h1 {
     max-width: 100%;
   }
 
-  /* Botones más cómodos para tocar */
   .btn { padding: 12px 14px; }
 
-  /* Modal a pantalla casi completa */
   .modal-content {
     width: 100%;
     max-width: none;
@@ -219,7 +261,6 @@ h1 {
     padding: 8px 10px;
   }
 
-  /* Filtros del histórico en columna (sobrescribe inline con !important) */
   .historico-filtros {
     flex-direction: column !important;
     gap: 8px !important;
@@ -227,16 +268,7 @@ h1 {
   .historico-filtros > * {
     width: 100%;
   }
-  .historico-filtros label {
-    display: block;
-    margin-bottom: 4px;
-  }
-  .historico-filtros input[type="date"],
-  .historico-filtros .btn {
-    width: 100%;
-  }
 
-  /* Tablas: scroll horizontal suave en pantallas pequeñas */
   .price-table,
   .historico-table,
   #resultado table {
@@ -256,6 +288,6 @@ h1 {
     font-size: 0.95rem;
   }
 
-  /* Reduce un poco los márgenes para compactar */
   #tabla-info { margin-top: 18px; }
 }
+
