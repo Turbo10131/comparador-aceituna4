@@ -235,6 +235,20 @@ h1 {
   margin-top: 25px;
 }
 
+/* ===== Resultado final (caja destacada) — Opción 2 ===== */
+#resultado-final {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, #e0f6d9, #f8fff0);
+  border: 2px solid #a6d891;
+  border-radius: 8px;
+  color: #1c5306;
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
 /* =======================
    📱 RESPONSIVE (MÓVIL)
    ======================= */
