@@ -63,6 +63,10 @@
     {
       "fecha": "2025-10-15",
       "precio_eur_kg": 4.062
+    },
+    {
+      "fecha": "2025-10-16",
+      "precio_eur_kg": 4.062
     }
   ],
   "Aceite de oliva virgen": [
@@ -129,6 +133,10 @@
     {
       "fecha": "2025-10-15",
       "precio_eur_kg": 3.6
+    },
+    {
+      "fecha": "2025-10-16",
+      "precio_eur_kg": 3.6
     }
   ],
   "Aceite de oliva lampante": [
@@ -194,6 +202,10 @@
     },
     {
       "fecha": "2025-10-15",
+      "precio_eur_kg": 3.5
+    },
+    {
+      "fecha": "2025-10-16",
       "precio_eur_kg": 3.5
     }
   ]
