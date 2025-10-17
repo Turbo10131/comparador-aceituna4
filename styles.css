@@ -14,9 +14,20 @@ body {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+/* 🌿 NUEVO ESTILO PROFESIONAL PARA EL TÍTULO PRINCIPAL */
 h1 {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  color: #3a4a00;
+  font-weight: 700;
+  font-size: 1.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h1::before {
+  content: "🌿";
+  font-size: 1.6rem;
 }
 
 .campo {
@@ -233,20 +244,6 @@ h1 {
 /* Más espacio antes de “Precios actualizados” */
 #tabla-info {
   margin-top: 25px;
-}
-
-/* ===== Resultado final (caja destacada) — Opción 2 ===== */
-#resultado-final {
-  margin-top: 14px;
-  padding: 14px 16px;
-  background: linear-gradient(90deg, #e0f6d9, #f8fff0);
-  border: 2px solid #a6d891;
-  border-radius: 8px;
-  color: #1c5306;
-  font-weight: 700;
-  font-size: 1.15rem;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 /* =======================
