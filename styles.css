@@ -1,70 +1,65 @@
+/* =========================
+   BASE
+   ========================= */
 body {
   font-family: Arial, sans-serif;
-  background: #f5f6f7;
+  /* Fondo con degradado suave, más “vivo” */
+  background: linear-gradient(180deg, #f5f7f2 0%, #e8eee0 100%);
   margin: 0;
   padding: 0;
 }
 
 .container {
   max-width: 900px;
-  margin: 20px auto;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin: 40px auto;                 /* más aire alrededor */
+  background: #fff;
+  padding: 30px;                      /* un poco más de padding */
+  border-radius: 12px;                /* bordes más suaves */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid #e4ebd3;          /* sutil borde para look pro */
 }
 
+/* Título profesional (opción 3) */
 h1 {
   font-size: 1.8rem;
   margin-bottom: 1rem;
 }
-
-/* ====== Título (opción 3: tarjeta “glass” con barra lateral) ====== */
 .page-title {
-  position: relative;
-  margin: 0 0 18px;
-  padding: 14px 16px;
-  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
-  font-weight: 800;
-  color: #1d2b3a;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid #e7ecef;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  backdrop-filter: blur(3px);
+  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: #334d00;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 6px solid #9dbb22;
+  padding-left: 12px;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.3px;
 }
-.page-title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 6px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #a3cf45, #6f8a00);
-  box-shadow: 0 0 0 1px #e7ecef inset;
-}
-
-/* Pequeño ajuste para que el emoji no quede pegado a la barra */
-.page-title { padding-left: 22px; }
 
 .campo {
   margin-bottom: 1rem;
 }
 
+/* Botón con look moderno y accesible */
 .btn {
-  background: #1e73be;
+  background: linear-gradient(180deg, #3e8f1f, #337a1b);
   color: #fff;
   border: none;
-  padding: 8px 14px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
-
 .btn:hover {
-  background: #155a91;
+  background: linear-gradient(180deg, #459c23, #387e1f);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
+/* Enlace tipo botón */
 .btn-link {
   background: none;
   border: none;
@@ -82,10 +77,11 @@ h1 {
   border-collapse: separate;
   border-spacing: 0;
   background: #fff;
-  border: 1px solid #dfe3ea;
-  border-radius: 10px;
+  /* refinado: sin borde, sombra más elegante */
+  border: none;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   margin-top: 12px;
 }
 
@@ -95,7 +91,8 @@ h1 {
 }
 
 .price-table th {
-  background: linear-gradient(180deg, #8ea31a 0%, #7c8800 100%);
+  /* cabecera con gradiente más rico */
+  background: linear-gradient(180deg, #9eb42a 0%, #849a1a 100%);
   color: #fff;
   font-weight: 600;
   letter-spacing: .2px;
@@ -125,10 +122,10 @@ h1 {
 }
 
 .price-table thead th:first-child {
-  border-top-left-radius: 10px;
+  border-top-left-radius: 12px;
 }
 .price-table thead th:last-child {
-  border-top-right-radius: 10px;
+  border-top-right-radius: 12px;
 }
 
 .price-table tbody tr:focus-within td {
@@ -222,6 +219,9 @@ h1 {
   margin-top: 15px;
   width: 100%;
   max-width: 700px;
+  border-radius: 10px;              /* look más suave */
+  overflow: hidden;
+  border: 1px solid #dbe7c3;        /* borde suave verdoso */
 }
 
 #resultado table {
@@ -264,18 +264,18 @@ h1 {
   margin-top: 25px;
 }
 
-/* ===== Resultado final (caja destacada) — Opción 2 ===== */
+/* ===== Resultado final (caja destacada) — Opción 2, refinada ===== */
 #resultado-final {
-  margin-top: 14px;
+  margin-top: 16px;
   padding: 14px 16px;
-  background: linear-gradient(90deg, #e0f6d9, #f8fff0);
-  border: 2px solid #a6d891;
-  border-radius: 8px;
-  color: #1c5306;
+  background: linear-gradient(90deg, #e9f8de, #f9fff0);
+  border: 2px solid #b2dc90;
+  border-radius: 10px;
+  color: #264d00;
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
 }
 
 /* =======================
@@ -290,10 +290,7 @@ h1 {
   }
 
   h1 { font-size: 1.4rem; }
-  .page-title {
-    font-size: 1.6rem;
-    padding: 12px 14px 12px 20px;
-  }
+  .page-title { font-size: 1.6rem; }
 
   .campo label {
     display: block;
@@ -350,3 +347,4 @@ h1 {
 
   #tabla-info { margin-top: 18px; }
 }
+
