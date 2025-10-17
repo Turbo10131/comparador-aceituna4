@@ -19,6 +19,35 @@ h1 {
   margin-bottom: 1rem;
 }
 
+/* ====== Título (opción 3: tarjeta “glass” con barra lateral) ====== */
+.page-title {
+  position: relative;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  font-weight: 800;
+  color: #1d2b3a;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #e7ecef;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  backdrop-filter: blur(3px);
+}
+.page-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #a3cf45, #6f8a00);
+  box-shadow: 0 0 0 1px #e7ecef inset;
+}
+
+/* Pequeño ajuste para que el emoji no quede pegado a la barra */
+.page-title { padding-left: 22px; }
+
 .campo {
   margin-bottom: 1rem;
 }
@@ -261,6 +290,10 @@ h1 {
   }
 
   h1 { font-size: 1.4rem; }
+  .page-title {
+    font-size: 1.6rem;
+    padding: 12px 14px 12px 20px;
+  }
 
   .campo label {
     display: block;
