@@ -1,65 +1,41 @@
-/* =========================
-   BASE
-   ========================= */
 body {
   font-family: Arial, sans-serif;
-  /* Fondo con degradado suave, más “vivo” */
-  background: linear-gradient(180deg, #f5f7f2 0%, #e8eee0 100%);
+  background: #f5f6f7;
   margin: 0;
   padding: 0;
 }
 
 .container {
   max-width: 900px;
-  margin: 40px auto;                 /* más aire alrededor */
-  background: #fff;
-  padding: 30px;                      /* un poco más de padding */
-  border-radius: 12px;                /* bordes más suaves */
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  border: 1px solid #e4ebd3;          /* sutil borde para look pro */
+  margin: 20px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* Título profesional (opción 3) */
 h1 {
   font-size: 1.8rem;
   margin-bottom: 1rem;
-}
-.page-title {
-  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
-  font-weight: 700;
-  font-size: 2rem;
-  color: #334d00;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-left: 6px solid #9dbb22;
-  padding-left: 12px;
-  margin-bottom: 1.5rem;
-  letter-spacing: 0.3px;
 }
 
 .campo {
   margin-bottom: 1rem;
 }
 
-/* Botón con look moderno y accesible */
 .btn {
-  background: linear-gradient(180deg, #3e8f1f, #337a1b);
+  background: #1e73be;
   color: #fff;
   border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-}
-.btn:hover {
-  background: linear-gradient(180deg, #459c23, #387e1f);
-  transform: translateY(-2px);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
-/* Enlace tipo botón */
+.btn:hover {
+  background: #155a91;
+}
+
 .btn-link {
   background: none;
   border: none;
@@ -77,11 +53,10 @@ h1 {
   border-collapse: separate;
   border-spacing: 0;
   background: #fff;
-  /* refinado: sin borde, sombra más elegante */
-  border: none;
-  border-radius: 12px;
+  border: 1px solid #dfe3ea;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
   margin-top: 12px;
 }
 
@@ -91,8 +66,7 @@ h1 {
 }
 
 .price-table th {
-  /* cabecera con gradiente más rico */
-  background: linear-gradient(180deg, #9eb42a 0%, #849a1a 100%);
+  background: linear-gradient(180deg, #8ea31a 0%, #7c8800 100%);
   color: #fff;
   font-weight: 600;
   letter-spacing: .2px;
@@ -122,10 +96,10 @@ h1 {
 }
 
 .price-table thead th:first-child {
-  border-top-left-radius: 12px;
+  border-top-left-radius: 10px;
 }
 .price-table thead th:last-child {
-  border-top-right-radius: 12px;
+  border-top-right-radius: 10px;
 }
 
 .price-table tbody tr:focus-within td {
@@ -219,9 +193,6 @@ h1 {
   margin-top: 15px;
   width: 100%;
   max-width: 700px;
-  border-radius: 10px;              /* look más suave */
-  overflow: hidden;
-  border: 1px solid #dbe7c3;        /* borde suave verdoso */
 }
 
 #resultado table {
@@ -264,18 +235,18 @@ h1 {
   margin-top: 25px;
 }
 
-/* ===== Resultado final (caja destacada) — Opción 2, refinada ===== */
+/* ===== Resultado final (caja destacada) — Opción 2 ===== */
 #resultado-final {
-  margin-top: 16px;
+  margin-top: 14px;
   padding: 14px 16px;
-  background: linear-gradient(90deg, #e9f8de, #f9fff0);
-  border: 2px solid #b2dc90;
-  border-radius: 10px;
-  color: #264d00;
+  background: linear-gradient(90deg, #e0f6d9, #f8fff0);
+  border: 2px solid #a6d891;
+  border-radius: 8px;
+  color: #1c5306;
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   text-align: center;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 /* =======================
@@ -290,7 +261,6 @@ h1 {
   }
 
   h1 { font-size: 1.4rem; }
-  .page-title { font-size: 1.6rem; }
 
   .campo label {
     display: block;
@@ -348,3 +318,52 @@ h1 {
   #tabla-info { margin-top: 18px; }
 }
 
+/* =========================================================
+   🖼️ Fondo con imagen de olivar + efecto “glass” (AÑADIDO)
+   ========================================================= */
+body {
+  background-color: #eef3e7; /* respaldo si no carga la imagen */
+  background-image: url("imgolivar.webp.webp"); /* ajusta ruta si está en /img/ */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Velo suave para mejorar legibilidad sobre el fondo */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.10) 0%,
+    rgba(255,255,255,0.18) 60%,
+    rgba(255,255,255,0.22) 100%
+  );
+  z-index: -1;
+}
+
+/* Caja principal translúcida (sin romper estructura) */
+.container {
+  background: rgba(255,255,255,0.74);
+  backdrop-filter: blur(6px) saturate(110%);
+  -webkit-backdrop-filter: blur(6px) saturate(110%);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 10px 30px rgba(40,60,0,0.12);
+  border-radius: 14px;
+  max-width: 980px;
+  margin: 28px auto;
+}
+
+/* Evitar “salto” del fondo en móviles */
+@media (max-width: 640px) {
+  body { background-attachment: scroll; }
+  .container {
+    margin: 0;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+}
