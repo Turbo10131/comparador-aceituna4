@@ -17,6 +17,10 @@ body {
 h1 {
   font-size: 1.8rem;
   margin-bottom: 1rem;
+  /* Mejora de legibilidad sobre fondo */
+  font-weight: 800;
+  color: #15210a;
+  text-shadow: 0 1px 0 rgba(255,255,255,.45);
 }
 
 .campo {
@@ -30,10 +34,20 @@ h1 {
   padding: 8px 14px;
   border-radius: 4px;
   cursor: pointer;
+  /* toque pro sin romper */
+  background: linear-gradient(#2176d1, #1e73be);
+  box-shadow: 0 2px 6px rgba(30,115,190,.18);
+  transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
 }
 
 .btn:hover {
   background: #155a91;
+  filter: brightness(1.02);
+  box-shadow: 0 6px 16px rgba(30,115,190,.22);
+}
+
+.btn:active {
+  transform: translateY(1px);
 }
 
 .btn-link {
@@ -93,6 +107,11 @@ h1 {
 
 .price-table tbody tr:hover td {
   background: #fafbfd;
+}
+
+/* zebra suave sin romper nada */
+.price-table tbody tr:nth-child(odd) td {
+  background: #fbfcfd;
 }
 
 .price-table thead th:first-child {
@@ -247,6 +266,15 @@ h1 {
   font-size: 1.15rem;
   text-align: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  /* alineación pro con icono sin romper texto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+#resultado-final::before {
+  content: "💶";
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.8));
 }
 
 /* =======================
@@ -319,7 +347,7 @@ h1 {
 }
 
 /* =========================================================
-   🖼️ Fondo con imagen de olivar + efecto “glass” (AÑADIDO)
+   🖼️ Fondo con imagen de olivar + efecto “glass”
    ========================================================= */
 body {
   background-color: #eef3e7; /* respaldo si no carga la imagen */
@@ -338,18 +366,18 @@ body::before {
   pointer-events: none;
   background: linear-gradient(
     to bottom,
-    rgba(255,255,255,0.10) 0%,
-    rgba(255,255,255,0.18) 60%,
-    rgba(255,255,255,0.22) 100%
+    rgba(255,255,255,0.12) 0%,
+    rgba(255,255,255,0.20) 60%,
+    rgba(255,255,255,0.24) 100%
   );
   z-index: -1;
 }
 
 /* Caja principal translúcida (sin romper estructura) */
 .container {
-  background: rgba(255,255,255,0.74);
-  backdrop-filter: blur(6px) saturate(110%);
-  -webkit-backdrop-filter: blur(6px) saturate(110%);
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(8px) saturate(110%);
+  -webkit-backdrop-filter: blur(8px) saturate(110%);
   border: 1px solid rgba(255,255,255,0.35);
   box-shadow: 0 10px 30px rgba(40,60,0,0.12);
   border-radius: 14px;
